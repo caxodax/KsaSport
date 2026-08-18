@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #2D3748;
+  --kasa-vinotinto: #5A0F1D;
+  --kasa-dorado: #D4AF37;
+  --kasa-gris: #2D3748;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-kasa-vinotinto: var(--kasa-vinotinto);
+  --color-kasa-dorado: var(--kasa-dorado);
+  --color-kasa-gris: var(--kasa-gris);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Forzar modo claro siempre (Eliminar pre-fers-color-scheme dark) */
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
