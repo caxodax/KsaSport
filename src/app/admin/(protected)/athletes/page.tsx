@@ -15,6 +15,23 @@ export default async function AthletesPage({
 }) {
   await checkAdminPermission('view_roster');
   const supabase = getServiceSupabase();
+  
+  // Obtener el usuario logueado
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  // Buscar permisos y rol del usuario
+  const { data: adminUser } = await supabase.from('admin_users').select('role_id, roles(name, permissions)').eq('id', user?.id).single();
+  const isSuperAdmin = adminUser?.roles?.permissions?.includes('manage_catalog');
+  
+  // Si no es superadmin, buscar su equipo en la tabla staff
+  let coachTeamId: string | null = null;
+  if (!isSuperAdmin && user) {
+    const { data: staffData } = await supabase.from('staff').select('team_id').eq('user_id', user.id).single();
+    if (staffData?.team_id) {
+      coachTeamId = staffData.team_id;
+    }
+  }
+
   const resolvedParams = await searchParams;
 
   // Extraer parámetros de búsqueda
@@ -35,12 +52,17 @@ export default async function AthletesPage({
   // Consulta de Atletas con Filtros y Paginación
   let athletesQuery = supabase
     .from('athletes')
-    .select('id, name, cedula, phone, status, team_id, teams!inner(id, name, category)', { count: 'exact' });
+    .select('id, name, cedula, phone, status, team_id, position, stats_avg, paid_until, teams!inner(id, name, category)', { count: 'exact' });
+
+  // Forzar el filtro si es un Coach
+  if (coachTeamId) {
+    athletesQuery = athletesQuery.eq('team_id', coachTeamId);
+  }
 
   if (query) {
     athletesQuery = athletesQuery.or(`name.ilike.%${query}%,cedula.ilike.%${query}%`);
   }
-  if (teamFilter) {
+  if (teamFilter && !coachTeamId) {
     athletesQuery = athletesQuery.eq('team_id', teamFilter);
   }
   if (categoryFilter) {
@@ -66,11 +88,13 @@ export default async function AthletesPage({
       <div className="flex flex-col gap-6">
         
         {/* Filtros Reutilizados (Minimalistas) */}
-        <DashboardFilters 
-          teams={teamsData || []} 
-          categories={categoriesData || []} 
-          basePath="/admin/athletes"
-        />
+        {!coachTeamId && (
+          <DashboardFilters 
+            teams={teamsData || []} 
+            categories={categoriesData || []} 
+            basePath="/admin/athletes"
+          />
+        )}
 
         {/* Formulario Crear Atleta */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 w-full">
@@ -82,6 +106,9 @@ export default async function AthletesPage({
           </div>
           
           <form action={createAthlete as any} className="flex flex-col md:flex-row gap-4 items-end flex-wrap">
+            {/* Si es coach, forzar su team_id y ocultarlo */}
+            {coachTeamId && <input type="hidden" name="team_id" value={coachTeamId} />}
+            
             <div className="flex-1 min-w-[200px]">
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo *</label>
               <input 
@@ -114,19 +141,21 @@ export default async function AthletesPage({
                 placeholder="Opcional"
               />
             </div>
-            <div className="flex-1 min-w-[150px]">
-              <label htmlFor="team_id" className="block text-sm font-medium text-gray-700 mb-1">Equipo</label>
-              <select 
-                id="team_id" 
-                name="team_id" 
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto bg-white"
-              >
-                <option value="">Seleccionar Equipo</option>
-                {teamsData?.map((t) => (
-                  <option key={t.id} value={t.id}>{t.name} ({t.category})</option>
-                ))}
-              </select>
-            </div>
+            {!coachTeamId && (
+              <div className="flex-1 min-w-[150px]">
+                <label htmlFor="team_id" className="block text-sm font-medium text-gray-700 mb-1">Equipo</label>
+                <select 
+                  id="team_id" 
+                  name="team_id" 
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto bg-white"
+                >
+                  <option value="">Seleccionar Equipo</option>
+                  {teamsData?.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name} ({t.category})</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="w-full md:w-32">
               <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">Estatus</label>
               <select 
@@ -164,7 +193,7 @@ export default async function AthletesPage({
           <div className="md:hidden flex flex-col p-3 gap-3 bg-gray-50/30">
             {athletes && athletes.length > 0 ? (
               athletes.map((athlete) => (
-                <AthleteCard key={athlete.id} athlete={athlete as any} teams={teamsData || []} />
+                <AthleteCard key={athlete.id} athlete={athlete as any} teams={teamsData || []} isSuperAdmin={!!isSuperAdmin} />
               ))
             ) : (
               <div className="text-center p-8 bg-white border border-gray-100 rounded-xl">
@@ -191,7 +220,7 @@ export default async function AthletesPage({
               <tbody className="bg-white divide-y divide-gray-100">
                 {athletes && athletes.length > 0 ? (
                   athletes.map((athlete) => (
-                    <AthleteRow key={athlete.id} athlete={athlete as any} teams={teamsData || []} />
+                    <AthleteRow key={athlete.id} athlete={athlete as any} teams={teamsData || []} isSuperAdmin={!!isSuperAdmin} />
                   ))
                 ) : (
                   <tr>

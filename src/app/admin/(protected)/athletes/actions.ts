@@ -19,7 +19,9 @@ export async function createAthlete(formData: FormData) {
     phone, 
     team_id: team_id || null, 
     status,
-    paid_until
+    paid_until,
+    position: formData.get('position') as string || null,
+    stats_avg: formData.get('stats_avg') ? Number(formData.get('stats_avg')) : null
   }]);
 
   if (error) {
@@ -59,14 +61,22 @@ export async function updateAthlete(formData: FormData) {
   if (!id || !name || !cedula) return { error: 'Datos incompletos' };
 
   const supabase = getServiceSupabase();
-  const { error } = await supabase.from('athletes').update({ 
+  
+  // Construir el objeto a actualizar
+  const updateData: any = { 
     name, 
     cedula, 
     phone, 
-    team_id: team_id || null, 
-    status,
-    paid_until
-  }).eq('id', id);
+    team_id: team_id || null
+  };
+  
+  // Solo actualizar el status si viene en el form (para evitar que coaches lo pisen con null)
+  if (status) updateData.status = status;
+  if (formData.has('paid_until')) updateData.paid_until = paid_until;
+  if (formData.has('position')) updateData.position = formData.get('position') as string;
+  if (formData.has('stats_avg')) updateData.stats_avg = formData.get('stats_avg') ? Number(formData.get('stats_avg')) : null;
+
+  const { error } = await supabase.from('athletes').update(updateData).eq('id', id);
 
   if (error) {
     if (error.code === '23505') {

@@ -79,30 +79,48 @@ export async function linkProfile(formData: FormData) {
 
   const adminSupabase = getServiceSupabase();
   
-  // 1. Buscar si la cédula existe
-  const { data: athlete, error: findError } = await adminSupabase
+  // 1. Buscar si la cédula existe en atletas
+  const { data: athlete } = await adminSupabase
     .from('athletes')
     .select('id, user_id')
     .eq('cedula', cedula)
     .single();
 
-  if (findError || !athlete) {
-    return { error: 'No se encontró ninguna atleta con esta cédula en Kasa Sports. Contacta a administración.' }
+  // 1.5 Buscar si existe en staff
+  const { data: staff } = await adminSupabase
+    .from('staff')
+    .select('id, user_id')
+    .eq('cedula', cedula)
+    .single();
+
+  if (!athlete && !staff) {
+    return { error: 'No se encontró ningún registro con esta cédula en Kasa Sports. Contacta a administración.' }
   }
 
-  // 2. Verificar si ya está vinculada a otra cuenta
-  if (athlete.user_id && athlete.user_id !== user.id) {
-    return { error: 'Esta cédula ya está vinculada a otra cuenta de correo.' }
+  // 2. Verificar y vincular Atleta
+  if (athlete) {
+    if (athlete.user_id && athlete.user_id !== user.id) {
+      return { error: 'Esta cédula ya está vinculada a otra cuenta de atleta.' }
+    }
+    const { error: updateError } = await adminSupabase
+      .from('athletes')
+      .update({ user_id: user.id })
+      .eq('id', athlete.id);
+      
+    if (updateError) return { error: 'Ocurrió un error al vincular el perfil de atleta.' }
   }
 
-  // 3. Vincular
-  const { error: updateError } = await adminSupabase
-    .from('athletes')
-    .update({ user_id: user.id })
-    .eq('id', athlete.id);
-
-  if (updateError) {
-    return { error: 'Ocurrió un error al vincular el perfil.' }
+  // 3. Verificar y vincular Staff
+  if (staff) {
+    if (staff.user_id && staff.user_id !== user.id) {
+      return { error: 'Esta cédula ya está vinculada a otra cuenta de staff.' }
+    }
+    const { error: updateError } = await adminSupabase
+      .from('staff')
+      .update({ user_id: user.id })
+      .eq('id', staff.id);
+      
+    if (updateError) return { error: 'Ocurrió un error al vincular el perfil de staff.' }
   }
 
   revalidatePath('/portal/dashboard')

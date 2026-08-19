@@ -6,19 +6,22 @@ import { deleteAthlete, updateAthlete } from './actions';
 
 export default function AthleteRow({ 
   athlete, 
-  teams 
+  teams,
+  isSuperAdmin = true
 }: { 
-  athlete: { id: string, name: string, cedula: string, phone: string, status: string, team_id: string, teams?: { name: string } | null, paid_until?: string | null },
-  teams: { id: string, name: string }[]
+  athlete: { id: string, name: string, cedula: string, phone: string, status: string, team_id: string, teams?: { name: string } | null, paid_until?: string | null, position?: string | null, stats_avg?: number | null },
+  teams: { id: string, name: string }[],
+  isSuperAdmin?: boolean
 }) {
   const [isEditing, setIsEditing] = useState(false);
   
   const [name, setName] = useState(athlete.name);
   const [cedula, setCedula] = useState(athlete.cedula);
-  const [phone, setPhone] = useState(athlete.phone || '');
   const [teamId, setTeamId] = useState(athlete.team_id || '');
   const [status, setStatus] = useState(athlete.status);
   const [paidUntil, setPaidUntil] = useState(athlete.paid_until || '');
+  const [position, setPosition] = useState(athlete.position || '');
+  const [statsAvg, setStatsAvg] = useState(athlete.stats_avg?.toString() || '');
   
   const [loading, setLoading] = useState(false);
 
@@ -31,8 +34,14 @@ export default function AthleteRow({
     formData.append('cedula', cedula);
     formData.append('phone', phone);
     formData.append('team_id', teamId);
-    formData.append('status', status);
-    if (paidUntil) formData.append('paid_until', paidUntil);
+    
+    if (isSuperAdmin) {
+      formData.append('status', status);
+      if (paidUntil) formData.append('paid_until', paidUntil);
+    }
+    
+    if (position) formData.append('position', position);
+    if (statsAvg) formData.append('stats_avg', statsAvg);
     
     await updateAthlete(formData);
     setIsEditing(false);
@@ -47,6 +56,8 @@ export default function AthleteRow({
     setTeamId(athlete.team_id || '');
     setStatus(athlete.status);
     setPaidUntil(athlete.paid_until || '');
+    setPosition(athlete.position || '');
+    setStatsAvg(athlete.stats_avg?.toString() || '');
   }
 
   if (isEditing) {
@@ -89,23 +100,44 @@ export default function AthleteRow({
           </select>
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
-          <div className="flex gap-2">
-            <select 
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="w-1/2 rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
-            >
-              <option value="Solvente">Solvente</option>
-              <option value="Moroso">Moroso</option>
-              <option value="Inactivo">Inactivo</option>
-            </select>
-            <input 
-              type="date" 
-              value={paidUntil}
-              onChange={(e) => setPaidUntil(e.target.value)}
-              className="w-1/2 rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
-              title="Solvente hasta"
-            />
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <input 
+                type="text" 
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
+                className="w-1/2 rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+                placeholder="Posición (Ej: 1B)"
+              />
+              <input 
+                type="number" 
+                step="0.001"
+                value={statsAvg}
+                onChange={(e) => setStatsAvg(e.target.value)}
+                className="w-1/2 rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+                placeholder="AVG (Ej: 0.350)"
+              />
+            </div>
+            {isSuperAdmin && (
+              <div className="flex gap-2">
+                <select 
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-1/2 rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+                >
+                  <option value="Solvente">Solvente</option>
+                  <option value="Moroso">Moroso</option>
+                  <option value="Inactivo">Inactivo</option>
+                </select>
+                <input 
+                  type="date" 
+                  value={paidUntil}
+                  onChange={(e) => setPaidUntil(e.target.value)}
+                  className="w-1/2 rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+                  title="Solvente hasta"
+                />
+              </div>
+            )}
           </div>
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-1">
@@ -138,7 +170,17 @@ export default function AthleteRow({
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex flex-col gap-1">
-          <span className={`px-2 py-1 inline-flex text-xs font-bold rounded-full border shadow-sm w-max
+          {athlete.position && (
+            <span className="text-xs font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded w-max">
+              Pos: {athlete.position}
+            </span>
+          )}
+          {athlete.stats_avg != null && (
+            <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded w-max">
+              AVG: {athlete.stats_avg}
+            </span>
+          )}
+          <span className={`mt-1 px-2 py-1 inline-flex text-xs font-bold rounded-full border shadow-sm w-max
             ${athlete.status === 'Solvente' ? 'bg-green-50 text-green-700 border-green-200' : 
               athlete.status === 'Moroso' ? 'bg-red-50 text-red-700 border-red-200' : 
               'bg-gray-50 text-gray-700 border-gray-200'}`}>
@@ -169,10 +211,12 @@ export default function AthleteRow({
 
 export function AthleteCard({ 
   athlete,
-  teams 
+  teams,
+  isSuperAdmin = true
 }: { 
-  athlete: { id: string, name: string, cedula: string, phone: string, status: string, team_id: string, teams?: { name: string } | null, paid_until?: string | null },
-  teams: { id: string, name: string }[] 
+  athlete: { id: string, name: string, cedula: string, phone: string, status: string, team_id: string, teams?: { name: string } | null, paid_until?: string | null, position?: string | null, stats_avg?: number | null },
+  teams: { id: string, name: string }[],
+  isSuperAdmin?: boolean
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(athlete.name);
@@ -181,6 +225,8 @@ export function AthleteCard({
   const [teamId, setTeamId] = useState(athlete.team_id || '');
   const [status, setStatus] = useState(athlete.status);
   const [paidUntil, setPaidUntil] = useState(athlete.paid_until || '');
+  const [position, setPosition] = useState(athlete.position || '');
+  const [statsAvg, setStatsAvg] = useState(athlete.stats_avg?.toString() || '');
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
@@ -192,8 +238,15 @@ export function AthleteCard({
     formData.append('cedula', cedula);
     formData.append('phone', phone);
     formData.append('team_id', teamId);
-    formData.append('status', status);
-    if (paidUntil) formData.append('paid_until', paidUntil);
+    
+    if (isSuperAdmin) {
+      formData.append('status', status);
+      if (paidUntil) formData.append('paid_until', paidUntil);
+    }
+    
+    if (position) formData.append('position', position);
+    if (statsAvg) formData.append('stats_avg', statsAvg);
+    
     await updateAthlete(formData);
     setIsEditing(false);
     setLoading(false);
@@ -207,6 +260,8 @@ export function AthleteCard({
     setTeamId(athlete.team_id || '');
     setStatus(athlete.status);
     setPaidUntil(athlete.paid_until || '');
+    setPosition(athlete.position || '');
+    setStatsAvg(athlete.stats_avg?.toString() || '');
   }
 
   return (
@@ -245,23 +300,45 @@ export function AthleteCard({
               <option value="">Sin equipo</option>
               {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
-            <select 
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="w-1/3 rounded-md border border-gray-300 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
-            >
-              <option value="Solvente">Solvente</option>
-              <option value="Moroso">Moroso</option>
-              <option value="Inactivo">Inactivo</option>
-            </select>
+          </div>
+          <div className="flex gap-2">
             <input 
-              type="date" 
-              value={paidUntil}
-              onChange={(e) => setPaidUntil(e.target.value)}
-              className="w-1/3 rounded-md border border-gray-300 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
-              title="Pagado hasta"
+              type="text" 
+              value={position}
+              onChange={(e) => setPosition(e.target.value)}
+              className="w-1/2 rounded-md border border-gray-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+              placeholder="Pos: Ej 1B"
+            />
+            <input 
+              type="number" 
+              step="0.001"
+              value={statsAvg}
+              onChange={(e) => setStatsAvg(e.target.value)}
+              className="w-1/2 rounded-md border border-gray-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+              placeholder="AVG: Ej 0.350"
             />
           </div>
+          
+          {isSuperAdmin && (
+            <div className="flex gap-2">
+              <select 
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="w-1/3 rounded-md border border-gray-300 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+              >
+                <option value="Solvente">Solvente</option>
+                <option value="Moroso">Moroso</option>
+                <option value="Inactivo">Inactivo</option>
+              </select>
+              <input 
+                type="date" 
+                value={paidUntil}
+                onChange={(e) => setPaidUntil(e.target.value)}
+                className="w-2/3 rounded-md border border-gray-300 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+                title="Pagado hasta"
+              />
+            </div>
+          )}
           <div className="flex justify-end gap-2 mt-2">
             <button onClick={cancelEdit} disabled={loading} className="text-gray-600 bg-gray-100 px-3 py-1.5 rounded-md text-sm font-medium">Cancelar</button>
             <button onClick={handleSave} disabled={loading} className="text-white bg-green-600 px-3 py-1.5 rounded-md text-sm font-medium">Guardar</button>
@@ -288,6 +365,19 @@ export function AthleteCard({
               {athlete.paid_until && (
                 <span className="text-[10px] text-gray-500 font-medium">
                   {athlete.status === 'Solvente' ? 'Hasta' : 'Desde'}: {new Date(athlete.paid_until).toLocaleDateString('es-ES')}
+                </span>
+              )}
+            </div>
+            
+            <div className="flex gap-2 mt-2">
+              {athlete.position && (
+                <span className="text-xs font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded w-max">
+                  Pos: {athlete.position}
+                </span>
+              )}
+              {athlete.stats_avg != null && (
+                <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded w-max">
+                  AVG: {athlete.stats_avg}
                 </span>
               )}
             </div>
