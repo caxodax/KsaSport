@@ -12,6 +12,7 @@ type Payment = {
   concept: string
   status: string
   reference_number: string
+  receipt_url?: string | null
   created_at: string
   athletes: {
     name: string
@@ -61,6 +62,11 @@ export default function PaymentRow({ payment }: { payment: Payment }) {
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="text-sm font-bold text-gray-900">{payment.method}</div>
         <div className="text-xs text-gray-500">Ref: {payment.reference_number || 'N/A'}</div>
+        {payment.receipt_url && (
+          <a href={payment.receipt_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline mt-1">
+            <FileText className="w-3 h-3" /> Ver Comprobante
+          </a>
+        )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="text-sm font-bold text-kasa-vinotinto">${Number(payment.amount).toFixed(2)}</div>
@@ -152,7 +158,14 @@ export function PaymentCard({ payment }: { payment: Payment }) {
         <p><span className="font-semibold text-gray-700">Concepto:</span> {payment.concept}</p>
         <p><span className="font-semibold text-gray-700">Método:</span> {payment.method}</p>
         <p><span className="font-semibold text-gray-700">Referencia:</span> {payment.reference_number || 'N/A'}</p>
-        <p><span className="font-semibold text-gray-700">Fecha:</span> {new Date(payment.created_at).toLocaleString()}</p>
+        {payment.receipt_url && (
+          <p className="mt-2">
+            <a href={payment.receipt_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline bg-blue-50 px-2 py-1 rounded">
+              <FileText className="w-3 h-3" /> Ver Comprobante Subido
+            </a>
+          </p>
+        )}
+        <p className="mt-2"><span className="font-semibold text-gray-700">Fecha:</span> {new Date(payment.created_at).toLocaleString()}</p>
       </div>
       
       {payment.status === 'Pendiente' && (

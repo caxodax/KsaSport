@@ -16,6 +16,7 @@ export default function PaymentForm({ products }: { products: Product[] }) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [file, setFile] = useState<File | null>(null)
 
   const handleSelect = (product: Product) => {
     setSelectedProduct(product)
@@ -28,8 +29,9 @@ export default function PaymentForm({ products }: { products: Product[] }) {
     formData.append('concept', selectedProduct!.name)
     formData.append('amount', selectedProduct!.price.toString())
     
-    // Aquí podrías procesar la subida del comprobante a Supabase Storage si quisieras
-    // Por ahora enviamos los datos textuales al action
+    // El input file se añade automáticamente al FormData si tiene el atributo 'name'
+    // pero si usamos estado lo podemos agregar explícitamente si queremos, 
+    // aunque como el input está en el form, ya viene en formData si tiene name="receipt"
     
     const result = await reportPayment(formData)
     
@@ -122,13 +124,38 @@ export default function PaymentForm({ products }: { products: Product[] }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Comprobante (Opcional)</label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors cursor-pointer">
-                <Camera className="w-8 h-8 mb-2 text-gray-400" />
-                <span className="text-sm font-medium">Sube una foto del pago</span>
-                <span className="text-xs mt-1">JPG o PNG, máx 2MB</span>
-                <input type="file" className="hidden" accept="image/*" />
-              </div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Comprobante (Obligatorio para verificar)</label>
+              <label className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors cursor-pointer group">
+                {file ? (
+                  <>
+                    <CheckCircle2 className="w-8 h-8 mb-2 text-green-500" />
+                    <span className="text-sm font-medium text-gray-900">{file.name}</span>
+                    <span className="text-xs mt-1 text-kasa-vinotinto font-semibold">Clic para cambiar</span>
+                  </>
+                ) : (
+                  <>
+                    <Camera className="w-8 h-8 mb-2 text-gray-400 group-hover:text-kasa-vinotinto transition-colors" />
+                    <span className="text-sm font-medium">Sube una foto del pago</span>
+                    <span className="text-xs mt-1">JPG o PNG, máx 5MB</span>
+                  </>
+                )}
+                <input 
+                  type="file" 
+                  name="receipt" 
+                  className="hidden" 
+                  accept="image/jpeg, image/png, image/webp" 
+                  onChange={(e) => {
+                    const selected = e.target.files?.[0]
+                    if (selected) {
+                      if (selected.size > 5 * 1024 * 1024) {
+                        setError('La imagen es muy pesada. Máximo 5MB.')
+                        return
+                      }
+                      setFile(selected)
+                    }
+                  }}
+                />
+              </label>
             </div>
 
             <div className="flex gap-3 pt-4">

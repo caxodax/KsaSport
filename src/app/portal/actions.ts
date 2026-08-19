@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getServiceSupabase } from '@/lib/supabase'
+import { uploadImageToCloudflare } from '@/lib/cloudflare'
 
 export async function login(formData: FormData) {
   const email = formData.get('email') as string
@@ -129,6 +130,12 @@ export async function reportPayment(formData: FormData) {
   const concept = formData.get('concept') as string
   const product_id = formData.get('product_id') as string
   const reference = formData.get('reference_number') as string || null
+  const receiptFile = formData.get('receipt') as File | null
+
+  let receipt_url = null
+  if (receiptFile && receiptFile.size > 0) {
+    receipt_url = await uploadImageToCloudflare(receiptFile, 'pagos')
+  }
 
   const { error } = await adminSupabase
     .from('payments')
@@ -140,7 +147,8 @@ export async function reportPayment(formData: FormData) {
       method,
       concept,
       status: 'Pendiente',
-      reference_number: reference
+      reference_number: reference,
+      receipt_url
     })
 
   if (error) return { error: error.message }
