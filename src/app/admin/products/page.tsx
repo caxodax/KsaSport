@@ -121,7 +121,7 @@ export default async function ProductsPage() {
           <div className="md:hidden flex flex-col p-4 gap-4 bg-gray-50/30">
             {products && products.length > 0 ? (
               products.map((p) => (
-                <ProductCard key={p.id} product={p as any} />
+                <ProductCard key={p.id} product={p as any} allCategories={categories || []} />
               ))
             ) : (
               <div className="text-center p-8 bg-white border border-gray-100 rounded-xl">
@@ -146,7 +146,7 @@ export default async function ProductsPage() {
               <tbody className="bg-white divide-y divide-gray-100">
                 {products && products.length > 0 ? (
                   products.map((p) => (
-                    <ProductRow key={p.id} product={p as any} />
+                    <ProductRow key={p.id} product={p as any} allCategories={categories || []} />
                   ))
                 ) : (
                   <tr>

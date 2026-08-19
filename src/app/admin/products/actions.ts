@@ -70,3 +70,35 @@ export async function deleteProduct(id: string) {
   revalidatePath('/admin/products')
   return { success: true }
 }
+
+export async function updateProduct(formData: FormData) {
+  const id = formData.get('id') as string
+  const name = formData.get('name') as string
+  const description = formData.get('description') as string
+  const price = Number(formData.get('price'))
+  
+  const categories = formData.getAll('categories') as string[]
+  const finalCategories = categories.includes('Global') || categories.length === 0 
+    ? [] 
+    : categories;
+
+  const supabase = getServiceSupabase()
+  
+  const { error } = await supabase
+    .from('products')
+    .update({ 
+      name, 
+      description, 
+      price, 
+      categories: finalCategories
+    })
+    .eq('id', id)
+
+  if (error) {
+    console.error('Error updating product:', error)
+    return { error: error.message }
+  }
+
+  revalidatePath('/admin/products')
+  return { success: true }
+}
