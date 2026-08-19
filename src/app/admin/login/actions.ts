@@ -9,7 +9,7 @@ export async function loginAdmin(formData: FormData) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
-  const supabase = createClient()
+  const supabase = await createClient()
   const adminSupabase = getServiceSupabase()
 
   // 1. Iniciar sesión en Supabase Auth
@@ -40,7 +40,7 @@ export async function loginAdmin(formData: FormData) {
 }
 
 export async function logoutAdmin() {
-  const supabase = createClient()
+  const supabase = await createClient()
   await supabase.auth.signOut()
   redirect('/admin/login')
 }

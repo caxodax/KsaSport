@@ -3,7 +3,7 @@ import { getServiceSupabase } from '@/lib/supabase'
 import { redirect } from 'next/navigation'
 
 export async function checkAdminPermission(requiredPermission?: string) {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
