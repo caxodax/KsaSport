@@ -1,5 +1,5 @@
 import { getServiceSupabase } from '@/lib/supabase'
-import { Wallet, Clock } from 'lucide-react'
+import { Wallet, Clock, Check } from 'lucide-react'
 import PaymentRow, { PaymentCard } from './PaymentRow'
 
 export const revalidate = 0
