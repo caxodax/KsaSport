@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Medal, LayoutDashboard, Users, Shield, Trophy, Menu, Tags, X } from 'lucide-react';
+import { Medal, LayoutDashboard, Users, Shield, Trophy, Menu, Tags, X, ShoppingBag, Wallet } from 'lucide-react';
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,6 +15,8 @@ export default function Sidebar() {
     { href: '/admin/categories', label: 'Categorías', icon: Tags },
     { href: '/admin/athletes', label: 'Roster / Atletas', icon: Users },
     { href: '/admin/staff', label: 'Staff Técnico', icon: Shield },
+    { href: '/admin/products', label: 'Catálogo de Tienda', icon: ShoppingBag },
+    { href: '/admin/payments', label: 'Finanzas y Pagos', icon: Wallet },
   ];
 
   const closeMenu = () => setIsOpen(false);

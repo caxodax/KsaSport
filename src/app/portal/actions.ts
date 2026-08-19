@@ -127,12 +127,14 @@ export async function reportPayment(formData: FormData) {
   const amount = Number(formData.get('amount'))
   const method = formData.get('method') as string
   const concept = formData.get('concept') as string
+  const product_id = formData.get('product_id') as string
   const reference = formData.get('reference_number') as string || null
 
   const { error } = await adminSupabase
     .from('payments')
     .insert({
       athlete_id: athlete.id,
+      product_id,
       amount,
       currency: 'USD',
       method,
