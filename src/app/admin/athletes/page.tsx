@@ -162,7 +162,7 @@ export default async function AthletesPage({
           <div className="md:hidden flex flex-col p-3 gap-3 bg-gray-50/30">
             {athletes && athletes.length > 0 ? (
               athletes.map((athlete) => (
-                <AthleteCard key={athlete.id} athlete={athlete} teams={teamsData || []} />
+                <AthleteCard key={athlete.id} athlete={athlete as any} teams={teamsData || []} />
               ))
             ) : (
               <div className="text-center p-8 bg-white border border-gray-100 rounded-xl">
@@ -189,7 +189,7 @@ export default async function AthletesPage({
               <tbody className="bg-white divide-y divide-gray-100">
                 {athletes && athletes.length > 0 ? (
                   athletes.map((athlete) => (
-                    <AthleteRow key={athlete.id} athlete={athlete} teams={teamsData || []} />
+                    <AthleteRow key={athlete.id} athlete={athlete as any} teams={teamsData || []} />
                   ))
                 ) : (
                   <tr>

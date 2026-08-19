@@ -40,7 +40,7 @@ export default async function CategoriesPage() {
             <h3 className="text-lg font-bold text-gray-900">Nueva Categoría</h3>
           </div>
           
-          <form action={createCategory} className="flex flex-col md:flex-row gap-4 items-end">
+          <form action={createCategory as any} className="flex flex-col md:flex-row gap-4 items-end">
             <div className="flex-1 w-full">
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
               <input 
