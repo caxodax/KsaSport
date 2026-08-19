@@ -3,21 +3,22 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Medal, LayoutDashboard, Users, Shield, Trophy, Menu, Tags, X, ShoppingBag, Wallet } from 'lucide-react';
+import { Medal, LayoutDashboard, Users, Shield, Trophy, Menu, Tags, X, ShoppingBag, Wallet, Settings, LogOut } from 'lucide-react';
+import { logoutAdmin } from '../login/actions';
 
-export default function Sidebar() {
+export default function Sidebar({ permissions }: { permissions: string[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
-
   const navLinks = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/teams', label: 'Equipos', icon: Trophy },
     { href: '/admin/categories', label: 'Categorías', icon: Tags },
-    { href: '/admin/athletes', label: 'Roster / Atletas', icon: Users },
+    { href: '/admin/athletes', label: 'Roster / Atletas', icon: Users, permission: 'view_roster' },
     { href: '/admin/staff', label: 'Staff Técnico', icon: Shield },
-    { href: '/admin/products', label: 'Catálogo de Tienda', icon: ShoppingBag },
-    { href: '/admin/payments', label: 'Finanzas y Pagos', icon: Wallet },
-  ];
+    { href: '/admin/products', label: 'Catálogo de Tienda', icon: ShoppingBag, permission: 'manage_catalog' },
+    { href: '/admin/payments', label: 'Finanzas y Pagos', icon: Wallet, permission: 'view_finances' },
+    { href: '/admin/settings', label: 'Configuración', icon: Settings, permission: 'manage_settings' },
+  ].filter(link => !link.permission || permissions.includes(link.permission));
 
   const closeMenu = () => setIsOpen(false);
 
@@ -82,16 +83,22 @@ export default function Sidebar() {
           </nav>
         </div>
         
-        <div className="p-4 border-t border-white/10 mt-auto">
+        <div className="p-4 border-t border-white/10 mt-auto flex justify-between items-center">
           <div className="flex items-center gap-3 px-3 py-2">
             <div className="w-8 h-8 rounded-full bg-kasa-dorado flex items-center justify-center text-kasa-vinotinto font-bold text-sm shrink-0">
               AD
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-bold">Administrador</span>
-              <span className="text-xs text-white/60">Superusuario</span>
+              <span className="text-sm font-bold truncate max-w-[100px]">Admin</span>
             </div>
           </div>
+          <button 
+            onClick={() => logoutAdmin()} 
+            className="text-white/60 hover:text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
+            title="Cerrar Sesión"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
         </div>
       </aside>
     </>

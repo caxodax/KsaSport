@@ -4,6 +4,7 @@ import DashboardFilters from '../DashboardFilters';
 import Pagination from '../Pagination';
 import { createAthlete } from './actions';
 import AthleteRow, { AthleteCard } from './AthleteRow';
+import { checkAdminPermission } from '@/lib/auth-admin';
 
 export const revalidate = 0;
 
@@ -12,6 +13,7 @@ export default async function AthletesPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+  await checkAdminPermission('view_roster');
   const supabase = getServiceSupabase();
   const resolvedParams = await searchParams;
 

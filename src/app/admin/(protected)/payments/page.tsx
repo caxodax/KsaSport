@@ -1,10 +1,12 @@
 import { getServiceSupabase } from '@/lib/supabase'
 import { Wallet, Clock, Check } from 'lucide-react'
 import PaymentRow, { PaymentCard } from './PaymentRow'
+import { checkAdminPermission } from '@/lib/auth-admin'
 
 export const revalidate = 0
 
 export default async function PaymentsPage() {
+  await checkAdminPermission('view_finances')
   const supabase = getServiceSupabase()
   
   // Obtener pagos con datos de la atleta (inner join)

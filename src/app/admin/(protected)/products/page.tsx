@@ -2,10 +2,12 @@ import { getServiceSupabase } from '@/lib/supabase'
 import { ShoppingBag, Plus } from 'lucide-react'
 import { createProduct } from './actions'
 import ProductRow, { ProductCard } from './ProductRow'
+import { checkAdminPermission } from '@/lib/auth-admin'
 
 export const revalidate = 0
 
 export default async function ProductsPage() {
+  await checkAdminPermission('manage_catalog')
   const supabase = getServiceSupabase()
   
   // Fetch Products
