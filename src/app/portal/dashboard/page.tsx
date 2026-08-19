@@ -18,7 +18,7 @@ export default async function PortalDashboard() {
   const adminSupabase = getServiceSupabase()
   const { data: athlete } = await adminSupabase
     .from('athletes')
-    .select('id, name, cedula, status, avatar_url, teams(name)')
+    .select('id, name, cedula, status, avatar_url, paid_until, teams(name)')
     .eq('user_id', session.user.id)
     .single()
 
@@ -83,13 +83,23 @@ export default async function PortalDashboard() {
               <>
                 <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-3" />
                 <h3 className="text-xl font-bold text-green-800">Solvente</h3>
-                <p className="text-sm text-green-600 mt-1">Estás al día con tus pagos. Tienes luz verde para jugar.</p>
+                {athlete.paid_until && (
+                  <p className="text-sm font-bold text-green-700 mt-2 bg-green-100 py-1.5 px-3 rounded-full inline-block">
+                    Válido hasta: {new Date(athlete.paid_until).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </p>
+                )}
+                <p className="text-sm text-green-600 mt-3">Estás al día con tus pagos. Tienes luz verde para jugar.</p>
               </>
             ) : (
               <>
                 <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
                 <h3 className="text-xl font-bold text-red-800">Morosidad</h3>
-                <p className="text-sm text-red-600 mt-1">Tienes deudas pendientes. Tu participación en juegos está restringida.</p>
+                {athlete.paid_until && (
+                  <p className="text-sm font-bold text-red-700 mt-2 bg-red-100 py-1.5 px-3 rounded-full inline-block">
+                    Vencido desde: {new Date(athlete.paid_until).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </p>
+                )}
+                <p className="text-sm text-red-600 mt-3">Tienes deudas pendientes. Tu participación en juegos está restringida.</p>
                 <Link href="/portal/dashboard/pagos" className="mt-4 inline-block bg-kasa-vinotinto hover:bg-red-900 text-white font-bold py-2 px-6 rounded-lg transition-colors w-full shadow-md">
                   Ir a Pagar
                 </Link>

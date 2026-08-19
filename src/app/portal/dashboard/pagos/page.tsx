@@ -15,15 +15,42 @@ export default async function PagosPage() {
 
   const adminSupabase = getServiceSupabase()
   
-  // Obtener la categoría del atleta
+  // Obtener la categoría y solvencia del atleta
   const { data: athlete } = await adminSupabase
     .from('athletes')
-    .select('teams(category)')
+    .select('paid_until, teams(category)')
     .eq('user_id', session.user.id)
     .single()
 
   // @ts-ignore
   const categoryName = athlete?.teams?.category
+  const paidUntil = athlete?.paid_until
+
+  // Obtener configuración global
+  const { data: settings } = await adminSupabase
+    .from('club_settings')
+    .select('grace_period_days, penalty_amount')
+    .eq('id', 1)
+    .single()
+
+  let isLate = false
+  if (paidUntil && settings) {
+    // La fecha límite es paid_until + grace_period_days.
+    // Ej: paid_until = 2026-08-31. Mes en curso = Septiembre.
+    // Límite = 5 de Septiembre.
+    const paidDate = new Date(paidUntil)
+    // El mes que debe pagar es el siguiente al pagado
+    const dueMonth = paidDate.getMonth() + 1 
+    const dueYear = paidDate.getFullYear()
+    
+    const limitDate = new Date(dueYear, dueMonth, settings.grace_period_days)
+    const today = new Date()
+    
+    // Solo está moroso si hoy es estrictamente mayor que la fecha límite
+    if (today > limitDate) {
+      isLate = true
+    }
+  }
 
   // Obtener productos activos
   const { data: products } = await adminSupabase
@@ -41,5 +68,9 @@ export default async function PagosPage() {
     return false
   })
 
-  return <PaymentForm products={filteredProducts || []} />
+  return <PaymentForm 
+    products={filteredProducts || []} 
+    isLate={isLate} 
+    penaltyAmount={settings?.penalty_amount || 0} 
+  />
 }

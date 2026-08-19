@@ -12,7 +12,15 @@ type Product = {
   description: string
 }
 
-export default function PaymentForm({ products }: { products: Product[] }) {
+export default function PaymentForm({ 
+  products,
+  isLate,
+  penaltyAmount
+}: { 
+  products: Product[],
+  isLate?: boolean,
+  penaltyAmount?: number
+}) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -60,19 +68,39 @@ export default function PaymentForm({ products }: { products: Product[] }) {
 
       {!selectedProduct ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {products.map((product) => (
-            <button
-              key={product.id}
-              onClick={() => handleSelect(product)}
-              className="text-left bg-white p-6 rounded-2xl border border-gray-200 hover:border-kasa-dorado hover:shadow-md transition-all group"
-            >
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="font-bold text-gray-900 text-lg group-hover:text-kasa-vinotinto transition-colors">{product.name}</h3>
-                <span className="font-bold text-kasa-vinotinto bg-red-50 px-3 py-1 rounded-full">${Number(product.price).toFixed(2)}</span>
-              </div>
-              <p className="text-sm text-gray-500">{product.description}</p>
-            </button>
-          ))}
+          {products.map((product) => {
+            const isMensualidad = product.name.toLowerCase().includes('mensualidad');
+            const hasPenalty = isMensualidad && isLate;
+            const finalPrice = hasPenalty ? Number(product.price) + (penaltyAmount || 0) : Number(product.price);
+            
+            return (
+              <button
+                key={product.id}
+                onClick={() => handleSelect({ ...product, price: finalPrice, name: hasPenalty ? `${product.name} + Recargo por Mora` : product.name })}
+                className="text-left bg-white p-6 rounded-2xl border border-gray-200 hover:border-kasa-dorado hover:shadow-md transition-all group relative overflow-hidden"
+              >
+                {hasPenalty && (
+                  <div className="absolute top-0 right-0 bg-red-100 text-red-700 text-[10px] font-bold px-3 py-1 rounded-bl-lg">
+                    Aplica Recargo
+                  </div>
+                )}
+                <div className="flex justify-between items-start mb-2 mt-2">
+                  <h3 className="font-bold text-gray-900 text-lg group-hover:text-kasa-vinotinto transition-colors pr-2">
+                    {product.name}
+                  </h3>
+                  <span className="font-bold text-kasa-vinotinto bg-red-50 px-3 py-1 rounded-full shrink-0">
+                    ${finalPrice.toFixed(2)}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-500">{product.description}</p>
+                {hasPenalty && (
+                  <p className="text-xs text-red-500 font-medium mt-2 bg-red-50 p-2 rounded-md">
+                    El monto incluye ${penaltyAmount} por pago después del período de gracia.
+                  </p>
+                )}
+              </button>
+            )
+          })}
           {products.length === 0 && (
             <div className="col-span-full p-8 text-center bg-gray-50 rounded-2xl border border-gray-200">
               <Wallet className="w-12 h-12 text-gray-300 mx-auto mb-3" />

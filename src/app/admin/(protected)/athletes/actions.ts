@@ -8,6 +8,7 @@ export async function createAthlete(formData: FormData) {
   const phone = formData.get('phone') as string;
   const team_id = formData.get('team_id') as string;
   const status = formData.get('status') as string || 'Solvente';
+  const paid_until = formData.get('paid_until') as string || null;
 
   if (!name || !cedula) return { error: 'Nombre y cédula son requeridos' };
 
@@ -17,7 +18,8 @@ export async function createAthlete(formData: FormData) {
     cedula, 
     phone, 
     team_id: team_id || null, 
-    status 
+    status,
+    paid_until
   }]);
 
   if (error) {
@@ -52,6 +54,7 @@ export async function updateAthlete(formData: FormData) {
   const phone = formData.get('phone') as string;
   const team_id = formData.get('team_id') as string;
   const status = formData.get('status') as string;
+  const paid_until = formData.get('paid_until') as string || null;
 
   if (!id || !name || !cedula) return { error: 'Datos incompletos' };
 
@@ -61,7 +64,8 @@ export async function updateAthlete(formData: FormData) {
     cedula, 
     phone, 
     team_id: team_id || null, 
-    status 
+    status,
+    paid_until
   }).eq('id', id);
 
   if (error) {

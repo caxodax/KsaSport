@@ -14,11 +14,30 @@ export async function approvePayment(paymentId: string, athleteId: string, conce
 
   if (paymentError) return { error: paymentError.message }
 
-  // 2. Si el concepto incluye "Mensualidad", actualizar el estatus de la atleta a "Solvente"
+  // 2. Si el concepto incluye "Mensualidad", actualizar el estatus de la atleta a "Solvente" y sumar +1 mes
   if (concept.toLowerCase().includes('mensualidad')) {
+    // Buscar la fecha actual
+    const { data: athlete } = await supabase.from('athletes').select('paid_until').eq('id', athleteId).single()
+    
+    let nextDate: Date;
+    if (athlete?.paid_until) {
+      // Sumarle un mes a la fecha que ya tenía
+      nextDate = new Date(athlete.paid_until)
+      nextDate.setMonth(nextDate.getMonth() + 1)
+      // Ajustar si el día se pasa (ej. 31 a Febrero -> 28)
+    } else {
+      // Si no tenía fecha, le damos hasta el final de este mes
+      nextDate = new Date()
+      nextDate.setMonth(nextDate.getMonth() + 1)
+      nextDate.setDate(0) // Último día del mes actual
+    }
+
     const { error: athleteError } = await supabase
       .from('athletes')
-      .update({ status: 'Solvente' })
+      .update({ 
+        status: 'Solvente',
+        paid_until: nextDate.toISOString().split('T')[0] // Formato YYYY-MM-DD
+      })
       .eq('id', athleteId)
       
     if (athleteError) console.error('Error actualizando estatus del atleta', athleteError)

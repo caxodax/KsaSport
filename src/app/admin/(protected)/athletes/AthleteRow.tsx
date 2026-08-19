@@ -8,7 +8,7 @@ export default function AthleteRow({
   athlete, 
   teams 
 }: { 
-  athlete: { id: string, name: string, cedula: string, phone: string, status: string, team_id: string, teams?: { name: string } | null },
+  athlete: { id: string, name: string, cedula: string, phone: string, status: string, team_id: string, teams?: { name: string } | null, paid_until?: string | null },
   teams: { id: string, name: string }[]
 }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -18,6 +18,7 @@ export default function AthleteRow({
   const [phone, setPhone] = useState(athlete.phone || '');
   const [teamId, setTeamId] = useState(athlete.team_id || '');
   const [status, setStatus] = useState(athlete.status);
+  const [paidUntil, setPaidUntil] = useState(athlete.paid_until || '');
   
   const [loading, setLoading] = useState(false);
 
@@ -31,6 +32,7 @@ export default function AthleteRow({
     formData.append('phone', phone);
     formData.append('team_id', teamId);
     formData.append('status', status);
+    if (paidUntil) formData.append('paid_until', paidUntil);
     
     await updateAthlete(formData);
     setIsEditing(false);
@@ -44,6 +46,7 @@ export default function AthleteRow({
     setPhone(athlete.phone || '');
     setTeamId(athlete.team_id || '');
     setStatus(athlete.status);
+    setPaidUntil(athlete.paid_until || '');
   }
 
   if (isEditing) {
@@ -86,15 +89,24 @@ export default function AthleteRow({
           </select>
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
-          <select 
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
-          >
-            <option value="Solvente">Solvente</option>
-            <option value="Moroso">Moroso</option>
-            <option value="Inactivo">Inactivo</option>
-          </select>
+          <div className="flex gap-2">
+            <select 
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="w-1/2 rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+            >
+              <option value="Solvente">Solvente</option>
+              <option value="Moroso">Moroso</option>
+              <option value="Inactivo">Inactivo</option>
+            </select>
+            <input 
+              type="date" 
+              value={paidUntil}
+              onChange={(e) => setPaidUntil(e.target.value)}
+              className="w-1/2 rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+              title="Solvente hasta"
+            />
+          </div>
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-1">
           <button onClick={handleSave} disabled={loading} className="text-green-600 hover:text-green-800 p-1.5 hover:bg-green-50 rounded-md disabled:opacity-50" title="Guardar">
@@ -125,12 +137,19 @@ export default function AthleteRow({
         </span>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
-        <span className={`px-2 py-1 inline-flex text-xs font-bold rounded-full border shadow-sm
-          ${athlete.status === 'Solvente' ? 'bg-green-50 text-green-700 border-green-200' : 
-            athlete.status === 'Moroso' ? 'bg-red-50 text-red-700 border-red-200' : 
-            'bg-gray-50 text-gray-700 border-gray-200'}`}>
-          {athlete.status}
-        </span>
+        <div className="flex flex-col gap-1">
+          <span className={`px-2 py-1 inline-flex text-xs font-bold rounded-full border shadow-sm w-max
+            ${athlete.status === 'Solvente' ? 'bg-green-50 text-green-700 border-green-200' : 
+              athlete.status === 'Moroso' ? 'bg-red-50 text-red-700 border-red-200' : 
+              'bg-gray-50 text-gray-700 border-gray-200'}`}>
+            {athlete.status}
+          </span>
+          {athlete.paid_until && (
+            <span className="text-[10px] text-gray-500 font-medium">
+              Hasta: {new Date(athlete.paid_until).toLocaleDateString('es-ES')}
+            </span>
+          )}
+        </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-1">
         <button onClick={() => setIsEditing(true)} className="text-blue-600 hover:text-blue-800 p-1.5 hover:bg-blue-50 rounded-md" title="Editar">
@@ -152,7 +171,7 @@ export function AthleteCard({
   athlete,
   teams 
 }: { 
-  athlete: { id: string, name: string, cedula: string, phone: string, status: string, team_id: string, teams?: { name: string } | null },
+  athlete: { id: string, name: string, cedula: string, phone: string, status: string, team_id: string, teams?: { name: string } | null, paid_until?: string | null },
   teams: { id: string, name: string }[] 
 }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -161,6 +180,7 @@ export function AthleteCard({
   const [phone, setPhone] = useState(athlete.phone || '');
   const [teamId, setTeamId] = useState(athlete.team_id || '');
   const [status, setStatus] = useState(athlete.status);
+  const [paidUntil, setPaidUntil] = useState(athlete.paid_until || '');
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
@@ -173,6 +193,7 @@ export function AthleteCard({
     formData.append('phone', phone);
     formData.append('team_id', teamId);
     formData.append('status', status);
+    if (paidUntil) formData.append('paid_until', paidUntil);
     await updateAthlete(formData);
     setIsEditing(false);
     setLoading(false);
@@ -185,6 +206,7 @@ export function AthleteCard({
     setPhone(athlete.phone || '');
     setTeamId(athlete.team_id || '');
     setStatus(athlete.status);
+    setPaidUntil(athlete.paid_until || '');
   }
 
   return (
@@ -226,12 +248,19 @@ export function AthleteCard({
             <select 
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-1/2 rounded-md border border-gray-300 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+              className="w-1/3 rounded-md border border-gray-300 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
             >
               <option value="Solvente">Solvente</option>
               <option value="Moroso">Moroso</option>
               <option value="Inactivo">Inactivo</option>
             </select>
+            <input 
+              type="date" 
+              value={paidUntil}
+              onChange={(e) => setPaidUntil(e.target.value)}
+              className="w-1/3 rounded-md border border-gray-300 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+              title="Pagado hasta"
+            />
           </div>
           <div className="flex justify-end gap-2 mt-2">
             <button onClick={cancelEdit} disabled={loading} className="text-gray-600 bg-gray-100 px-3 py-1.5 rounded-md text-sm font-medium">Cancelar</button>
@@ -249,12 +278,19 @@ export function AthleteCard({
                 {athlete.teams?.name || 'Sin equipo'}
               </span>
             </div>
-            <span className={`mt-2 px-2 py-0.5 inline-flex text-[10px] uppercase font-bold rounded-full border
-              ${athlete.status === 'Solvente' ? 'bg-green-50 text-green-700 border-green-200' : 
-                athlete.status === 'Moroso' ? 'bg-red-50 text-red-700 border-red-200' : 
-                'bg-gray-50 text-gray-700 border-gray-200'}`}>
-              {athlete.status}
-            </span>
+            <div className="flex items-center gap-2 mt-2">
+              <span className={`px-2 py-0.5 inline-flex text-[10px] uppercase font-bold rounded-full border
+                ${athlete.status === 'Solvente' ? 'bg-green-50 text-green-700 border-green-200' : 
+                  athlete.status === 'Moroso' ? 'bg-red-50 text-red-700 border-red-200' : 
+                  'bg-gray-50 text-gray-700 border-gray-200'}`}>
+                {athlete.status}
+              </span>
+              {athlete.paid_until && (
+                <span className="text-[10px] text-gray-500 font-medium">
+                  {athlete.status === 'Solvente' ? 'Hasta' : 'Desde'}: {new Date(athlete.paid_until).toLocaleDateString('es-ES')}
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex flex-col gap-1 items-end ml-2">
             <button onClick={() => setIsEditing(true)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Editar">
