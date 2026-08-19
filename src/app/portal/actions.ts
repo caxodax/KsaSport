@@ -51,7 +51,11 @@ export async function signup(formData: FormData) {
   }
 
   // En un MVP, al crear la cuenta hacemos sign in automático
-  await supabase.auth.signInWithPassword({ email, password });
+  const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+  
+  if (signInError) {
+    return { error: 'Cuenta creada exitosamente. Por favor, revisa tu bandeja de entrada y confirma tu correo electrónico antes de continuar.' }
+  }
   
   // Como es una cuenta nueva, no tiene perfil de atleta vinculado
   redirect('/portal/link-profile')
