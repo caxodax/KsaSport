@@ -36,7 +36,7 @@ export async function loginAdmin(formData: FormData) {
   }
 
   revalidatePath('/admin')
-  redirect('/admin/dashboard')
+  redirect('/admin')
 }
 
 export async function logoutAdmin() {
