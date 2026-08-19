@@ -1,7 +1,7 @@
-import { createClient } from '@supabase/ssr'
+import { createBrowserClient as createClientSSR } from '@supabase/ssr'
 
 export function createBrowserClient() {
-  return createClient(
+  return createClientSSR(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )

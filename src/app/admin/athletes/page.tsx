@@ -79,7 +79,7 @@ export default async function AthletesPage({
             <h3 className="text-lg font-bold text-gray-900">Registrar Nueva Jugadora</h3>
           </div>
           
-          <form action={createAthlete} className="flex flex-col md:flex-row gap-4 items-end flex-wrap">
+          <form action={createAthlete as any} className="flex flex-col md:flex-row gap-4 items-end flex-wrap">
             <div className="flex-1 min-w-[200px]">
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo *</label>
               <input 

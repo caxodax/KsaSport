@@ -79,7 +79,7 @@ export default async function StaffPage({
             <h3 className="text-lg font-bold text-gray-900">Registrar Personal Técnico</h3>
           </div>
           
-          <form action={createStaff} className="flex flex-col md:flex-row gap-4 items-end flex-wrap">
+          <form action={createStaff as any} className="flex flex-col md:flex-row gap-4 items-end flex-wrap">
             <div className="flex-1 min-w-[200px]">
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo *</label>
               <input 
@@ -159,7 +159,7 @@ export default async function StaffPage({
           <div className="md:hidden flex flex-col p-3 gap-3 bg-gray-50/30">
             {staffMembers && staffMembers.length > 0 ? (
               staffMembers.map((sm) => (
-                <StaffCard key={sm.id} staffMember={sm} teams={teamsData || []} />
+                <StaffCard key={sm.id} staffMember={sm as any} teams={teamsData || []} />
               ))
             ) : (
               <div className="text-center p-8 bg-white border border-gray-100 rounded-xl">
@@ -185,7 +185,7 @@ export default async function StaffPage({
               <tbody className="bg-white divide-y divide-gray-100">
                 {staffMembers && staffMembers.length > 0 ? (
                   staffMembers.map((sm) => (
-                    <StaffRow key={sm.id} staffMember={sm} teams={teamsData || []} />
+                    <StaffRow key={sm.id} staffMember={sm as any} teams={teamsData || []} />
                   ))
                 ) : (
                   <tr>
