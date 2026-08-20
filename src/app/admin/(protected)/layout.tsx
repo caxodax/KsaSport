@@ -20,8 +20,9 @@ export default async function AdminLayout({
   const { data: adminUser } = await adminSupabase
     .from('admin_users')
     .select(`
+      email,
       role_id,
-      admin_roles ( permissions )
+      admin_roles ( name, permissions )
     `)
     .eq('id', user.id)
     .single()
@@ -34,9 +35,11 @@ export default async function AdminLayout({
 
   // Extraer permisos para inyectarlos en el Sidebar
   const permissions = (adminUser.admin_roles as any)?.permissions || []
+  const roleName = (adminUser.admin_roles as any)?.name || 'Admin'
+  
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
-      <Sidebar permissions={permissions} />
+      <Sidebar permissions={permissions} roleName={roleName} email={adminUser.email} />
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col h-screen overflow-y-auto bg-gray-50">

@@ -6,15 +6,15 @@ import { usePathname } from 'next/navigation';
 import { Medal, LayoutDashboard, Users, Shield, Trophy, Menu, Tags, X, ShoppingBag, Wallet, Settings, LogOut } from 'lucide-react';
 import { logoutAdmin } from '../login/actions';
 
-export default function Sidebar({ permissions }: { permissions: string[] }) {
+export default function Sidebar({ permissions, roleName, email }: { permissions: string[], roleName: string, email: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const navLinks = [
-    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/admin/teams', label: 'Equipos', icon: Trophy },
-    { href: '/admin/categories', label: 'Categorías', icon: Tags },
+    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, permission: 'view_finances' },
+    { href: '/admin/teams', label: 'Equipos', icon: Trophy, permission: 'manage_catalog' },
+    { href: '/admin/categories', label: 'Categorías', icon: Tags, permission: 'manage_catalog' },
     { href: '/admin/athletes', label: 'Roster / Atletas', icon: Users, permission: 'view_roster' },
-    { href: '/admin/staff', label: 'Staff Técnico', icon: Shield },
+    { href: '/admin/staff', label: 'Staff Técnico', icon: Shield, permission: 'manage_catalog' },
     { href: '/admin/products', label: 'Catálogo de Tienda', icon: ShoppingBag, permission: 'manage_catalog' },
     { href: '/admin/payments', label: 'Finanzas y Pagos', icon: Wallet, permission: 'view_finances' },
     { href: '/admin/settings', label: 'Configuración', icon: Settings, permission: 'manage_settings' },
@@ -84,12 +84,13 @@ export default function Sidebar({ permissions }: { permissions: string[] }) {
         </div>
         
         <div className="p-4 border-t border-white/10 mt-auto flex justify-between items-center">
-          <div className="flex items-center gap-3 px-3 py-2">
+          <div className="flex items-center gap-3 px-3 py-2 w-full overflow-hidden">
             <div className="w-8 h-8 rounded-full bg-kasa-dorado flex items-center justify-center text-kasa-vinotinto font-bold text-sm shrink-0">
-              AD
+              {email ? email.substring(0, 2).toUpperCase() : 'AD'}
             </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-bold truncate max-w-[100px]">Admin</span>
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm font-bold truncate block">{email ? email.split('@')[0] : 'Admin'}</span>
+              <span className="text-[10px] text-kasa-dorado font-bold uppercase tracking-wider truncate block">{roleName}</span>
             </div>
           </div>
           <button 
