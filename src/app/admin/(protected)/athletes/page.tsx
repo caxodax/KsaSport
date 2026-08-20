@@ -21,7 +21,7 @@ export default async function AthletesPage({
   
   // Buscar permisos y rol del usuario
   const { data: adminUser } = await supabase.from('admin_users').select('role_id, roles(name, permissions)').eq('id', user?.id).single();
-  const isSuperAdmin = adminUser?.roles?.permissions?.includes('manage_catalog');
+  const isSuperAdmin = (adminUser?.roles as any)?.permissions?.includes('manage_catalog');
   
   // Si no es superadmin, buscar su equipo en la tabla staff
   let coachTeamId: string | null = null;

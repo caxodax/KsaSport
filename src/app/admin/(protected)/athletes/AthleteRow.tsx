@@ -17,6 +17,7 @@ export default function AthleteRow({
   
   const [name, setName] = useState(athlete.name);
   const [cedula, setCedula] = useState(athlete.cedula);
+  const [phone, setPhone] = useState(athlete.phone || '');
   const [teamId, setTeamId] = useState(athlete.team_id || '');
   const [status, setStatus] = useState(athlete.status);
   const [paidUntil, setPaidUntil] = useState(athlete.paid_until || '');
