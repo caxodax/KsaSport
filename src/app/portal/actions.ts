@@ -33,8 +33,8 @@ export async function login(formData: FormData) {
     redirect('/portal/link-profile')
   }
 
-  revalidatePath('/portal/dashboard')
-  redirect('/portal/dashboard')
+  revalidatePath('/gateway')
+  redirect('/gateway')
 }
 
 export async function signup(formData: FormData) {
@@ -134,8 +134,8 @@ export async function linkProfile(formData: FormData) {
     if (adminError) console.error("Error asignando rol de admin al coach:", adminError);
   }
 
-  revalidatePath('/portal/dashboard')
-  redirect('/portal/dashboard')
+  revalidatePath('/gateway')
+  redirect('/gateway')
 }
 
 export async function reportPayment(formData: FormData) {

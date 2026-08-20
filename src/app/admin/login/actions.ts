@@ -35,8 +35,8 @@ export async function loginAdmin(formData: FormData) {
     return { error: 'Acceso Denegado: No tienes permisos de administrador.' }
   }
 
-  revalidatePath('/admin')
-  redirect('/admin')
+  revalidatePath('/gateway')
+  redirect('/gateway')
 }
 
 export async function logoutAdmin() {
