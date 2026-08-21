@@ -122,16 +122,20 @@ export async function linkProfile(formData: FormData) {
       
     if (updateError) return { error: 'Ocurrió un error al vincular el perfil de staff.' }
 
-    // Darle acceso automático al panel de administración como Coach
-    const { error: adminError } = await adminSupabase
-      .from('admin_users')
-      .upsert({
-        id: user.id,
-        email: user.email,
-        role_id: 'coach'
-      });
-      
-    if (adminError) console.error("Error asignando rol de admin al coach:", adminError);
+    // Darle acceso automático al panel de administración como Coach (solo si no es admin ya)
+    const { data: existingAdmin } = await adminSupabase.from('admin_users').select('id').eq('id', user.id).single();
+    
+    if (!existingAdmin) {
+      const { error: adminError } = await adminSupabase
+        .from('admin_users')
+        .insert({
+          id: user.id,
+          email: user.email,
+          role_id: 'coach'
+        });
+        
+      if (adminError) console.error("Error asignando rol de admin al coach:", adminError);
+    }
   }
 
   revalidatePath('/gateway')

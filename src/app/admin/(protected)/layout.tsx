@@ -43,7 +43,7 @@ export default async function AdminLayout({
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col h-screen overflow-y-auto bg-gray-50">
-        <div className="w-full">
+        <div className="w-full flex-1 flex flex-col h-full">
           {children}
         </div>
       </main>

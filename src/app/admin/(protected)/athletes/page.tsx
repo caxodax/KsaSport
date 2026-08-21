@@ -1,3 +1,4 @@
+import { createClient } from '@/lib/supabase/server';
 import { getServiceSupabase } from '@/lib/supabase';
 import { Users, Plus } from 'lucide-react';
 import DashboardFilters from '../DashboardFilters';
@@ -16,12 +17,12 @@ export default async function AthletesPage({
   await checkAdminPermission('view_roster');
   const supabase = getServiceSupabase();
   
-  // Obtener el usuario logueado
-  const { data: { user } } = await supabase.auth.getUser();
+  const authClient = await createClient();
+  const { data: { user } } = await authClient.auth.getUser();
   
   // Buscar permisos y rol del usuario
-  const { data: adminUser } = await supabase.from('admin_users').select('role_id, roles(name, permissions)').eq('id', user?.id).single();
-  const isSuperAdmin = (adminUser?.roles as any)?.permissions?.includes('manage_catalog');
+  const { data: adminUser } = await supabase.from('admin_users').select('role_id, admin_roles(name, permissions)').eq('id', user?.id).single();
+  const isSuperAdmin = (adminUser?.admin_roles as any)?.permissions?.includes('manage_catalog');
   
   // Si no es superadmin, buscar su equipo en la tabla staff
   let coachTeamId: string | null = null;
@@ -54,9 +55,9 @@ export default async function AthletesPage({
     .from('athletes')
     .select('id, name, cedula, phone, status, team_id, position, stats_avg, paid_until, teams!inner(id, name, category)', { count: 'exact' });
 
-  // Forzar el filtro si es un Coach
-  if (coachTeamId) {
-    athletesQuery = athletesQuery.eq('team_id', coachTeamId);
+  // Forzar el filtro si NO es superadmin
+  if (!isSuperAdmin) {
+    athletesQuery = athletesQuery.eq('team_id', coachTeamId || '00000000-0000-0000-0000-000000000000');
   }
 
   if (query) {

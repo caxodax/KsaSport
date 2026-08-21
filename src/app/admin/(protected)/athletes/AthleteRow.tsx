@@ -103,13 +103,26 @@ export default function AthleteRow({
         <td className="px-6 py-4 whitespace-nowrap">
           <div className="flex flex-col gap-2">
             <div className="flex gap-2">
-              <input 
-                type="text" 
+              <select
                 value={position}
                 onChange={(e) => setPosition(e.target.value)}
                 className="w-1/2 rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
-                placeholder="Posición (Ej: 1B)"
-              />
+              >
+                <option value="">Posición</option>
+                <option value="P">Pitcher (P)</option>
+                <option value="C">Catcher (C)</option>
+                <option value="1B">1ra Base (1B)</option>
+                <option value="2B">2da Base (2B)</option>
+                <option value="3B">3ra Base (3B)</option>
+                <option value="SS">Shortstop (SS)</option>
+                <option value="SF">Short Field (SF)</option>
+                <option value="LF">Left Field (LF)</option>
+                <option value="LCF">Left Center (LCF)</option>
+                <option value="CF">Center Field (CF)</option>
+                <option value="2F">Second Field (2F)</option>
+                <option value="RCF">Right Center (RCF)</option>
+                <option value="RF">Right Field (RF)</option>
+              </select>
               <input 
                 type="number" 
                 step="0.001"
@@ -303,13 +316,26 @@ export function AthleteCard({
             </select>
           </div>
           <div className="flex gap-2">
-            <input 
-              type="text" 
+            <select
               value={position}
               onChange={(e) => setPosition(e.target.value)}
               className="w-1/2 rounded-md border border-gray-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
-              placeholder="Pos: Ej 1B"
-            />
+            >
+              <option value="">Posición</option>
+              <option value="P">Pitcher (P)</option>
+              <option value="C">Catcher (C)</option>
+              <option value="1B">1ra Base (1B)</option>
+              <option value="2B">2da Base (2B)</option>
+              <option value="3B">3ra Base (3B)</option>
+              <option value="SS">Shortstop (SS)</option>
+              <option value="SF">Short Field (SF)</option>
+              <option value="LF">Left Field (LF)</option>
+              <option value="LCF">Left Center (LCF)</option>
+              <option value="CF">Center Field (CF)</option>
+              <option value="2F">Second Field (2F)</option>
+              <option value="RCF">Right Center (RCF)</option>
+              <option value="RF">Right Field (RF)</option>
+            </select>
             <input 
               type="number" 
               step="0.001"

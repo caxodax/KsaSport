@@ -11,6 +11,7 @@ export default function Sidebar({ permissions, roleName, email }: { permissions:
   const pathname = usePathname();
   const navLinks = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, permission: 'view_finances' },
+    { href: '/admin/lineup', label: 'Alineación', icon: Users, permission: 'view_roster' },
     { href: '/admin/teams', label: 'Equipos', icon: Trophy, permission: 'manage_catalog' },
     { href: '/admin/categories', label: 'Categorías', icon: Tags, permission: 'manage_catalog' },
     { href: '/admin/athletes', label: 'Roster / Atletas', icon: Users, permission: 'view_roster' },
