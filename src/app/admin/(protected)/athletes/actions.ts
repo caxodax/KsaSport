@@ -21,7 +21,10 @@ export async function createAthlete(formData: FormData) {
     status,
     paid_until,
     position: formData.get('position') as string || null,
-    stats_avg: formData.get('stats_avg') ? Number(formData.get('stats_avg')) : null
+    stats_avg: formData.get('stats_avg') ? Number(formData.get('stats_avg')) : null,
+    stats_hits: formData.get('stats_hits') ? Number(formData.get('stats_hits')) : null,
+    stats_rbi: formData.get('stats_rbi') ? Number(formData.get('stats_rbi')) : null,
+    stats_runs: formData.get('stats_runs') ? Number(formData.get('stats_runs')) : null
   }]);
 
   if (error) {
@@ -75,6 +78,9 @@ export async function updateAthlete(formData: FormData) {
   if (formData.has('paid_until')) updateData.paid_until = paid_until;
   if (formData.has('position')) updateData.position = formData.get('position') as string;
   if (formData.has('stats_avg')) updateData.stats_avg = formData.get('stats_avg') ? Number(formData.get('stats_avg')) : null;
+  if (formData.has('stats_hits')) updateData.stats_hits = formData.get('stats_hits') ? Number(formData.get('stats_hits')) : null;
+  if (formData.has('stats_rbi')) updateData.stats_rbi = formData.get('stats_rbi') ? Number(formData.get('stats_rbi')) : null;
+  if (formData.has('stats_runs')) updateData.stats_runs = formData.get('stats_runs') ? Number(formData.get('stats_runs')) : null;
 
   const { error } = await supabase.from('athletes').update(updateData).eq('id', id);
 

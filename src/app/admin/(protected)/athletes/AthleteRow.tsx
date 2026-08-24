@@ -9,7 +9,7 @@ export default function AthleteRow({
   teams,
   isSuperAdmin = true
 }: { 
-  athlete: { id: string, name: string, cedula: string, phone: string, status: string, team_id: string, teams?: { name: string } | null, paid_until?: string | null, position?: string | null, stats_avg?: number | null },
+  athlete: { id: string, name: string, cedula: string, phone: string, status: string, team_id: string, teams?: { name: string } | null, paid_until?: string | null, position?: string | null, stats_avg?: number | null, stats_hits?: number | null, stats_rbi?: number | null, stats_runs?: number | null },
   teams: { id: string, name: string }[],
   isSuperAdmin?: boolean
 }) {
@@ -23,7 +23,10 @@ export default function AthleteRow({
   const [paidUntil, setPaidUntil] = useState(athlete.paid_until || '');
   const [position, setPosition] = useState(athlete.position || '');
   const [statsAvg, setStatsAvg] = useState(athlete.stats_avg?.toString() || '');
-  
+  const [statsHits, setStatsHits] = useState(athlete.stats_hits?.toString() || '');
+  const [statsRbi, setStatsRbi] = useState(athlete.stats_rbi?.toString() || '');
+  const [statsRuns, setStatsRuns] = useState(athlete.stats_runs?.toString() || '');
+
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
@@ -43,6 +46,9 @@ export default function AthleteRow({
     
     if (position) formData.append('position', position);
     if (statsAvg) formData.append('stats_avg', statsAvg);
+    if (statsHits) formData.append('stats_hits', statsHits);
+    if (statsRbi) formData.append('stats_rbi', statsRbi);
+    if (statsRuns) formData.append('stats_runs', statsRuns);
     
     await updateAthlete(formData);
     setIsEditing(false);
@@ -59,6 +65,9 @@ export default function AthleteRow({
     setPaidUntil(athlete.paid_until || '');
     setPosition(athlete.position || '');
     setStatsAvg(athlete.stats_avg?.toString() || '');
+    setStatsHits(athlete.stats_hits?.toString() || '');
+    setStatsRbi(athlete.stats_rbi?.toString() || '');
+    setStatsRuns(athlete.stats_runs?.toString() || '');
   }
 
   if (isEditing) {
@@ -128,8 +137,31 @@ export default function AthleteRow({
                 step="0.001"
                 value={statsAvg}
                 onChange={(e) => setStatsAvg(e.target.value)}
-                className="w-1/2 rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
-                placeholder="AVG (Ej: 0.350)"
+                className="w-1/4 rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+                placeholder="AVG"
+              />
+              <input 
+                type="number" 
+                value={statsHits}
+                onChange={(e) => setStatsHits(e.target.value)}
+                className="w-1/4 rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+                placeholder="HITS"
+              />
+              <input 
+                type="number" 
+                value={statsRbi}
+                onChange={(e) => setStatsRbi(e.target.value)}
+                className="w-1/4 rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+                placeholder="CI"
+                title="Carreras Impulsadas"
+              />
+              <input 
+                type="number" 
+                value={statsRuns}
+                onChange={(e) => setStatsRuns(e.target.value)}
+                className="w-1/4 rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+                placeholder="CA"
+                title="Carreras Anotadas"
               />
             </div>
             {isSuperAdmin && (
@@ -194,6 +226,21 @@ export default function AthleteRow({
               AVG: {athlete.stats_avg}
             </span>
           )}
+          {athlete.stats_hits != null && (
+            <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded w-max">
+              HITS: {athlete.stats_hits}
+            </span>
+          )}
+          {athlete.stats_rbi != null && (
+            <span className="text-xs font-bold text-orange-700 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded w-max">
+              CI: {athlete.stats_rbi}
+            </span>
+          )}
+          {athlete.stats_runs != null && (
+            <span className="text-xs font-bold text-teal-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded w-max">
+              CA: {athlete.stats_runs}
+            </span>
+          )}
           <span className={`mt-1 px-2 py-1 inline-flex text-xs font-bold rounded-full border shadow-sm w-max
             ${athlete.status === 'Solvente' ? 'bg-green-50 text-green-700 border-green-200' : 
               athlete.status === 'Moroso' ? 'bg-red-50 text-red-700 border-red-200' : 
@@ -228,7 +275,7 @@ export function AthleteCard({
   teams,
   isSuperAdmin = true
 }: { 
-  athlete: { id: string, name: string, cedula: string, phone: string, status: string, team_id: string, teams?: { name: string } | null, paid_until?: string | null, position?: string | null, stats_avg?: number | null },
+  athlete: { id: string, name: string, cedula: string, phone: string, status: string, team_id: string, teams?: { name: string } | null, paid_until?: string | null, position?: string | null, stats_avg?: number | null, stats_hits?: number | null, stats_rbi?: number | null, stats_runs?: number | null },
   teams: { id: string, name: string }[],
   isSuperAdmin?: boolean
 }) {
@@ -241,6 +288,9 @@ export function AthleteCard({
   const [paidUntil, setPaidUntil] = useState(athlete.paid_until || '');
   const [position, setPosition] = useState(athlete.position || '');
   const [statsAvg, setStatsAvg] = useState(athlete.stats_avg?.toString() || '');
+  const [statsHits, setStatsHits] = useState(athlete.stats_hits?.toString() || '');
+  const [statsRbi, setStatsRbi] = useState(athlete.stats_rbi?.toString() || '');
+  const [statsRuns, setStatsRuns] = useState(athlete.stats_runs?.toString() || '');
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
@@ -260,6 +310,9 @@ export function AthleteCard({
     
     if (position) formData.append('position', position);
     if (statsAvg) formData.append('stats_avg', statsAvg);
+    if (statsHits) formData.append('stats_hits', statsHits);
+    if (statsRbi) formData.append('stats_rbi', statsRbi);
+    if (statsRuns) formData.append('stats_runs', statsRuns);
     
     await updateAthlete(formData);
     setIsEditing(false);
@@ -276,6 +329,9 @@ export function AthleteCard({
     setPaidUntil(athlete.paid_until || '');
     setPosition(athlete.position || '');
     setStatsAvg(athlete.stats_avg?.toString() || '');
+    setStatsHits(athlete.stats_hits?.toString() || '');
+    setStatsRbi(athlete.stats_rbi?.toString() || '');
+    setStatsRuns(athlete.stats_runs?.toString() || '');
   }
 
   return (
@@ -341,8 +397,31 @@ export function AthleteCard({
               step="0.001"
               value={statsAvg}
               onChange={(e) => setStatsAvg(e.target.value)}
-              className="w-1/2 rounded-md border border-gray-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
-              placeholder="AVG: Ej 0.350"
+              className="w-1/4 rounded-md border border-gray-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+              placeholder="AVG"
+            />
+            <input 
+              type="number" 
+              value={statsHits}
+              onChange={(e) => setStatsHits(e.target.value)}
+              className="w-1/4 rounded-md border border-gray-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+              placeholder="HITS"
+            />
+            <input 
+              type="number" 
+              value={statsRbi}
+              onChange={(e) => setStatsRbi(e.target.value)}
+              className="w-1/4 rounded-md border border-gray-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+              placeholder="CI"
+              title="Carreras Impulsadas"
+            />
+            <input 
+              type="number" 
+              value={statsRuns}
+              onChange={(e) => setStatsRuns(e.target.value)}
+              className="w-1/4 rounded-md border border-gray-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+              placeholder="CA"
+              title="Carreras Anotadas"
             />
           </div>
           
@@ -405,6 +484,21 @@ export function AthleteCard({
               {athlete.stats_avg != null && (
                 <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded w-max">
                   AVG: {athlete.stats_avg}
+                </span>
+              )}
+              {athlete.stats_hits != null && (
+                <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded w-max">
+                  HITS: {athlete.stats_hits}
+                </span>
+              )}
+              {athlete.stats_rbi != null && (
+                <span className="text-xs font-bold text-orange-700 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded w-max">
+                  CI: {athlete.stats_rbi}
+                </span>
+              )}
+              {athlete.stats_runs != null && (
+                <span className="text-xs font-bold text-teal-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded w-max">
+                  CA: {athlete.stats_runs}
                 </span>
               )}
             </div>

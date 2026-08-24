@@ -4,6 +4,7 @@ import { getServiceSupabase } from '@/lib/supabase'
 import { CheckCircle2, AlertCircle, ShoppingCart, Activity, Camera } from 'lucide-react'
 import Link from 'next/link'
 import { logout } from '../actions'
+import QRModal from '@/components/portal/QRModal'
 
 export const revalidate = 0;
 
@@ -18,7 +19,7 @@ export default async function PortalDashboard() {
   const adminSupabase = getServiceSupabase()
   const { data: athlete } = await adminSupabase
     .from('athletes')
-    .select('id, name, cedula, status, avatar_url, paid_until, teams(name)')
+    .select('id, name, cedula, status, avatar_url, paid_until, stats_avg, stats_hits, stats_rbi, stats_runs, teams(name)')
     .eq('user_id', session.user.id)
     .single()
 
@@ -66,10 +67,14 @@ export default async function PortalDashboard() {
               <div className="text-center">
                 <h2 className="text-xl font-bold text-gray-900">{athlete.name}</h2>
                 <p className="text-sm text-gray-500 mb-1">C.I: {athlete.cedula}</p>
-                <span className="inline-block bg-gray-100 text-gray-800 text-xs px-3 py-1 rounded-full font-medium">
+                <span className="inline-block bg-gray-100 text-gray-800 text-xs px-3 py-1 rounded-full font-medium mb-6">
                   {/* @ts-ignore */}
                   Equipo: {athlete.teams?.name || 'Sin asignar'}
                 </span>
+                
+                <div className="pt-2 flex flex-col items-center">
+                  <QRModal athleteId={athlete.id} status={athlete.status} />
+                </div>
               </div>
             </div>
           </div>
@@ -122,13 +127,33 @@ export default async function PortalDashboard() {
               </div>
             </Link>
 
-            <div className="group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-kasa-vinotinto hover:shadow-md transition-all flex items-center gap-4 cursor-not-allowed opacity-80">
-              <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center">
-                <Activity className="w-6 h-6 text-kasa-vinotinto" />
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center">
+                  <Activity className="w-6 h-6 text-indigo-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Mis Estadísticas</h3>
+                  <p className="text-sm text-gray-500">Rendimiento de temporada</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-gray-900">Mis Estadísticas</h3>
-                <p className="text-sm text-gray-500">Próximamente</p>
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                <div className="flex-1 bg-gray-50 rounded-xl p-3 text-center border border-gray-100">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">AVG</p>
+                  <p className="text-xl font-black text-kasa-dorado">{athlete.stats_avg ? Number(athlete.stats_avg).toFixed(3).replace('0.', '.') : '.000'}</p>
+                </div>
+                <div className="flex-1 bg-gray-50 rounded-xl p-3 text-center border border-gray-100">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">HITS</p>
+                  <p className="text-xl font-black text-gray-900">{athlete.stats_hits || 0}</p>
+                </div>
+                <div className="flex-1 bg-gray-50 rounded-xl p-3 text-center border border-gray-100">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">CI</p>
+                  <p className="text-xl font-black text-gray-900">{athlete.stats_rbi || 0}</p>
+                </div>
+                <div className="flex-1 bg-gray-50 rounded-xl p-3 text-center border border-gray-100">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">CA</p>
+                  <p className="text-xl font-black text-gray-900">{athlete.stats_runs || 0}</p>
+                </div>
               </div>
             </div>
           </div>

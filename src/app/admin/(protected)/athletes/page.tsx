@@ -53,7 +53,7 @@ export default async function AthletesPage({
   // Consulta de Atletas con Filtros y Paginación
   let athletesQuery = supabase
     .from('athletes')
-    .select('id, name, cedula, phone, status, team_id, position, stats_avg, paid_until, teams!inner(id, name, category)', { count: 'exact' });
+    .select('id, name, cedula, phone, status, team_id, position, stats_avg, stats_hits, stats_rbi, stats_runs, paid_until, teams!inner(id, name, category)', { count: 'exact' });
 
   // Forzar el filtro si NO es superadmin
   if (!isSuperAdmin) {
