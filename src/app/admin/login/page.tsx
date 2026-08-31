@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { ShieldAlert, KeyRound, Lock, ArrowRight } from 'lucide-react'
+import { ShieldAlert, KeyRound, Lock, ArrowRight, ArrowLeft } from 'lucide-react'
 import { loginAdmin } from './actions'
+import Link from 'next/link'
 
 export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false)
@@ -23,7 +24,16 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-kasa-fondo flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-kasa-fondo flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative">
+      <div className="absolute top-4 left-4 sm:top-8 sm:left-8">
+        <Link 
+          href="/"
+          className="flex items-center text-sm font-medium text-gray-600 hover:text-kasa-vinotinto transition-colors bg-white/60 hover:bg-white px-4 py-2 rounded-full shadow-sm backdrop-blur-sm border border-gray-200"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Volver al inicio
+        </Link>
+      </div>
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           <div className="w-20 h-20 bg-kasa-vinotinto rounded-2xl flex items-center justify-center shadow-xl transform -rotate-6">
