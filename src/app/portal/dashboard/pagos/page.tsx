@@ -38,6 +38,8 @@ export default async function PagosPage() {
     .single()
 
   let isLate = false
+  let monthsOwed = 1 // Por defecto, se debe 1 mes
+
   if (paidUntil && settings) {
     // La fecha límite es paid_until + grace_period_days.
     // Ej: paid_until = 2026-08-31. Mes en curso = Septiembre.
@@ -53,6 +55,15 @@ export default async function PagosPage() {
     // Solo está moroso si hoy es estrictamente mayor que la fecha límite
     if (today > limitDate) {
       isLate = true
+    }
+
+    // Calcular cuántos meses se deben si la fecha de solvencia ya pasó
+    const yearDiff = today.getFullYear() - paidDate.getFullYear()
+    const monthDiff = today.getMonth() - paidDate.getMonth()
+    
+    const calculatedMonths = (yearDiff * 12) + monthDiff
+    if (calculatedMonths >= 1) {
+      monthsOwed = calculatedMonths
     }
   }
 
@@ -78,13 +89,27 @@ export default async function PagosPage() {
     if (categoryName && p.categories.includes(categoryName)) return true
     return false
   }).map(p => {
+    // Ajustar precio si es mensualidad y debe múltiples meses
+    const isMensualidad = p.name.toLowerCase().includes('mensualidad')
+    let basePrice = Number(p.price)
+    
+    if (isMensualidad && monthsOwed > 1) {
+      basePrice = basePrice * monthsOwed
+    }
+
     // Calcular cuánto ha pagado de este producto
     const productPayments = payments?.filter(pay => pay.product_id === p.id) || []
     const amountPaid = productPayments.reduce((sum, pay) => sum + Number(pay.amount), 0)
-    const amountPending = Math.max(0, Number(p.price) - amountPaid)
+    
+    // Si es mensualidad, restamos los abonos del total acumulado. Si no, del precio original.
+    const amountPending = Math.max(0, basePrice - amountPaid)
 
+    // Agregar info extra para PaymentForm
     return {
       ...p,
+      price: basePrice, // El precio base se actualiza al acumulado
+      original_price: Number(p.price), // Guardamos el original por si acaso
+      months_owed: isMensualidad ? monthsOwed : 1,
       amount_paid: amountPaid,
       amount_pending: amountPending
     }

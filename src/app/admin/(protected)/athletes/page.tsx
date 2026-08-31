@@ -6,6 +6,7 @@ import Pagination from '../Pagination';
 import { createAthlete } from './actions';
 import AthleteRow, { AthleteCard } from './AthleteRow';
 import { checkAdminPermission } from '@/lib/auth-admin';
+import StatusDateInputs from './StatusDateInputs';
 
 export const revalidate = 0;
 
@@ -157,27 +158,7 @@ export default async function AthletesPage({
                 </select>
               </div>
             )}
-            <div className="w-full md:w-32">
-              <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">Estatus</label>
-              <select 
-                id="status" 
-                name="status" 
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto bg-white"
-              >
-                <option value="Solvente">Solvente</option>
-                <option value="Moroso">Moroso</option>
-                <option value="Inactivo">Inactivo</option>
-              </select>
-            </div>
-            <div className="w-full md:w-40">
-              <label htmlFor="paid_until" className="block text-sm font-medium text-gray-700 mb-1">Solvente hasta</label>
-              <input 
-                type="date" 
-                id="paid_until" 
-                name="paid_until" 
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto bg-white"
-              />
-            </div>
+            <StatusDateInputs />
             <button 
               type="submit" 
               className="bg-kasa-vinotinto hover:bg-red-900 text-white font-bold py-2 px-6 rounded-lg transition-colors w-full md:w-auto h-[38px] text-sm"

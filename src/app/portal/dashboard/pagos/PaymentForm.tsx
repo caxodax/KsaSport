@@ -13,6 +13,7 @@ type Product = {
   allows_installments?: boolean
   amount_paid?: number
   amount_pending?: number
+  months_owed?: number
 }
 
 export default function PaymentForm({ 
@@ -77,7 +78,8 @@ export default function PaymentForm({
           {products.map((product) => {
             const isMensualidad = product.name.toLowerCase().includes('mensualidad');
             const hasPenalty = isMensualidad && isLate;
-            const finalPrice = hasPenalty ? Number(product.price) + (penaltyAmount || 0) : Number(product.price);
+            const penaltyTotal = hasPenalty ? (penaltyAmount || 0) * (product.months_owed || 1) : 0;
+            const finalPrice = Number(product.price) + penaltyTotal;
             
             return (
               <button
@@ -98,6 +100,9 @@ export default function PaymentForm({
                     ${finalPrice.toFixed(2)}
                   </span>
                 </div>
+                {product.months_owed && product.months_owed > 1 && isMensualidad ? (
+                  <p className="text-sm font-bold text-orange-600 mb-1">Adeuda {product.months_owed} meses</p>
+                ) : null}
                 <p className="text-sm text-gray-500">{product.description}</p>
                 {product.amount_paid && product.amount_paid > 0 ? (
                   <div className="mt-3 flex justify-between items-center bg-orange-50 px-3 py-2 rounded-lg border border-orange-100">
@@ -107,7 +112,7 @@ export default function PaymentForm({
                 ) : null}
                 {hasPenalty && (
                   <p className="text-xs text-red-500 font-medium mt-2 bg-red-50 p-2 rounded-md">
-                    El monto incluye ${penaltyAmount} por pago después del período de gracia.
+                    El monto incluye ${penaltyTotal} por {product.months_owed || 1} {product.months_owed === 1 ? 'mes' : 'meses'} de atraso (${penaltyAmount} por mes).
                   </p>
                 )}
               </button>

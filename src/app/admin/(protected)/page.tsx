@@ -59,7 +59,7 @@ export default async function DashboardPage({
   // 1. Todos los atletas activos (sin paginación) para KPIs
   let allAthletesQuery = supabase
     .from('athletes')
-    .select('id, status, team_id, teams!inner(category)')
+    .select('id, status, paid_until, team_id, teams!inner(category)')
     .in('status', ['Solvente', 'Moroso']);
   if (teamFilter) allAthletesQuery = allAthletesQuery.eq('team_id', teamFilter);
   if (categoryFilter) allAthletesQuery = allAthletesQuery.eq('teams.category', categoryFilter);
@@ -100,6 +100,8 @@ export default async function DashboardPage({
   let montoMorosidad = 0;
   const categoryBreakdown = new Map<string, { solventes: number, morosos: number, price: number, recibido: number, pendiente: number }>();
 
+  const today = new Date();
+
   allAthletes?.forEach(a => {
     const cat = (a.teams as any)?.category || 'Sin categoría';
     const price = getMensualidadPrice(cat);
@@ -114,9 +116,21 @@ export default async function DashboardPage({
       entry.solventes++;
       entry.recibido += price;
     } else if (a.status === 'Moroso') {
-      montoMorosidad += price;
+      let monthsOwed = 1;
+      if (a.paid_until) {
+        const paidDate = new Date(a.paid_until);
+        const yearDiff = today.getFullYear() - paidDate.getFullYear();
+        const monthDiff = today.getMonth() - paidDate.getMonth();
+        const calculatedMonths = (yearDiff * 12) + monthDiff;
+        if (calculatedMonths >= 1) {
+          monthsOwed = calculatedMonths;
+        }
+      }
+
+      const totalOwed = price * monthsOwed;
+      montoMorosidad += totalOwed;
       entry.morosos++;
-      entry.pendiente += price;
+      entry.pendiente += totalOwed;
     }
   });
 

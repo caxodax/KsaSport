@@ -180,7 +180,7 @@ export default function AthleteRow({
                   value={paidUntil}
                   onChange={(e) => setPaidUntil(e.target.value)}
                   className="w-1/2 rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
-                  title="Solvente hasta"
+                  title={status === 'Solvente' ? 'Solvente hasta' : status === 'Moroso' ? 'Moroso desde' : 'Inactivo desde'}
                 />
               </div>
             )}
@@ -441,7 +441,7 @@ export function AthleteCard({
                 value={paidUntil}
                 onChange={(e) => setPaidUntil(e.target.value)}
                 className="w-2/3 rounded-md border border-gray-300 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
-                title="Pagado hasta"
+                title={status === 'Solvente' ? 'Solvente hasta' : status === 'Moroso' ? 'Moroso desde' : 'Inactivo desde'}
               />
             </div>
           )}
