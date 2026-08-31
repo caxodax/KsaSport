@@ -1,10 +1,11 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getServiceSupabase } from '@/lib/supabase'
-import { CheckCircle2, AlertCircle, ShoppingCart, Activity, Camera } from 'lucide-react'
+import { CheckCircle2, AlertCircle, ShoppingCart, Activity } from 'lucide-react'
 import Link from 'next/link'
 import { logout } from '../actions'
 import QRModal from '@/components/portal/QRModal'
+import AvatarUpload from '@/components/portal/AvatarUpload'
 
 export const revalidate = 0;
 
@@ -30,10 +31,39 @@ export default async function PortalDashboard() {
   // Obtener últimos pagos
   const { data: payments } = await adminSupabase
     .from('payments')
-    .select('*')
+    .select('*, products(name, price, allows_installments)')
     .eq('athlete_id', athlete.id)
     .order('created_at', { ascending: false })
-    .limit(5)
+
+  // Calcular deudas activas (productos con abonos parciales)
+  // Agrupamos los pagos aprobados/pendientes por producto
+  const activeDebts: any[] = []
+  if (payments) {
+    const productPayments = new Map<string, { totalPaid: number, product: any }>()
+    payments.forEach(pay => {
+      if (pay.status === 'Completado' || pay.status === 'Pendiente') {
+        const prod = pay.products as any
+        if (prod && prod.allows_installments) {
+          const current = productPayments.get(pay.product_id) || { totalPaid: 0, product: { ...prod, id: pay.product_id } }
+          current.totalPaid += Number(pay.amount)
+          productPayments.set(pay.product_id, current)
+        }
+      }
+    })
+
+    productPayments.forEach(val => {
+      const remaining = Number(val.product.price) - val.totalPaid
+      if (remaining > 0) {
+        activeDebts.push({
+          id: val.product.id,
+          name: val.product.name,
+          total: Number(val.product.price),
+          paid: val.totalPaid,
+          remaining: remaining
+        })
+      }
+    })
+  }
 
   return (
     <div className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
@@ -55,15 +85,7 @@ export default async function PortalDashboard() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
             <div className="h-24 bg-gradient-to-r from-kasa-vinotinto to-red-900"></div>
             <div className="px-6 pb-6 relative">
-              <div className="w-24 h-24 bg-white rounded-full p-1 -mt-12 mb-4 relative shadow-sm mx-auto">
-                {athlete.avatar_url ? (
-                  <img src={athlete.avatar_url} alt="Profile" className="w-full h-full rounded-full object-cover" />
-                ) : (
-                  <div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-                    <Camera className="w-8 h-8" />
-                  </div>
-                )}
-              </div>
+              <AvatarUpload athleteId={athlete.id} currentAvatar={athlete.avatar_url} />
               <div className="text-center">
                 <h2 className="text-xl font-bold text-gray-900">{athlete.name}</h2>
                 <p className="text-sm text-gray-500 mb-1">C.I: {athlete.cedula}</p>
@@ -157,6 +179,38 @@ export default async function PortalDashboard() {
               </div>
             </div>
           </div>
+
+          {activeDebts.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                <h3 className="text-lg font-bold text-gray-900">Abonos Activos (Deudas)</h3>
+              </div>
+              <div className="divide-y divide-gray-100 p-4 sm:p-6 space-y-4">
+                {activeDebts.map((debt, idx) => (
+                  <div key={idx} className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="font-bold text-gray-900">{debt.name}</h4>
+                      <span className="text-sm font-bold text-kasa-vinotinto">Total: ${debt.total.toFixed(2)}</span>
+                    </div>
+                    
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                      <div className="bg-green-500 h-2.5 rounded-full" style={{ width: `${Math.min(100, (debt.paid / debt.total) * 100)}%` }}></div>
+                    </div>
+                    
+                    <div className="flex justify-between text-sm">
+                      <span className="text-green-700 font-bold">Abonado: ${debt.paid.toFixed(2)}</span>
+                      <span className="text-red-600 font-bold">Resta: ${debt.remaining.toFixed(2)}</span>
+                    </div>
+                  </div>
+                ))}
+                <div className="text-center pt-2">
+                  <Link href="/portal/dashboard/pagos" className="text-sm text-blue-600 hover:underline font-medium">
+                    Ir al Centro de Pagos para abonar
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center">

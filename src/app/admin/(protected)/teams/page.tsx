@@ -9,7 +9,7 @@ export default async function TeamsPage() {
   const supabase = getServiceSupabase();
   const { data: teams, error } = await supabase
     .from('teams')
-    .select('id, name, category, created_at')
+    .select('id, name, category, logo_url, created_at')
     .order('created_at', { ascending: false });
 
   // Fallback silencioso por si aún no corren el script SQL
@@ -73,6 +73,16 @@ export default async function TeamsPage() {
                   </>
                 )}
               </select>
+            </div>
+            <div className="w-full md:w-auto">
+              <label htmlFor="logo" className="block text-sm font-medium text-gray-700 mb-1">Logo</label>
+              <input 
+                type="file" 
+                id="logo" 
+                name="logo" 
+                accept="image/*"
+                className="w-full rounded-lg border border-gray-300 px-3 py-[6px] bg-white text-gray-900 focus:ring-2 focus:ring-kasa-vinotinto focus:border-transparent outline-none transition-all text-sm file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer"
+              />
             </div>
             <button 
               type="submit" 

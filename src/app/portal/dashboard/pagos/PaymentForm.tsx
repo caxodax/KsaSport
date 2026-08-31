@@ -10,6 +10,9 @@ type Product = {
   name: string
   price: number
   description: string
+  allows_installments?: boolean
+  amount_paid?: number
+  amount_pending?: number
 }
 
 export default function PaymentForm({ 
@@ -26,8 +29,11 @@ export default function PaymentForm({
   const [error, setError] = useState('')
   const [file, setFile] = useState<File | null>(null)
 
+  const [amountToPay, setAmountToPay] = useState<string>('')
+
   const handleSelect = (product: Product) => {
     setSelectedProduct(product)
+    setAmountToPay(product.amount_pending ? product.amount_pending.toString() : product.price.toString())
   }
 
   const handleSubmit = async (formData: FormData) => {
@@ -35,7 +41,7 @@ export default function PaymentForm({
     setError('')
     formData.append('product_id', selectedProduct!.id)
     formData.append('concept', selectedProduct!.name)
-    formData.append('amount', selectedProduct!.price.toString())
+    formData.append('amount', amountToPay)
     
     // El input file se añade automáticamente al FormData si tiene el atributo 'name'
     // pero si usamos estado lo podemos agregar explícitamente si queremos, 
@@ -93,6 +99,12 @@ export default function PaymentForm({
                   </span>
                 </div>
                 <p className="text-sm text-gray-500">{product.description}</p>
+                {product.amount_paid && product.amount_paid > 0 ? (
+                  <div className="mt-3 flex justify-between items-center bg-orange-50 px-3 py-2 rounded-lg border border-orange-100">
+                    <span className="text-xs font-bold text-orange-800">Abonado: ${product.amount_paid.toFixed(2)}</span>
+                    <span className="text-xs font-bold text-red-600">Resta: ${product.amount_pending?.toFixed(2)}</span>
+                  </div>
+                ) : null}
                 {hasPenalty && (
                   <p className="text-xs text-red-500 font-medium mt-2 bg-red-50 p-2 rounded-md">
                     El monto incluye ${penaltyAmount} por pago después del período de gracia.
@@ -117,12 +129,29 @@ export default function PaymentForm({
               <h3 className="font-bold text-xl text-gray-900">{selectedProduct.name}</h3>
             </div>
             <div className="text-right">
-              <p className="text-sm text-gray-500">Total a pagar:</p>
-              <span className="font-bold text-2xl text-kasa-vinotinto">${Number(selectedProduct.price).toFixed(2)}</span>
+              <p className="text-sm text-gray-500">Saldo Restante:</p>
+              <span className="font-bold text-2xl text-kasa-vinotinto">${(selectedProduct.amount_pending ?? selectedProduct.price).toFixed(2)}</span>
             </div>
           </div>
 
           <form action={handleSubmit} className="space-y-6">
+            {selectedProduct.allows_installments && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Monto a Abonar ($)</label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  min="1"
+                  max={selectedProduct.amount_pending ?? selectedProduct.price}
+                  value={amountToPay}
+                  onChange={(e) => setAmountToPay(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto bg-yellow-50 font-bold"
+                />
+                <p className="text-xs text-gray-500 mt-1">Este producto permite cuotas. Puedes modificar el monto a abonar.</p>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Método de Pago</label>
               <select 

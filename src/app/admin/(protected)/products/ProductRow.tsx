@@ -11,6 +11,7 @@ type Product = {
   price: number
   is_active: boolean
   categories: string[]
+  allows_installments: boolean
 }
 
 type Category = { name: string }
@@ -63,6 +64,19 @@ function EditProductForm({ product, allCategories, onCancel }: { product: Produc
             type="text" name="description" defaultValue={product.description || ''}
             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-1 focus:ring-kasa-vinotinto outline-none"
           />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input 
+            type="checkbox" 
+            id={`allows_installments_${product.id}`} 
+            name="allows_installments" 
+            defaultChecked={product.allows_installments}
+            className="w-4 h-4 text-kasa-vinotinto focus:ring-kasa-vinotinto border-gray-300 rounded"
+          />
+          <label htmlFor={`allows_installments_${product.id}`} className="text-sm font-medium text-gray-700">
+            Permite Abonos (Cuotas)
+          </label>
         </div>
 
         <div>
@@ -135,6 +149,13 @@ export default function ProductRow({ product, allCategories }: { product: Produc
           <span className="bg-purple-50 text-purple-700 text-[10px] px-2 py-0.5 rounded-full font-bold">
             Global
           </span>
+        )}
+        {product.allows_installments && (
+          <div className="mt-1">
+            <span className="bg-orange-50 text-orange-700 text-[10px] px-2 py-0.5 rounded-full font-bold">
+              Permite Abonos
+            </span>
+          </div>
         )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
@@ -212,7 +233,7 @@ export function ProductCard({ product, allCategories }: { product: Product, allC
       <div className="flex justify-between items-center pt-2 border-t border-gray-50">
         <div>
           {product.categories && product.categories.length > 0 ? (
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1 mb-1">
               {product.categories.map(c => (
                 <span key={c} className="bg-blue-50 text-blue-700 text-[10px] px-2 py-0.5 rounded-full font-bold">
                   {c}
@@ -220,8 +241,15 @@ export function ProductCard({ product, allCategories }: { product: Product, allC
               ))}
             </div>
           ) : (
-            <span className="bg-purple-50 text-purple-700 text-[10px] px-2 py-0.5 rounded-full font-bold">
-              Global
+            <div className="mb-1">
+              <span className="bg-purple-50 text-purple-700 text-[10px] px-2 py-0.5 rounded-full font-bold">
+                Global
+              </span>
+            </div>
+          )}
+          {product.allows_installments && (
+            <span className="bg-orange-50 text-orange-700 text-[10px] px-2 py-0.5 rounded-full font-bold">
+              Permite Abonos
             </span>
           )}
         </div>

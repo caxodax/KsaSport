@@ -78,6 +78,18 @@ export default async function ProductsPage() {
                   placeholder="Ej: Pago correspondiente al mes en curso."
                 />
               </div>
+
+              <div className="flex items-center gap-2 mt-2">
+                <input 
+                  type="checkbox" 
+                  id="allows_installments" 
+                  name="allows_installments" 
+                  className="w-4 h-4 text-kasa-vinotinto focus:ring-kasa-vinotinto border-gray-300 rounded"
+                />
+                <label htmlFor="allows_installments" className="text-sm font-medium text-gray-700">
+                  Permite Abonos (Cuotas parciales)
+                </label>
+              </div>
             </div>
 
             <div className="flex-1 w-full">

@@ -1,9 +1,9 @@
 import { getServiceSupabase } from '@/lib/supabase';
-import { Users, AlertCircle, CircleDollarSign } from 'lucide-react';
+import { Users, AlertCircle, CircleDollarSign, TrendingUp, Wallet } from 'lucide-react';
 import DashboardFilters from './DashboardFilters';
 import Pagination from './Pagination';
 
-export const revalidate = 0; // Fetch dynamic data on every request
+export const revalidate = 0;
 
 export default async function DashboardPage({
   searchParams,
@@ -13,7 +13,6 @@ export default async function DashboardPage({
   const supabase = getServiceSupabase();
   const resolvedParams = await searchParams;
 
-  // Extraer parámetros de búsqueda
   const query = typeof resolvedParams.query === 'string' ? resolvedParams.query : '';
   const teamFilter = typeof resolvedParams.team === 'string' ? resolvedParams.team : '';
   const categoryFilter = typeof resolvedParams.category === 'string' ? resolvedParams.category : '';
@@ -24,7 +23,7 @@ export default async function DashboardPage({
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
-  // Consulta de Atletas con Filtros y Paginación
+  // Consulta de Atletas con Filtros y Paginación (para la tabla)
   let athletesQuery = supabase
     .from('athletes')
     .select('id, name, cedula, status, team_id, teams!inner(id, name, category)', { count: 'exact' });
@@ -48,18 +47,96 @@ export default async function DashboardPage({
 
   const totalPages = count ? Math.ceil(count / pageSize) : 0;
 
-  // Datos para los selectores de filtros
   const { data: teamsData } = await supabase.from('teams').select('id, name').order('name');
   const { data: categoriesData } = await supabase.from('categories').select('name').order('name');
   
-  if (error) {
-    console.error('Error fetching athletes:', error);
-  }
+  if (error) console.error('Error fetching athletes:', error);
 
-  // Calculate metrics
   const solventes = athletes?.filter(a => a.status === 'Solvente').length || 0;
   const morosos = athletes?.filter(a => a.status === 'Moroso').length || 0;
-  const total = athletes?.length || 0;
+
+  // ========== ANÁLISIS FINANCIERO ==========
+  // 1. Todos los atletas activos (sin paginación) para KPIs
+  let allAthletesQuery = supabase
+    .from('athletes')
+    .select('id, status, team_id, teams!inner(category)')
+    .in('status', ['Solvente', 'Moroso']);
+  if (teamFilter) allAthletesQuery = allAthletesQuery.eq('team_id', teamFilter);
+  if (categoryFilter) allAthletesQuery = allAthletesQuery.eq('teams.category', categoryFilter);
+  const { data: allAthletes } = await allAthletesQuery;
+
+  // 2. Productos de mensualidad activos
+  const { data: mensualidades } = await supabase
+    .from('products')
+    .select('id, name, price, categories')
+    .eq('is_active', true)
+    .ilike('name', '%mensualidad%');
+
+  // 3. Productos con abonos activos
+  const { data: installmentProducts } = await supabase
+    .from('products')
+    .select('id, name, price')
+    .eq('is_active', true)
+    .eq('allows_installments', true);
+
+  // 4. Pagos de productos con abonos (todos los completados/pendientes)
+  const { data: installmentPayments } = await supabase
+    .from('payments')
+    .select('product_id, athlete_id, amount, status')
+    .in('status', ['Completado', 'Pendiente']);
+
+  // --- Calcular KPIs de Mensualidad ---
+  // Función: dado un atleta con categoría X, buscar el producto mensualidad que aplique
+  const getMensualidadPrice = (category: string): number => {
+    if (!mensualidades) return 0;
+    for (const m of mensualidades) {
+      if (!m.categories || m.categories.length === 0) return Number(m.price); // Global
+      if (m.categories.includes(category)) return Number(m.price);
+    }
+    return 0;
+  };
+
+  let montoSolvente = 0;
+  let montoMorosidad = 0;
+  const categoryBreakdown = new Map<string, { solventes: number, morosos: number, price: number, recibido: number, pendiente: number }>();
+
+  allAthletes?.forEach(a => {
+    const cat = (a.teams as any)?.category || 'Sin categoría';
+    const price = getMensualidadPrice(cat);
+    
+    if (!categoryBreakdown.has(cat)) {
+      categoryBreakdown.set(cat, { solventes: 0, morosos: 0, price, recibido: 0, pendiente: 0 });
+    }
+    const entry = categoryBreakdown.get(cat)!;
+
+    if (a.status === 'Solvente') {
+      montoSolvente += price;
+      entry.solventes++;
+      entry.recibido += price;
+    } else if (a.status === 'Moroso') {
+      montoMorosidad += price;
+      entry.morosos++;
+      entry.pendiente += price;
+    }
+  });
+
+  const ingresoEsperado = montoSolvente + montoMorosidad;
+  const categoryRows = Array.from(categoryBreakdown.entries()).map(([cat, data]) => ({
+    category: cat, ...data, total: data.solventes + data.morosos, esperado: data.recibido + data.pendiente
+  }));
+
+  // --- Calcular Abonos Activos por Producto ---
+  const installmentSummary = (installmentProducts || []).map(prod => {
+    const payments = installmentPayments?.filter(p => p.product_id === prod.id) || [];
+    const athleteIds = new Set(payments.map(p => p.athlete_id));
+    const totalFacturado = athleteIds.size * Number(prod.price);
+    const totalAbonado = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+    const saldoPendiente = Math.max(0, totalFacturado - totalAbonado);
+    return {
+      id: prod.id, name: prod.name, price: Number(prod.price),
+      athleteCount: athleteIds.size, totalFacturado, totalAbonado, saldoPendiente
+    };
+  }).filter(p => p.athleteCount > 0);
 
   return (
     <div className="p-4 sm:p-8">
@@ -69,8 +146,8 @@ export default async function DashboardPage({
           <p className="text-gray-500 mt-1">Resumen financiero y estatus de atletas en tiempo real.</p>
         </div>
 
-        {/* Metrics Widgets */}
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-10">
+        {/* KPIs de Atletas */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6">
           <div className="bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow rounded-xl border border-gray-100 relative">
             <div className="absolute top-0 left-0 w-1 h-full bg-green-500"></div>
             <div className="p-4">
@@ -79,15 +156,12 @@ export default async function DashboardPage({
                   <CircleDollarSign className="h-5 w-5 text-green-600" />
                 </div>
                 <div className="ml-4 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Solventes</dt>
-                    <dd className="text-2xl font-bold text-gray-900">{solventes}</dd>
-                  </dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Solventes</dt>
+                  <dd className="text-2xl font-bold text-gray-900">{solventes}</dd>
                 </div>
               </div>
             </div>
           </div>
-
           <div className="bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow rounded-xl border border-gray-100 relative">
             <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
             <div className="p-4">
@@ -96,15 +170,12 @@ export default async function DashboardPage({
                   <AlertCircle className="h-5 w-5 text-red-600" />
                 </div>
                 <div className="ml-4 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Morosidad Activa</dt>
-                    <dd className="text-2xl font-bold text-gray-900">{morosos}</dd>
-                  </dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Morosidad Activa</dt>
+                  <dd className="text-2xl font-bold text-gray-900">{morosos}</dd>
                 </div>
               </div>
             </div>
           </div>
-
           <div className="bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow rounded-xl border border-gray-100 relative">
             <div className="absolute top-0 left-0 w-1 h-full bg-gray-400"></div>
             <div className="p-4">
@@ -113,18 +184,185 @@ export default async function DashboardPage({
                   <Users className="h-5 w-5 text-gray-600" />
                 </div>
                 <div className="ml-4 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Total en Roster</dt>
-                    <dd className="text-2xl font-bold text-gray-900">{count || 0}</dd>
-                  </dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Total en Roster</dt>
+                  <dd className="text-2xl font-bold text-gray-900">{count || 0}</dd>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
+        {/* KPIs Financieros */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-8">
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 overflow-hidden shadow-sm hover:shadow-md transition-shadow rounded-xl border border-green-200 relative">
+            <div className="absolute top-0 left-0 w-1 h-full bg-green-600"></div>
+            <div className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-green-600 uppercase tracking-wider">Ingreso Recibido</p>
+                  <p className="text-3xl font-black text-green-800 mt-1">${montoSolvente.toFixed(2)}</p>
+                  <p className="text-[11px] text-green-600 mt-1">{allAthletes?.filter(a => a.status === 'Solvente').length || 0} atletas al día</p>
+                </div>
+                <div className="p-3 bg-green-100 rounded-xl">
+                  <CircleDollarSign className="h-7 w-7 text-green-600" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-red-50 to-orange-50 overflow-hidden shadow-sm hover:shadow-md transition-shadow rounded-xl border border-red-200 relative">
+            <div className="absolute top-0 left-0 w-1 h-full bg-red-600"></div>
+            <div className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-red-600 uppercase tracking-wider">Morosidad Pendiente</p>
+                  <p className="text-3xl font-black text-red-800 mt-1">${montoMorosidad.toFixed(2)}</p>
+                  <p className="text-[11px] text-red-600 mt-1">{allAthletes?.filter(a => a.status === 'Moroso').length || 0} atletas en mora</p>
+                </div>
+                <div className="p-3 bg-red-100 rounded-xl">
+                  <AlertCircle className="h-7 w-7 text-red-600" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 overflow-hidden shadow-sm hover:shadow-md transition-shadow rounded-xl border border-indigo-200 relative">
+            <div className="absolute top-0 left-0 w-1 h-full bg-indigo-600"></div>
+            <div className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Ingreso Esperado</p>
+                  <p className="text-3xl font-black text-indigo-800 mt-1">${ingresoEsperado.toFixed(2)}</p>
+                  <p className="text-[11px] text-indigo-600 mt-1">Solvente + Morosidad</p>
+                </div>
+                <div className="p-3 bg-indigo-100 rounded-xl">
+                  <TrendingUp className="h-7 w-7 text-indigo-600" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Desglose por Categoría */}
+        {categoryRows.length > 0 && (
+          <div className="bg-white shadow-sm border border-gray-100 rounded-xl overflow-hidden mb-6">
+            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+              <h3 className="text-lg font-bold text-gray-800">Desglose por Categoría (Mensualidad)</h3>
+            </div>
+            {/* Móvil */}
+            <div className="md:hidden p-4 space-y-3">
+              {categoryRows.map(row => (
+                <div key={row.category} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <h4 className="font-bold text-gray-900 mb-2">{row.category}</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div><span className="text-gray-500">Precio:</span> <span className="font-bold">${row.price.toFixed(2)}</span></div>
+                    <div><span className="text-gray-500">Atletas:</span> <span className="font-bold">{row.total}</span></div>
+                    <div><span className="text-green-600 font-bold">Recibido: ${row.recibido.toFixed(2)}</span></div>
+                    <div><span className="text-red-600 font-bold">Pendiente: ${row.pendiente.toFixed(2)}</span></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Desktop */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-white">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Categoría</th>
+                    <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase">Atletas</th>
+                    <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase">Precio</th>
+                    <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase">Solventes</th>
+                    <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase">Morosos</th>
+                    <th className="px-6 py-3 text-right text-xs font-bold text-green-600 uppercase">Recibido</th>
+                    <th className="px-6 py-3 text-right text-xs font-bold text-red-600 uppercase">Pendiente</th>
+                    <th className="px-6 py-3 text-right text-xs font-bold text-indigo-600 uppercase">Esperado</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-100">
+                  {categoryRows.map(row => (
+                    <tr key={row.category} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-3 font-bold text-gray-900">{row.category}</td>
+                      <td className="px-6 py-3 text-center text-sm text-gray-700">{row.total}</td>
+                      <td className="px-6 py-3 text-center text-sm font-bold text-gray-700">${row.price.toFixed(2)}</td>
+                      <td className="px-6 py-3 text-center"><span className="bg-green-50 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">{row.solventes}</span></td>
+                      <td className="px-6 py-3 text-center"><span className="bg-red-50 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">{row.morosos}</span></td>
+                      <td className="px-6 py-3 text-right text-sm font-bold text-green-700">${row.recibido.toFixed(2)}</td>
+                      <td className="px-6 py-3 text-right text-sm font-bold text-red-700">${row.pendiente.toFixed(2)}</td>
+                      <td className="px-6 py-3 text-right text-sm font-bold text-indigo-700">${row.esperado.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Abonos Activos por Producto */}
+        {installmentSummary.length > 0 && (
+          <div className="bg-white shadow-sm border border-gray-100 rounded-xl overflow-hidden mb-6">
+            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+              <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <Wallet className="w-5 h-5 text-kasa-dorado" />
+                Abonos Activos por Producto
+              </h3>
+            </div>
+            {/* Móvil */}
+            <div className="md:hidden p-4 space-y-3">
+              {installmentSummary.map(prod => (
+                <div key={prod.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <h4 className="font-bold text-gray-900 mb-2">{prod.name}</h4>
+                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                    <div className="bg-green-500 h-2 rounded-full" style={{ width: `${prod.totalFacturado > 0 ? Math.min(100, (prod.totalAbonado / prod.totalFacturado) * 100) : 0}%` }}></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div><span className="text-gray-500">Atletas:</span> <span className="font-bold">{prod.athleteCount}</span></div>
+                    <div><span className="text-gray-500">Facturado:</span> <span className="font-bold">${prod.totalFacturado.toFixed(2)}</span></div>
+                    <div><span className="text-green-600 font-bold">Abonado: ${prod.totalAbonado.toFixed(2)}</span></div>
+                    <div><span className="text-red-600 font-bold">Resta: ${prod.saldoPendiente.toFixed(2)}</span></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Desktop */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-white">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Producto</th>
+                    <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase">Atletas</th>
+                    <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Total Facturado</th>
+                    <th className="px-6 py-3 text-right text-xs font-bold text-green-600 uppercase">Total Abonado</th>
+                    <th className="px-6 py-3 text-right text-xs font-bold text-red-600 uppercase">Saldo Pendiente</th>
+                    <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase">Progreso</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-100">
+                  {installmentSummary.map(prod => {
+                    const pct = prod.totalFacturado > 0 ? Math.min(100, (prod.totalAbonado / prod.totalFacturado) * 100) : 0;
+                    return (
+                      <tr key={prod.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-3 font-bold text-gray-900">{prod.name}</td>
+                        <td className="px-6 py-3 text-center text-sm text-gray-700">{prod.athleteCount}</td>
+                        <td className="px-6 py-3 text-right text-sm font-bold text-gray-700">${prod.totalFacturado.toFixed(2)}</td>
+                        <td className="px-6 py-3 text-right text-sm font-bold text-green-700">${prod.totalAbonado.toFixed(2)}</td>
+                        <td className="px-6 py-3 text-right text-sm font-bold text-red-700">${prod.saldoPendiente.toFixed(2)}</td>
+                        <td className="px-6 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 bg-gray-200 rounded-full h-2">
+                              <div className="bg-green-500 h-2 rounded-full" style={{ width: `${pct}%` }}></div>
+                            </div>
+                            <span className="text-xs font-bold text-gray-600 w-10 text-right">{pct.toFixed(0)}%</span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* Estatus de Atletas */}
-        <div className="bg-white shadow-sm border border-gray-100 rounded-xl overflow-hidden mt-6">
+        <div className="bg-white shadow-sm border border-gray-100 rounded-xl overflow-hidden mt-2">
           <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
             <h3 className="text-xl font-bold text-gray-800">Estatus de Atletas</h3>
             <span className="bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm">

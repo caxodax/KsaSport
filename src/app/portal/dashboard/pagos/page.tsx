@@ -59,6 +59,13 @@ export default async function PagosPage() {
     .eq('is_active', true)
     .order('created_at', { ascending: false })
 
+  // Obtener todos los pagos aprobados/completados del atleta
+  const { data: payments } = await adminSupabase
+    .from('payments')
+    .select('product_id, amount')
+    .eq('athlete_id', athlete.id)
+    .in('status', ['Completado', 'Pendiente']) // Incluimos pendientes para no permitirles volver a pagar si ya reportaron
+
   // Filtrar productos: 
   // 1. Si categories es null o array vacío -> Es Global (aplica a todas)
   // 2. Si categories incluye el categoryName del atleta -> Aplica a este atleta
@@ -66,7 +73,20 @@ export default async function PagosPage() {
     if (!p.categories || p.categories.length === 0) return true
     if (categoryName && p.categories.includes(categoryName)) return true
     return false
-  })
+  }).map(p => {
+    // Calcular cuánto ha pagado de este producto
+    const productPayments = payments?.filter(pay => pay.product_id === p.id) || []
+    const amountPaid = productPayments.reduce((sum, pay) => sum + Number(pay.amount), 0)
+    const amountPending = Math.max(0, Number(p.price) - amountPaid)
+
+    return {
+      ...p,
+      amount_paid: amountPaid,
+      amount_pending: amountPending
+    }
+  }).filter(p => p.amount_pending > 0 || p.name.toLowerCase().includes('mensualidad'))
+
+  // Permitir la mensualidad siempre porque es recurrente, aunque su "amount_pending" llegue a 0.
 
   return <PaymentForm 
     products={filteredProducts || []} 
