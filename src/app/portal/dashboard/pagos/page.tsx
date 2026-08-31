@@ -18,9 +18,13 @@ export default async function PagosPage() {
   // Obtener la categoría y solvencia del atleta
   const { data: athlete } = await adminSupabase
     .from('athletes')
-    .select('paid_until, teams(category)')
+    .select('id, paid_until, teams(category)')
     .eq('user_id', session.user.id)
     .single()
+
+  if (!athlete) {
+    redirect('/portal/link-profile')
+  }
 
   // @ts-ignore
   const categoryName = athlete?.teams?.category
