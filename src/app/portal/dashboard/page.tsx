@@ -82,21 +82,21 @@ export default async function PortalDashboard() {
         {/* Columna Izquierda: Tarjeta de Perfil y Estatus */}
         <div className="lg:col-span-1 space-y-6">
           
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
-            <div className="h-24 bg-gradient-to-r from-kasa-vinotinto to-red-900"></div>
-            <div className="px-6 pb-6 relative">
-              <AvatarUpload athleteId={athlete.id} currentAvatar={athlete.avatar_url} />
-              <div className="text-center">
-                <h2 className="text-xl font-bold text-gray-900">{athlete.name}</h2>
-                <p className="text-sm text-gray-500 mb-1">C.I: {athlete.cedula}</p>
-                <span className="inline-block bg-gray-100 text-gray-800 text-xs px-3 py-1 rounded-full font-medium mb-6">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-center gap-6">
+            <AvatarUpload athleteId={athlete.id} currentAvatar={athlete.avatar_url} />
+            <div className="flex flex-col flex-1">
+              <h2 className="text-xl sm:text-2xl font-black text-gray-900 leading-tight mb-1">{athlete.name}</h2>
+              <p className="text-sm font-medium text-gray-500 mb-3">C.I: {athlete.cedula}</p>
+              
+              <div className="flex items-center gap-2 mb-4">
+                <span className="bg-kasa-vinotinto/10 text-kasa-vinotinto text-xs px-3 py-1.5 rounded-full font-bold">
                   {/* @ts-ignore */}
-                  Equipo: {athlete.teams?.name || 'Sin asignar'}
+                  {athlete.teams?.name || 'Sin asignar'}
                 </span>
-                
-                <div className="pt-2 flex flex-col items-center">
-                  <QRModal athleteId={athlete.id} status={athlete.status} />
-                </div>
+              </div>
+              
+              <div className="w-full mt-auto">
+                <QRModal athleteId={athlete.id} status={athlete.status} />
               </div>
             </div>
           </div>
