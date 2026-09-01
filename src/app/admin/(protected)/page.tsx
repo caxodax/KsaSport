@@ -144,7 +144,11 @@ export default async function DashboardPage({
     const payments = installmentPayments?.filter(p => p.product_id === prod.id) || [];
     const athleteIds = new Set(payments.map(p => p.athlete_id));
     const totalFacturado = athleteIds.size * Number(prod.price);
-    const totalAbonado = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+    
+    // Solo los pagos Completados suman al ingreso recibido
+    const pagosValidados = payments.filter(p => p.status === 'Completado');
+    const totalAbonado = pagosValidados.reduce((sum, p) => sum + Number(p.amount), 0);
+    
     const saldoPendiente = Math.max(0, totalFacturado - totalAbonado);
     return {
       id: prod.id, name: prod.name, price: Number(prod.price),
