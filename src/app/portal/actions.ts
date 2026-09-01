@@ -158,30 +158,47 @@ export async function reportPayment(formData: FormData) {
 
   if (!athlete) return { error: 'Atleta no encontrado' }
 
-  const amount = Number(formData.get('amount'))
-  const method = formData.get('method') as string
+  const total_amount = Number(formData.get('total_amount'))
   const concept = formData.get('concept') as string
   const product_id = formData.get('product_id') as string
-  const reference = formData.get('reference_number') as string || null
-  const receiptFile = formData.get('receipt') as File | null
-
-  let receipt_url = null
-  if (receiptFile && receiptFile.size > 0) {
-    receipt_url = await uploadImageToCloudflare(receiptFile, 'pagos')
+  const splitsJson = formData.get('splits_json') as string
+  
+  let splits: { amount: string, method: string, reference: string }[] = []
+  if (splitsJson) {
+    splits = JSON.parse(splitsJson)
+  } else {
+    return { error: 'Datos de abonos incompletos.' }
   }
+
+  const receiptUrls: string[] = []
+  
+  // Procesar archivos
+  for (let i = 0; i < splits.length; i++) {
+    const file = formData.get(`receipt_${i}`) as File | null
+    if (file && file.size > 0) {
+      const url = await uploadImageToCloudflare(file, 'pagos')
+      if (url) receiptUrls.push(url)
+    }
+  }
+
+  // Si es un solo abono, lo guardamos normal. Si son varios, los combinamos.
+  const isMixto = splits.length > 1
+  const finalMethod = isMixto ? 'Mixto (Varios)' : splits[0].method
+  const finalReference = splits.map(s => `${s.method}: ${s.reference} ($${s.amount})`).join(' | ')
+  const finalReceiptUrl = receiptUrls.length > 0 ? receiptUrls.join(',') : null
 
   const { error } = await adminSupabase
     .from('payments')
     .insert({
       athlete_id: athlete.id,
       product_id,
-      amount,
+      amount: total_amount,
       currency: 'USD',
-      method,
+      method: finalMethod,
       concept,
       status: 'Pendiente',
-      reference_number: reference,
-      receipt_url
+      reference_number: finalReference,
+      receipt_url: finalReceiptUrl
     })
 
   if (error) return { error: error.message }

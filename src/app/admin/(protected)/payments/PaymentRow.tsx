@@ -63,9 +63,13 @@ export default function PaymentRow({ payment }: { payment: Payment }) {
         <div className="text-sm font-bold text-gray-900">{payment.method}</div>
         <div className="text-xs text-gray-500">Ref: {payment.reference_number || 'N/A'}</div>
         {payment.receipt_url && (
-          <a href={payment.receipt_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline mt-1">
-            <FileText className="w-3 h-3" /> Ver Comprobante
-          </a>
+          <div className="mt-1 flex flex-col gap-1">
+            {payment.receipt_url.split(',').map((url, idx) => (
+              <a key={idx} href={url.trim()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline">
+                <FileText className="w-3 h-3" /> Comprobante {payment.receipt_url!.split(',').length > 1 ? idx + 1 : ''}
+              </a>
+            ))}
+          </div>
         )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
@@ -159,11 +163,13 @@ export function PaymentCard({ payment }: { payment: Payment }) {
         <p><span className="font-semibold text-gray-700">Método:</span> {payment.method}</p>
         <p><span className="font-semibold text-gray-700">Referencia:</span> {payment.reference_number || 'N/A'}</p>
         {payment.receipt_url && (
-          <p className="mt-2">
-            <a href={payment.receipt_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline bg-blue-50 px-2 py-1 rounded">
-              <FileText className="w-3 h-3" /> Ver Comprobante Subido
-            </a>
-          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {payment.receipt_url.split(',').map((url, idx) => (
+              <a key={idx} href={url.trim()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline bg-blue-50 px-2 py-1 rounded">
+                <FileText className="w-3 h-3" /> Comprobante {payment.receipt_url!.split(',').length > 1 ? idx + 1 : ''}
+              </a>
+            ))}
+          </div>
         )}
         <p className="mt-2"><span className="font-semibold text-gray-700">Fecha:</span> {new Date(payment.created_at).toLocaleString()}</p>
       </div>
