@@ -177,7 +177,13 @@ export async function reportPayment(formData: FormData) {
     const file = formData.get(`receipt_${i}`) as File | null
     if (file && file.size > 0) {
       const url = await uploadImageToCloudflare(file, 'pagos')
-      if (url) receiptUrls.push(url)
+      if (url) {
+        receiptUrls.push(url)
+      } else {
+        return { error: 'Error al subir el comprobante. Por favor, intenta de nuevo.' }
+      }
+    } else {
+      return { error: 'No se detectó un archivo válido para uno de los comprobantes.' }
     }
   }
 
