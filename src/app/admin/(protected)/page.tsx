@@ -156,6 +156,31 @@ export default async function DashboardPage({
     };
   }).filter(p => p.athleteCount > 0);
 
+  // --- Libro Mayor: Ingresos Totales por Producto (Todos) ---
+  const { data: allValidPayments } = await supabase
+    .from('payments')
+    .select('product_id, amount, products(name)')
+    .eq('status', 'Completado');
+
+  const ledgerBreakdown = new Map<string, { name: string, count: number, total: number }>();
+  if (allValidPayments) {
+    allValidPayments.forEach(pay => {
+      const prodName = (pay.products as any)?.name || 'Producto Eliminado / Desconocido';
+      const pId = pay.product_id;
+      
+      if (!ledgerBreakdown.has(pId)) {
+        ledgerBreakdown.set(pId, { name: prodName, count: 0, total: 0 });
+      }
+      
+      const entry = ledgerBreakdown.get(pId)!;
+      entry.count += 1;
+      entry.total += Number(pay.amount);
+    });
+  }
+  
+  const ledgerRows = Array.from(ledgerBreakdown.values()).sort((a, b) => b.total - a.total);
+  const totalHistoricoValidado = ledgerRows.reduce((sum, row) => sum + row.total, 0);
+
   return (
     <div className="p-4 sm:p-8">
       {/* Title */}
@@ -373,6 +398,71 @@ export default async function DashboardPage({
                       </tr>
                     );
                   })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Libro Mayor: Ingresos Totales por Producto */}
+        {ledgerRows.length > 0 && (
+          <div className="bg-white shadow-sm border border-gray-100 rounded-xl overflow-hidden mb-6">
+            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+              <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <CircleDollarSign className="w-5 h-5 text-green-600" />
+                Libro Mayor: Ingresos por Producto (Todos)
+              </h3>
+              <span className="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full border border-green-200">
+                Total Validado: ${totalHistoricoValidado.toFixed(2)}
+              </span>
+            </div>
+            
+            {/* Móvil */}
+            <div className="md:hidden p-4 space-y-3">
+              {ledgerRows.map(row => (
+                <div key={row.name} className="bg-gray-50 p-4 rounded-lg border border-gray-200 flex justify-between items-center">
+                  <div>
+                    <h4 className="font-bold text-gray-900">{row.name}</h4>
+                    <p className="text-xs text-gray-500 mt-1">{row.count} {row.count === 1 ? 'transacción' : 'transacciones'}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-lg font-black text-green-700">${row.total.toFixed(2)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Desktop */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-white">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Producto / Concepto</th>
+                    <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase">Transacciones Validadas</th>
+                    <th className="px-6 py-3 text-right text-xs font-bold text-green-600 uppercase">Ingreso Total ($)</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-100">
+                  {ledgerRows.map(row => (
+                    <tr key={row.name} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 font-bold text-gray-900">{row.name}</td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          {row.count}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right text-sm font-bold text-green-700">${row.total.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                  {/* Fila de Totales */}
+                  <tr className="bg-green-50/50 border-t-2 border-green-100">
+                    <td className="px-6 py-4 font-black text-gray-900 text-right uppercase text-xs" colSpan={2}>
+                      Total Histórico Validado
+                    </td>
+                    <td className="px-6 py-4 text-right text-lg font-black text-green-800">
+                      ${totalHistoricoValidado.toFixed(2)}
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
