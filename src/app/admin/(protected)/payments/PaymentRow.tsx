@@ -20,100 +20,28 @@ type Payment = {
   }
 }
 
-export default function PaymentRow({ payment }: { payment: Payment }) {
-  const [loading, setLoading] = useState(false)
-
-  const handleApprove = async () => {
-    if (!confirm('¿Aprobar este pago?')) return;
-    setLoading(true)
-    await approvePayment(payment.id, payment.athlete_id, payment.concept)
-    setLoading(false)
-  }
-
-  const handleReject = async () => {
-    if (!confirm('¿Rechazar este pago?')) return;
-    setLoading(true)
-    await rejectPayment(payment.id)
-    setLoading(false)
-  }
-
+function ReceiptModal({ url, onClose }: { url: string | null, onClose: () => void }) {
+  if (!url) return null;
   return (
-    <tr className="hover:bg-gray-50 transition-colors">
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-lg ${
-            payment.status === 'Pendiente' ? 'bg-yellow-50' : 
-            payment.status === 'Completado' ? 'bg-green-50' : 'bg-red-50'
-          }`}>
-            {payment.status === 'Pendiente' ? <Clock className="w-5 h-5 text-yellow-600" /> :
-             payment.status === 'Completado' ? <Check className="w-5 h-5 text-green-600" /> :
-             <X className="w-5 h-5 text-red-600" />}
-          </div>
-          <div>
-            <div className="text-sm font-bold text-gray-900">{payment.athletes?.name || 'Atleta Desconocido'}</div>
-            <div className="text-xs text-gray-500">CI: {payment.athletes?.cedula || 'N/A'}</div>
-          </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80" onClick={onClose}>
+      <div className="relative max-w-4xl w-full max-h-[90vh] flex flex-col bg-white rounded-xl overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center p-4 border-b">
+          <h3 className="font-bold text-gray-900">Comprobante de Pago</h3>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
+            <X className="w-6 h-6 text-gray-500" />
+          </button>
         </div>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm text-gray-900 font-medium">{payment.concept}</div>
-        <div className="text-xs text-gray-500">{new Date(payment.created_at).toLocaleDateString()}</div>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm font-bold text-gray-900">{payment.method}</div>
-        <div className="text-xs text-gray-500">Ref: {payment.reference_number || 'N/A'}</div>
-        {payment.receipt_url && (
-          <div className="mt-1 flex flex-col gap-1">
-            {payment.receipt_url.split(',').map((url, idx) => (
-              <a key={idx} href={url.trim()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline">
-                <FileText className="w-3 h-3" /> Comprobante {payment.receipt_url!.split(',').length > 1 ? idx + 1 : ''}
-              </a>
-            ))}
-          </div>
-        )}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm font-bold text-kasa-vinotinto">${Number(payment.amount).toFixed(2)}</div>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-          payment.status === 'Pendiente' ? 'bg-yellow-100 text-yellow-800' :
-          payment.status === 'Completado' ? 'bg-green-100 text-green-800' :
-          'bg-red-100 text-red-800'
-        }`}>
-          {payment.status}
-        </span>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-        {payment.status === 'Pendiente' ? (
-          <div className="flex justify-end gap-2">
-            <button 
-              onClick={handleApprove}
-              disabled={loading}
-              className="p-1.5 bg-green-50 text-green-600 hover:bg-green-100 rounded-lg transition-colors disabled:opacity-50"
-              title="Aprobar Pago"
-            >
-              <Check className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={handleReject}
-              disabled={loading}
-              className="p-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50"
-              title="Rechazar Pago"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        ) : (
-          <span className="text-gray-400 text-xs">Procesado</span>
-        )}
-      </td>
-    </tr>
+        <div className="flex-1 overflow-auto p-4 bg-gray-50 flex items-center justify-center">
+          <img src={url} alt="Comprobante" className="max-w-full max-h-[70vh] object-contain rounded-lg" />
+        </div>
+      </div>
+    </div>
   )
 }
 
-export function PaymentCard({ payment }: { payment: Payment }) {
+export default function PaymentRow({ payment }: { payment: Payment }) {
   const [loading, setLoading] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
   const handleApprove = async () => {
     if (!confirm('¿Aprobar este pago?')) return;
@@ -130,68 +58,175 @@ export function PaymentCard({ payment }: { payment: Payment }) {
   }
 
   return (
-    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col gap-3">
-      <div className="flex justify-between items-start">
-        <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-lg ${
-            payment.status === 'Pendiente' ? 'bg-yellow-50' : 
-            payment.status === 'Completado' ? 'bg-green-50' : 'bg-red-50'
-          }`}>
-            {payment.status === 'Pendiente' ? <Clock className="w-5 h-5 text-yellow-600" /> :
-             payment.status === 'Completado' ? <Check className="w-5 h-5 text-green-600" /> :
-             <X className="w-5 h-5 text-red-600" />}
+    <>
+      <tr className="hover:bg-gray-50 transition-colors">
+        <td className="px-6 py-4 whitespace-nowrap">
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-lg ${
+              payment.status === 'Pendiente' ? 'bg-yellow-50' : 
+              payment.status === 'Completado' ? 'bg-green-50' : 'bg-red-50'
+            }`}>
+              {payment.status === 'Pendiente' ? <Clock className="w-5 h-5 text-yellow-600" /> :
+               payment.status === 'Completado' ? <Check className="w-5 h-5 text-green-600" /> :
+               <X className="w-5 h-5 text-red-600" />}
+            </div>
+            <div>
+              <div className="text-sm font-bold text-gray-900">{payment.athletes?.name || 'Atleta Desconocido'}</div>
+              <div className="text-xs text-gray-500">CI: {payment.athletes?.cedula || 'N/A'}</div>
+            </div>
           </div>
-          <div>
-            <h4 className="font-bold text-gray-900">{payment.athletes?.name || 'Desconocido'}</h4>
-            <span className="text-xs text-gray-500">CI: {payment.athletes?.cedula || 'N/A'}</span>
-          </div>
-        </div>
-        <div className="text-right">
-          <div className="font-bold text-kasa-vinotinto">${Number(payment.amount).toFixed(2)}</div>
-          <span className={`px-2 py-0.5 inline-flex text-[10px] leading-5 font-semibold rounded-full mt-1 ${
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <div className="text-sm text-gray-900 font-medium">{payment.concept}</div>
+          <div className="text-xs text-gray-500">{new Date(payment.created_at).toLocaleDateString()}</div>
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <div className="text-sm font-bold text-gray-900">{payment.method}</div>
+          <div className="text-xs text-gray-500">Ref: {payment.reference_number || 'N/A'}</div>
+          {payment.receipt_url && (
+            <div className="mt-1 flex flex-col gap-1">
+              {payment.receipt_url.split(',').map((url, idx) => (
+                <button 
+                  key={idx} 
+                  onClick={() => setPreviewUrl(url.trim())}
+                  className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline text-left"
+                >
+                  <FileText className="w-3 h-3" /> Comprobante {payment.receipt_url!.split(',').length > 1 ? idx + 1 : ''}
+                </button>
+              ))}
+            </div>
+          )}
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <div className="text-sm font-bold text-kasa-vinotinto">${Number(payment.amount).toFixed(2)}</div>
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
             payment.status === 'Pendiente' ? 'bg-yellow-100 text-yellow-800' :
             payment.status === 'Completado' ? 'bg-green-100 text-green-800' :
             'bg-red-100 text-red-800'
           }`}>
             {payment.status}
           </span>
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+          {payment.status === 'Pendiente' ? (
+            <div className="flex justify-end gap-2">
+              <button 
+                onClick={handleApprove}
+                disabled={loading}
+                className="p-1.5 bg-green-50 text-green-600 hover:bg-green-100 rounded-lg transition-colors disabled:opacity-50"
+                title="Aprobar Pago"
+              >
+                <Check className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={handleReject}
+                disabled={loading}
+                className="p-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50"
+                title="Rechazar Pago"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          ) : (
+            <span className="text-gray-400 text-xs">Procesado</span>
+          )}
+        </td>
+      </tr>
+      <ReceiptModal url={previewUrl} onClose={() => setPreviewUrl(null)} />
+    </>
+  )
+}
+
+export function PaymentCard({ payment }: { payment: Payment }) {
+  const [loading, setLoading] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
+  const handleApprove = async () => {
+    if (!confirm('¿Aprobar este pago?')) return;
+    setLoading(true)
+    await approvePayment(payment.id, payment.athlete_id, payment.concept)
+    setLoading(false)
+  }
+
+  const handleReject = async () => {
+    if (!confirm('¿Rechazar este pago?')) return;
+    setLoading(true)
+    await rejectPayment(payment.id)
+    setLoading(false)
+  }
+
+  return (
+    <>
+      <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col gap-3">
+        <div className="flex justify-between items-start">
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-lg ${
+              payment.status === 'Pendiente' ? 'bg-yellow-50' : 
+              payment.status === 'Completado' ? 'bg-green-50' : 'bg-red-50'
+            }`}>
+              {payment.status === 'Pendiente' ? <Clock className="w-5 h-5 text-yellow-600" /> :
+               payment.status === 'Completado' ? <Check className="w-5 h-5 text-green-600" /> :
+               <X className="w-5 h-5 text-red-600" />}
+            </div>
+            <div>
+              <h4 className="font-bold text-gray-900">{payment.athletes?.name || 'Desconocido'}</h4>
+              <span className="text-xs text-gray-500">CI: {payment.athletes?.cedula || 'N/A'}</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="font-bold text-kasa-vinotinto">${Number(payment.amount).toFixed(2)}</div>
+            <span className={`px-2 py-0.5 inline-flex text-[10px] leading-5 font-semibold rounded-full mt-1 ${
+              payment.status === 'Pendiente' ? 'bg-yellow-100 text-yellow-800' :
+              payment.status === 'Completado' ? 'bg-green-100 text-green-800' :
+              'bg-red-100 text-red-800'
+            }`}>
+              {payment.status}
+            </span>
+          </div>
         </div>
-      </div>
-      
-      <div className="bg-gray-50 p-3 rounded-lg text-sm">
-        <p><span className="font-semibold text-gray-700">Concepto:</span> {payment.concept}</p>
-        <p><span className="font-semibold text-gray-700">Método:</span> {payment.method}</p>
-        <p><span className="font-semibold text-gray-700">Referencia:</span> {payment.reference_number || 'N/A'}</p>
-        {payment.receipt_url && (
-          <div className="mt-2 flex flex-wrap gap-2">
-            {payment.receipt_url.split(',').map((url, idx) => (
-              <a key={idx} href={url.trim()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline bg-blue-50 px-2 py-1 rounded">
-                <FileText className="w-3 h-3" /> Comprobante {payment.receipt_url!.split(',').length > 1 ? idx + 1 : ''}
-              </a>
-            ))}
+        
+        <div className="bg-gray-50 p-3 rounded-lg text-sm">
+          <p><span className="font-semibold text-gray-700">Concepto:</span> {payment.concept}</p>
+          <p><span className="font-semibold text-gray-700">Método:</span> {payment.method}</p>
+          <p><span className="font-semibold text-gray-700">Referencia:</span> {payment.reference_number || 'N/A'}</p>
+          {payment.receipt_url && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {payment.receipt_url.split(',').map((url, idx) => (
+                <button 
+                  key={idx} 
+                  onClick={() => setPreviewUrl(url.trim())}
+                  className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline bg-blue-50 px-2 py-1 rounded"
+                >
+                  <FileText className="w-3 h-3" /> Comprobante {payment.receipt_url!.split(',').length > 1 ? idx + 1 : ''}
+                </button>
+              ))}
+            </div>
+          )}
+          <p className="mt-2"><span className="font-semibold text-gray-700">Fecha:</span> {new Date(payment.created_at).toLocaleString()}</p>
+        </div>
+        
+        {payment.status === 'Pendiente' && (
+          <div className="flex gap-2 mt-2">
+            <button 
+              onClick={handleReject}
+              disabled={loading}
+              className="flex-1 py-2 bg-red-50 text-red-600 hover:bg-red-100 font-bold rounded-lg transition-colors text-sm disabled:opacity-50"
+            >
+              Rechazar
+            </button>
+            <button 
+              onClick={handleApprove}
+              disabled={loading}
+              className="flex-1 py-2 bg-green-50 text-green-600 hover:bg-green-100 font-bold rounded-lg transition-colors text-sm disabled:opacity-50"
+            >
+              Aprobar
+            </button>
           </div>
         )}
-        <p className="mt-2"><span className="font-semibold text-gray-700">Fecha:</span> {new Date(payment.created_at).toLocaleString()}</p>
       </div>
-      
-      {payment.status === 'Pendiente' && (
-        <div className="flex gap-2 mt-2">
-          <button 
-            onClick={handleReject}
-            disabled={loading}
-            className="flex-1 py-2 bg-red-50 text-red-600 hover:bg-red-100 font-bold rounded-lg transition-colors text-sm disabled:opacity-50"
-          >
-            Rechazar
-          </button>
-          <button 
-            onClick={handleApprove}
-            disabled={loading}
-            className="flex-1 py-2 bg-green-50 text-green-600 hover:bg-green-100 font-bold rounded-lg transition-colors text-sm disabled:opacity-50"
-          >
-            Aprobar
-          </button>
-        </div>
-      )}
-    </div>
+      <ReceiptModal url={previewUrl} onClose={() => setPreviewUrl(null)} />
+    </>
   )
 }
