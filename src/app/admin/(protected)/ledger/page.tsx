@@ -9,7 +9,7 @@ export default async function LedgerPage() {
   // Fetch ALL completed payments
   const { data: payments } = await supabase
     .from('payments')
-    .select('id, amount, method, created_at, products(name, category), athletes(name, cedula)')
+    .select('id, amount, method, created_at, products(name), athletes(name, cedula)')
     .eq('status', 'Completado');
 
   // Fetch all active installment products (to show debt)
