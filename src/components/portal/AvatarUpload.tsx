@@ -48,25 +48,25 @@ export default function AvatarUpload({
   return (
     <>
       <div 
-        className="relative w-32 h-40 sm:w-36 sm:h-48 group cursor-pointer shrink-0" 
+        className="relative w-full h-full group cursor-pointer" 
         onClick={() => setIsModalOpen(true)}
       >
-        <div className="w-full h-full bg-white rounded-2xl p-1 shadow-sm border border-gray-100 relative overflow-hidden transition-all group-hover:shadow-md group-hover:border-kasa-dorado">
+        <div className="w-full h-full relative overflow-hidden transition-all group-hover:opacity-80">
           {avatar ? (
-            <img src={avatar} alt="Profile Avatar" className="w-full h-full rounded-xl object-cover" />
+            <img src={avatar} alt="Profile Avatar" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-gray-100 transition-colors">
+            <div className="w-full h-full bg-black/40 flex items-center justify-center text-white/50 transition-colors">
               <Camera className="w-8 h-8" />
             </div>
           )}
 
           {/* Overlay hover indicator for view */}
-          <div className="absolute inset-1 rounded-xl bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <span className="text-white text-xs font-bold px-3 py-1 bg-black/50 rounded-full">Ver / Editar</span>
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="text-white text-xs font-bold px-3 py-1 bg-black/50 rounded-full border border-white/20">Cambiar Foto</span>
           </div>
           
           {isUploading && (
-            <div className="absolute inset-1 rounded-xl bg-black/60 flex flex-col items-center justify-center">
+            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
               <Loader2 className="w-6 h-6 text-white animate-spin mb-2" />
               <span className="text-[10px] text-white font-bold">Subiendo...</span>
             </div>
@@ -77,12 +77,12 @@ export default function AvatarUpload({
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}>
           <div className="relative flex flex-col items-center max-w-sm w-full" onClick={e => e.stopPropagation()}>
-            <div className="bg-white rounded-2xl p-2 w-full max-w-[320px] aspect-[3/4] shadow-2xl relative">
+            <div className="bg-white/5 p-2 w-full max-w-[320px] aspect-square rounded-full shadow-2xl relative border border-white/20">
               {avatar ? (
-                <img src={avatar} alt="Avatar Completo" className="w-full h-full object-cover rounded-xl" />
+                <img src={avatar} alt="Avatar Completo" className="w-full h-full object-cover rounded-full shadow-inner" />
               ) : (
-                <div className="w-full h-full bg-gray-100 flex items-center justify-center rounded-xl">
-                  <Camera className="w-16 h-16 text-gray-300" />
+                <div className="w-full h-full bg-gray-900 flex items-center justify-center rounded-full shadow-inner">
+                  <Camera className="w-16 h-16 text-gray-600" />
                 </div>
               )}
             </div>
@@ -99,9 +99,9 @@ export default function AvatarUpload({
               
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="flex items-center justify-center w-full py-3 bg-white hover:bg-gray-50 text-gray-900 font-bold rounded-xl transition-colors shadow-lg"
+                className="py-3 text-white/70 hover:text-white font-bold rounded-xl transition-colors hover:bg-white/10"
               >
-                Cerrar Visor
+                Cerrar
               </button>
             </div>
           </div>
