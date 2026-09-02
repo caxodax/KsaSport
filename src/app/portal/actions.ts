@@ -187,25 +187,22 @@ export async function reportPayment(formData: FormData) {
     }
   }
 
-  // Si es un solo abono, lo guardamos normal. Si son varios, los combinamos.
-  const isMixto = splits.length > 1
-  const finalMethod = isMixto ? 'Mixto (Varios)' : splits[0].method
-  const finalReference = splits.map(s => `${s.method}: ${s.reference} ($${s.amount})`).join(' | ')
-  const finalReceiptUrl = receiptUrls.length > 0 ? receiptUrls.join(',') : null
+  // En lugar de agrupar "Mixto", insertamos una fila por cada comprobante/fracción
+  const rowsToInsert = splits.map((s, index) => ({
+    athlete_id: athlete.id,
+    product_id,
+    amount: Number(s.amount),
+    currency: 'USD',
+    method: s.method,
+    concept: splits.length > 1 ? `${concept} (Parte ${index + 1}/${splits.length})` : concept,
+    status: 'Pendiente',
+    reference_number: s.reference,
+    receipt_url: receiptUrls[index] || null
+  }))
 
   const { error } = await adminSupabase
     .from('payments')
-    .insert({
-      athlete_id: athlete.id,
-      product_id,
-      amount: total_amount,
-      currency: 'USD',
-      method: finalMethod,
-      concept,
-      status: 'Pendiente',
-      reference_number: finalReference,
-      receipt_url: finalReceiptUrl
-    })
+    .insert(rowsToInsert)
 
   if (error) return { error: error.message }
 
