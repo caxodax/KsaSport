@@ -30,6 +30,11 @@ export default async function LedgerPage() {
     .from('athlete_product_opt_ins')
     .select('product_id, athlete_id');
 
+  // Fetch all exemptions to remove from expected revenue
+  const { data: allExemptions } = await supabase
+    .from('athlete_exemptions')
+    .select('product_id, athlete_id');
+
   // --- Metrics Calculation ---
   let totalRevenue = 0;
   const methodMap = new Map<string, { count: number, total: number }>();
@@ -74,15 +79,19 @@ export default async function LedgerPage() {
   const installmentSummary = (installmentProducts || []).map(prod => {
     const pmt = installmentPayments?.filter(p => p.product_id === prod.id) || [];
     let expectedAthleteCount = 0;
+    const exemptionsForProduct = new Set(allExemptions?.filter(e => e.product_id === prod.id).map(e => e.athlete_id) || []);
 
     if (prod.requires_opt_in) {
       // Para torneos, la deuda esperada se basa SOLO en los inscritos explícitamente
       const optIns = allOptIns?.filter(o => o.product_id === prod.id) || [];
-      expectedAthleteCount = optIns.length;
+      // Excluir a los exonerados
+      const validOptIns = optIns.filter(o => !exemptionsForProduct.has(o.athlete_id));
+      expectedAthleteCount = validOptIns.length;
     } else {
       // Para mensualidades (sin opt-in explícito), se asume que todos los que han pagado algo son los esperados
-      // En un futuro se puede cruzar con la tabla athletes si se requiere para todos.
+      // Excluyendo a los exonerados
       const athleteIds = new Set(pmt.map(p => p.athlete_id));
+      exemptionsForProduct.forEach(id => athleteIds.delete(id));
       expectedAthleteCount = athleteIds.size;
     }
 

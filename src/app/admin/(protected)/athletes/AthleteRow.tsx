@@ -1,15 +1,16 @@
 'use client'
 
 import { useState } from 'react';
-import { Trash2, Edit2, Check, X } from 'lucide-react';
+import { Trash2, Edit2, Check, X, UserSearch } from 'lucide-react';
 import { deleteAthlete, updateAthlete } from './actions';
+import Link from 'next/link';
 
 export default function AthleteRow({ 
   athlete, 
   teams,
   isSuperAdmin = true
 }: { 
-  athlete: { id: string, name: string, cedula: string, phone: string, status: string, team_id: string, teams?: { name: string } | null, paid_until?: string | null, position?: string | null, stats_avg?: number | null, stats_hits?: number | null, stats_rbi?: number | null, stats_runs?: number | null },
+  athlete: { id: string, name: string, cedula: string, phone: string, status: string, team_id: string, has_alliance?: boolean, teams?: { name: string } | null, paid_until?: string | null, position?: string | null, stats_avg?: number | null, stats_hits?: number | null, stats_rbi?: number | null, stats_runs?: number | null },
   teams: { id: string, name: string }[],
   isSuperAdmin?: boolean
 }) {
@@ -26,6 +27,7 @@ export default function AthleteRow({
   const [statsHits, setStatsHits] = useState(athlete.stats_hits?.toString() || '');
   const [statsRbi, setStatsRbi] = useState(athlete.stats_rbi?.toString() || '');
   const [statsRuns, setStatsRuns] = useState(athlete.stats_runs?.toString() || '');
+  const [hasAlliance, setHasAlliance] = useState(athlete.has_alliance || false);
 
   const [loading, setLoading] = useState(false);
 
@@ -68,6 +70,7 @@ export default function AthleteRow({
     setStatsHits(athlete.stats_hits?.toString() || '');
     setStatsRbi(athlete.stats_rbi?.toString() || '');
     setStatsRuns(athlete.stats_runs?.toString() || '');
+    setHasAlliance(athlete.has_alliance || false);
   }
 
   if (isEditing) {
@@ -184,6 +187,17 @@ export default function AthleteRow({
                 />
               </div>
             )}
+            {isSuperAdmin && (
+              <label className="flex items-center gap-2 mt-2 text-sm text-gray-700 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={hasAlliance} 
+                  onChange={(e) => setHasAlliance(e.target.checked)}
+                  className="rounded text-kasa-dorado focus:ring-kasa-dorado"
+                />
+                <span className="font-bold">Alianza Comercial</span>
+              </label>
+            )}
           </div>
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-1">
@@ -213,6 +227,11 @@ export default function AthleteRow({
         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
           {athlete.teams?.name || 'Sin equipo'}
         </span>
+        {athlete.has_alliance && (
+          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-kasa-dorado/10 text-kasa-dorado border border-kasa-dorado/20">
+            🤝 Alianza
+          </span>
+        )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex flex-col gap-1">
@@ -255,6 +274,11 @@ export default function AthleteRow({
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-1">
+        {isSuperAdmin && (
+          <Link href={`/admin/athletes/${athlete.id}`} className="text-purple-600 hover:text-purple-800 p-1.5 hover:bg-purple-50 rounded-md" title="Ver Perfil 360">
+            <UserSearch className="w-4 h-4" />
+          </Link>
+        )}
         <button onClick={() => setIsEditing(true)} className="text-blue-600 hover:text-blue-800 p-1.5 hover:bg-blue-50 rounded-md" title="Editar">
           <Edit2 className="w-4 h-4" />
         </button>
@@ -275,7 +299,7 @@ export function AthleteCard({
   teams,
   isSuperAdmin = true
 }: { 
-  athlete: { id: string, name: string, cedula: string, phone: string, status: string, team_id: string, teams?: { name: string } | null, paid_until?: string | null, position?: string | null, stats_avg?: number | null, stats_hits?: number | null, stats_rbi?: number | null, stats_runs?: number | null },
+  athlete: { id: string, name: string, cedula: string, phone: string, status: string, team_id: string, has_alliance?: boolean, teams?: { name: string } | null, paid_until?: string | null, position?: string | null, stats_avg?: number | null, stats_hits?: number | null, stats_rbi?: number | null, stats_runs?: number | null },
   teams: { id: string, name: string }[],
   isSuperAdmin?: boolean
 }) {
@@ -291,6 +315,7 @@ export function AthleteCard({
   const [statsHits, setStatsHits] = useState(athlete.stats_hits?.toString() || '');
   const [statsRbi, setStatsRbi] = useState(athlete.stats_rbi?.toString() || '');
   const [statsRuns, setStatsRuns] = useState(athlete.stats_runs?.toString() || '');
+  const [hasAlliance, setHasAlliance] = useState(athlete.has_alliance || false);
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
@@ -313,6 +338,7 @@ export function AthleteCard({
     if (statsHits) formData.append('stats_hits', statsHits);
     if (statsRbi) formData.append('stats_rbi', statsRbi);
     if (statsRuns) formData.append('stats_runs', statsRuns);
+    formData.append('has_alliance', hasAlliance ? 'true' : 'false');
     
     await updateAthlete(formData);
     setIsEditing(false);
@@ -332,6 +358,7 @@ export function AthleteCard({
     setStatsHits(athlete.stats_hits?.toString() || '');
     setStatsRbi(athlete.stats_rbi?.toString() || '');
     setStatsRuns(athlete.stats_runs?.toString() || '');
+    setHasAlliance(athlete.has_alliance || false);
   }
 
   return (
@@ -445,6 +472,17 @@ export function AthleteCard({
               />
             </div>
           )}
+          {isSuperAdmin && (
+            <label className="flex items-center gap-2 mt-2 text-sm text-gray-700 cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={hasAlliance} 
+                onChange={(e) => setHasAlliance(e.target.checked)}
+                className="rounded text-kasa-dorado focus:ring-kasa-dorado"
+              />
+              <span className="font-bold">Alianza Comercial</span>
+            </label>
+          )}
           <div className="flex justify-end gap-2 mt-2">
             <button onClick={cancelEdit} disabled={loading} className="text-gray-600 bg-gray-100 px-3 py-1.5 rounded-md text-sm font-medium">Cancelar</button>
             <button onClick={handleSave} disabled={loading} className="text-white bg-green-600 px-3 py-1.5 rounded-md text-sm font-medium">Guardar</button>
@@ -471,6 +509,11 @@ export function AthleteCard({
               {athlete.paid_until && (
                 <span className="text-[10px] text-gray-500 font-medium">
                   {athlete.status === 'Solvente' ? 'Hasta' : 'Desde'}: {new Date(athlete.paid_until).toLocaleDateString('es-ES')}
+                </span>
+              )}
+              {athlete.has_alliance && (
+                <span className="px-2 py-0.5 inline-flex items-center text-[10px] font-black bg-kasa-dorado/10 text-kasa-dorado border border-kasa-dorado/20 rounded-full">
+                  🤝 Alianza
                 </span>
               )}
             </div>
@@ -504,6 +547,11 @@ export function AthleteCard({
             </div>
           </div>
           <div className="flex flex-col gap-1 items-end ml-2">
+            {isSuperAdmin && (
+              <Link href={`/admin/athletes/${athlete.id}`} className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors" title="Ver Perfil 360">
+                <UserSearch className="w-4 h-4" />
+              </Link>
+            )}
             <button onClick={() => setIsEditing(true)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Editar">
               <Edit2 className="w-4 h-4" />
             </button>

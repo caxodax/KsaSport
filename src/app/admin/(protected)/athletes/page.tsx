@@ -159,6 +159,16 @@ export default async function AthletesPage({
               </div>
             )}
             <StatusDateInputs />
+            <div className="w-full md:w-auto flex items-center mb-1">
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  name="has_alliance"
+                  className="rounded text-kasa-dorado focus:ring-kasa-dorado"
+                />
+                <span className="font-bold">Alianza Comercial</span>
+              </label>
+            </div>
             <button 
               type="submit" 
               className="bg-kasa-vinotinto hover:bg-red-900 text-white font-bold py-2 px-6 rounded-lg transition-colors w-full md:w-auto h-[38px] text-sm"

@@ -9,6 +9,7 @@ export async function createAthlete(formData: FormData) {
   const team_id = formData.get('team_id') as string;
   const status = formData.get('status') as string || 'Solvente';
   const paid_until = formData.get('paid_until') as string || null;
+  const has_alliance = formData.get('has_alliance') === 'on' || formData.get('has_alliance') === 'true';
 
   if (!name || !cedula) return { error: 'Nombre y cédula son requeridos' };
 
@@ -24,7 +25,8 @@ export async function createAthlete(formData: FormData) {
     stats_avg: formData.get('stats_avg') ? Number(formData.get('stats_avg')) : null,
     stats_hits: formData.get('stats_hits') ? Number(formData.get('stats_hits')) : null,
     stats_rbi: formData.get('stats_rbi') ? Number(formData.get('stats_rbi')) : null,
-    stats_runs: formData.get('stats_runs') ? Number(formData.get('stats_runs')) : null
+    stats_runs: formData.get('stats_runs') ? Number(formData.get('stats_runs')) : null,
+    has_alliance
   }]);
 
   if (error) {
@@ -60,6 +62,7 @@ export async function updateAthlete(formData: FormData) {
   const team_id = formData.get('team_id') as string;
   const status = formData.get('status') as string;
   const paid_until = formData.get('paid_until') as string || null;
+  const has_alliance = formData.get('has_alliance') === 'on' || formData.get('has_alliance') === 'true';
 
   if (!id || !name || !cedula) return { error: 'Datos incompletos' };
 
@@ -81,6 +84,7 @@ export async function updateAthlete(formData: FormData) {
   if (formData.has('stats_hits')) updateData.stats_hits = formData.get('stats_hits') ? Number(formData.get('stats_hits')) : null;
   if (formData.has('stats_rbi')) updateData.stats_rbi = formData.get('stats_rbi') ? Number(formData.get('stats_rbi')) : null;
   if (formData.has('stats_runs')) updateData.stats_runs = formData.get('stats_runs') ? Number(formData.get('stats_runs')) : null;
+  if (formData.has('has_alliance')) updateData.has_alliance = has_alliance;
 
   const { error } = await supabase.from('athletes').update(updateData).eq('id', id);
 

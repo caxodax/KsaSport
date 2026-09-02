@@ -36,6 +36,14 @@ export default async function PortalDashboard() {
     .eq('athlete_id', athlete.id)
     .order('created_at', { ascending: false })
 
+  // Obtener exoneraciones
+  const { data: athleteExemptions } = await adminSupabase
+    .from('athlete_exemptions')
+    .select('product_id')
+    .eq('athlete_id', athlete.id)
+
+  const exemptIds = new Set(athleteExemptions?.map(e => e.product_id) || [])
+
   // Calcular deudas activas (productos con abonos parciales)
   // Agrupamos los pagos aprobados/pendientes por producto
   const activeDebts: any[] = []
@@ -53,6 +61,9 @@ export default async function PortalDashboard() {
     })
 
     productPayments.forEach(val => {
+      // Si el atleta está exonerado de este producto, no hay deuda activa
+      if (exemptIds.has(val.product.id)) return
+
       const remaining = Number(val.product.price) - val.totalPaid
       if (remaining > 0) {
         activeDebts.push({

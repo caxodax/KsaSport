@@ -89,11 +89,21 @@ export default async function PagosPage() {
 
   const optedInIds = new Set(athleteOptIns?.map(o => o.product_id) || [])
 
+  // Obtener exoneraciones de este atleta
+  const { data: athleteExemptions } = await adminSupabase
+    .from('athlete_exemptions')
+    .select('product_id')
+    .eq('athlete_id', athlete.id)
+
+  const exemptIds = new Set(athleteExemptions?.map(e => e.product_id) || [])
+
   // Filtrar productos: 
   // 1. Si categories es null o array vacío -> Es Global (aplica a todas)
   // 2. Si categories incluye el categoryName del atleta -> Aplica a este atleta
   // 3. Si requires_opt_in es true, el atleta DEBE estar en optedInIds
+  // 4. Si el atleta está exonerado (exemptIds), no mostramos el producto para pago
   const filteredProducts = products?.filter(p => {
+    if (exemptIds.has(p.id)) return false
     if (p.requires_opt_in && !optedInIds.has(p.id)) return false
     
     if (!p.categories || p.categories.length === 0) return true
