@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Medal, LayoutDashboard, Users, Shield, Trophy, Menu, Tags, X, ShoppingBag, Wallet, Settings, LogOut } from 'lucide-react';
+import { Medal, LayoutDashboard, Users, Shield, Trophy, Menu, Tags, X, ShoppingBag, Wallet, Settings, LogOut, BarChart3 } from 'lucide-react';
 import { logoutAdmin } from '../login/actions';
 
 export default function Sidebar({ permissions, roleName, email }: { permissions: string[], roleName: string, email: string }) {
@@ -18,6 +18,7 @@ export default function Sidebar({ permissions, roleName, email }: { permissions:
     { href: '/admin/staff', label: 'Staff Técnico', icon: Shield, permission: 'manage_catalog' },
     { href: '/admin/products', label: 'Catálogo de Tienda', icon: ShoppingBag, permission: 'manage_catalog' },
     { href: '/admin/payments', label: 'Finanzas y Pagos', icon: Wallet, permission: 'view_finances' },
+    { href: '/admin/ledger', label: 'Reportes Financieros', icon: BarChart3, permission: 'view_finances' },
     { href: '/admin/settings', label: 'Configuración', icon: Settings, permission: 'manage_settings' },
   ].filter(link => !link.permission || permissions.includes(link.permission));
 
