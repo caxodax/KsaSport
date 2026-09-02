@@ -110,7 +110,7 @@ export default async function PortalDashboard() {
         <div className="relative z-10 px-6 pb-8 md:px-10 md:pb-10 pt-2 flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-10">
           
           <div className="shrink-0 relative">
-            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white/20 shadow-2xl bg-black overflow-hidden backdrop-blur-md">
+            <div className="w-28 h-28 md:w-36 md:h-36 rounded-full shadow-2xl overflow-hidden ring-4 ring-white/10">
               <AvatarUpload athleteId={athlete.id} currentAvatar={athlete.avatar_url} />
             </div>
             {athlete.has_alliance && (
@@ -122,7 +122,7 @@ export default async function PortalDashboard() {
           </div>
 
           <div className="flex-1 text-center md:text-left">
-            <h1 className="text-3xl md:text-5xl font-black text-white leading-tight tracking-tight drop-shadow-md mb-2">
+            <h1 className="text-2xl md:text-5xl font-black text-white leading-tight tracking-tight drop-shadow-md mb-2">
               {athlete.name}
             </h1>
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-1">
