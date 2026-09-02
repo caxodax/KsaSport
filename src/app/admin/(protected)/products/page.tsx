@@ -79,16 +79,29 @@ export default async function ProductsPage() {
                 />
               </div>
 
-              <div className="flex items-center gap-2 mt-2">
-                <input 
-                  type="checkbox" 
-                  id="allows_installments" 
-                  name="allows_installments" 
-                  className="w-4 h-4 text-kasa-vinotinto focus:ring-kasa-vinotinto border-gray-300 rounded"
-                />
-                <label htmlFor="allows_installments" className="text-sm font-medium text-gray-700">
-                  Permite Abonos (Cuotas parciales)
-                </label>
+              <div className="flex flex-col gap-2 mt-2">
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="checkbox" 
+                    id="allows_installments" 
+                    name="allows_installments" 
+                    className="w-4 h-4 text-kasa-vinotinto focus:ring-kasa-vinotinto border-gray-300 rounded"
+                  />
+                  <label htmlFor="allows_installments" className="text-sm font-medium text-gray-700">
+                    Permite Abonos (Cuotas parciales)
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="checkbox" 
+                    id="requires_opt_in" 
+                    name="requires_opt_in" 
+                    className="w-4 h-4 text-kasa-dorado focus:ring-kasa-dorado border-gray-300 rounded"
+                  />
+                  <label htmlFor="requires_opt_in" className="text-sm font-medium text-gray-700">
+                    Requiere Confirmación (Ej: Torneos/Ligas)
+                  </label>
+                </div>
               </div>
             </div>
 

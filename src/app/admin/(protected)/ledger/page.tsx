@@ -15,7 +15,7 @@ export default async function LedgerPage() {
   // Fetch all active installment products (to show debt)
   const { data: installmentProducts } = await supabase
     .from('products')
-    .select('id, name, price')
+    .select('id, name, price, requires_opt_in')
     .eq('is_active', true)
     .eq('allows_installments', true);
 
@@ -24,6 +24,11 @@ export default async function LedgerPage() {
     .from('payments')
     .select('product_id, athlete_id, amount, status')
     .in('status', ['Completado', 'Pendiente']);
+
+  // Fetch all opt-ins to calculate expected revenue for tournaments
+  const { data: allOptIns } = await supabase
+    .from('athlete_product_opt_ins')
+    .select('product_id, athlete_id');
 
   // --- Metrics Calculation ---
   let totalRevenue = 0;
@@ -68,8 +73,20 @@ export default async function LedgerPage() {
   // --- Calcular Abonos Activos por Producto ---
   const installmentSummary = (installmentProducts || []).map(prod => {
     const pmt = installmentPayments?.filter(p => p.product_id === prod.id) || [];
-    const athleteIds = new Set(pmt.map(p => p.athlete_id));
-    const totalFacturado = athleteIds.size * Number(prod.price);
+    let expectedAthleteCount = 0;
+
+    if (prod.requires_opt_in) {
+      // Para torneos, la deuda esperada se basa SOLO en los inscritos explícitamente
+      const optIns = allOptIns?.filter(o => o.product_id === prod.id) || [];
+      expectedAthleteCount = optIns.length;
+    } else {
+      // Para mensualidades (sin opt-in explícito), se asume que todos los que han pagado algo son los esperados
+      // En un futuro se puede cruzar con la tabla athletes si se requiere para todos.
+      const athleteIds = new Set(pmt.map(p => p.athlete_id));
+      expectedAthleteCount = athleteIds.size;
+    }
+
+    const totalFacturado = expectedAthleteCount * Number(prod.price);
     
     // Solo los pagos Completados suman al ingreso recibido
     const pagosValidados = pmt.filter(p => p.status === 'Completado');
@@ -78,7 +95,7 @@ export default async function LedgerPage() {
     const saldoPendiente = Math.max(0, totalFacturado - totalAbonado);
     return {
       id: prod.id, name: prod.name, price: Number(prod.price),
-      athleteCount: athleteIds.size, totalFacturado, totalAbonado, saldoPendiente
+      athleteCount: expectedAthleteCount, totalFacturado, totalAbonado, saldoPendiente
     };
   }).filter(p => p.athleteCount > 0);
 

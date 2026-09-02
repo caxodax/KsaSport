@@ -44,3 +44,21 @@ export async function updateAvatar(athleteId: string, formData: FormData) {
     return { error: err.message || 'Error desconocido' };
   }
 }
+
+export async function optInToProduct(athleteId: string, productId: string) {
+  const supabase = getServiceSupabase();
+  const { error } = await supabase
+    .from('athlete_product_opt_ins')
+    .insert({ athlete_id: athleteId, product_id: productId });
+
+  if (error) {
+    if (error.code === '23505') {
+      return { success: true }; // Ya estaba inscrito
+    }
+    return { error: error.message };
+  }
+
+  revalidatePath('/portal/dashboard');
+  revalidatePath('/portal/dashboard/pagos');
+  return { success: true };
+}

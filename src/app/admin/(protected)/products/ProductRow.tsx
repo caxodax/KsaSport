@@ -12,6 +12,7 @@ type Product = {
   is_active: boolean
   categories: string[]
   allows_installments: boolean
+  requires_opt_in: boolean
 }
 
 type Category = { name: string }
@@ -66,17 +67,31 @@ function EditProductForm({ product, allCategories, onCancel }: { product: Produc
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <input 
-            type="checkbox" 
-            id={`allows_installments_${product.id}`} 
-            name="allows_installments" 
-            defaultChecked={product.allows_installments}
-            className="w-4 h-4 text-kasa-vinotinto focus:ring-kasa-vinotinto border-gray-300 rounded"
-          />
-          <label htmlFor={`allows_installments_${product.id}`} className="text-sm font-medium text-gray-700">
-            Permite Abonos (Cuotas)
-          </label>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <input 
+              type="checkbox" 
+              id={`allows_installments_${product.id}`} 
+              name="allows_installments" 
+              defaultChecked={product.allows_installments}
+              className="w-4 h-4 text-kasa-vinotinto focus:ring-kasa-vinotinto border-gray-300 rounded"
+            />
+            <label htmlFor={`allows_installments_${product.id}`} className="text-sm font-medium text-gray-700">
+              Permite Abonos (Cuotas)
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <input 
+              type="checkbox" 
+              id={`requires_opt_in_${product.id}`} 
+              name="requires_opt_in" 
+              defaultChecked={product.requires_opt_in}
+              className="w-4 h-4 text-kasa-dorado focus:ring-kasa-dorado border-gray-300 rounded"
+            />
+            <label htmlFor={`requires_opt_in_${product.id}`} className="text-sm font-medium text-gray-700">
+              Requiere Confirmación (Ej: Torneos/Ligas)
+            </label>
+          </div>
         </div>
 
         <div>
@@ -154,6 +169,13 @@ export default function ProductRow({ product, allCategories }: { product: Produc
           <div className="mt-1">
             <span className="bg-orange-50 text-orange-700 text-[10px] px-2 py-0.5 rounded-full font-bold">
               Permite Abonos
+            </span>
+          </div>
+        )}
+        {product.requires_opt_in && (
+          <div className="mt-1">
+            <span className="bg-kasa-dorado/10 text-kasa-dorado text-[10px] px-2 py-0.5 rounded-full font-bold border border-kasa-dorado/20">
+              Torneo (Opt-in)
             </span>
           </div>
         )}
@@ -248,8 +270,13 @@ export function ProductCard({ product, allCategories }: { product: Product, allC
             </div>
           )}
           {product.allows_installments && (
-            <span className="bg-orange-50 text-orange-700 text-[10px] px-2 py-0.5 rounded-full font-bold">
+            <span className="bg-orange-50 text-orange-700 text-[10px] px-2 py-0.5 rounded-full font-bold inline-block mr-1">
               Permite Abonos
+            </span>
+          )}
+          {product.requires_opt_in && (
+            <span className="bg-kasa-dorado/10 text-kasa-dorado text-[10px] px-2 py-0.5 rounded-full font-bold border border-kasa-dorado/20 inline-block">
+              Torneo (Opt-in)
             </span>
           )}
         </div>

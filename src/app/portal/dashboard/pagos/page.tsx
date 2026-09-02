@@ -81,10 +81,21 @@ export default async function PagosPage() {
     .eq('athlete_id', athlete.id)
     .in('status', ['Completado', 'Pendiente']) // Incluimos pendientes para no permitirles volver a pagar si ya reportaron
 
+  // Obtener opt-ins del atleta para saber a qué torneos está inscrito
+  const { data: athleteOptIns } = await adminSupabase
+    .from('athlete_product_opt_ins')
+    .select('product_id')
+    .eq('athlete_id', athlete.id)
+
+  const optedInIds = new Set(athleteOptIns?.map(o => o.product_id) || [])
+
   // Filtrar productos: 
   // 1. Si categories es null o array vacío -> Es Global (aplica a todas)
   // 2. Si categories incluye el categoryName del atleta -> Aplica a este atleta
+  // 3. Si requires_opt_in es true, el atleta DEBE estar en optedInIds
   const filteredProducts = products?.filter(p => {
+    if (p.requires_opt_in && !optedInIds.has(p.id)) return false
+    
     if (!p.categories || p.categories.length === 0) return true
     if (categoryName && p.categories.includes(categoryName)) return true
     return false

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { logout } from '../actions'
 import QRModal from '@/components/portal/QRModal'
 import AvatarUpload from '@/components/portal/AvatarUpload'
+import OptInCard from '@/components/portal/OptInCard'
 
 export const revalidate = 0;
 
@@ -64,6 +65,21 @@ export default async function PortalDashboard() {
       }
     })
   }
+
+  // Obtener productos que requieren opt-in y cruzar con los opt-ins actuales
+  const { data: optInProducts } = await adminSupabase
+    .from('products')
+    .select('id, name, price, description')
+    .eq('is_active', true)
+    .eq('requires_opt_in', true)
+
+  const { data: athleteOptIns } = await adminSupabase
+    .from('athlete_product_opt_ins')
+    .select('product_id')
+    .eq('athlete_id', athlete.id)
+
+  const optedInIds = new Set(athleteOptIns?.map(o => o.product_id) || [])
+  const pendingInvitations = optInProducts?.filter(p => !optedInIds.has(p.id)) || []
 
   return (
     <div className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
@@ -138,6 +154,14 @@ export default async function PortalDashboard() {
         {/* Columna Derecha: Acciones e Historial */}
         <div className="lg:col-span-2 space-y-6">
           
+          {pendingInvitations.length > 0 && (
+            <div className="flex flex-col gap-4">
+              {pendingInvitations.map(invitation => (
+                <OptInCard key={invitation.id} athleteId={athlete.id} product={invitation} />
+              ))}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Link href="/portal/dashboard/pagos" className="group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-kasa-dorado hover:shadow-md transition-all flex items-center gap-4">
               <div className="w-12 h-12 bg-yellow-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
