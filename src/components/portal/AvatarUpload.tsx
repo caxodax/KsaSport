@@ -51,17 +51,17 @@ export default function AvatarUpload({
         className="relative w-full h-full group cursor-pointer" 
         onClick={() => setIsModalOpen(true)}
       >
-        <div className="w-full h-full relative overflow-hidden transition-all group-hover:opacity-80">
+        <div className="w-full h-full rounded-full relative overflow-hidden transition-all group-hover:opacity-80">
           {avatar ? (
-            <img src={avatar} alt="Profile Avatar" className="w-full h-full object-cover" />
+            <img src={avatar} alt="Profile Avatar" className="w-full h-full object-cover rounded-full" />
           ) : (
-            <div className="w-full h-full bg-black/40 flex items-center justify-center text-white/50 transition-colors">
+            <div className="w-full h-full rounded-full bg-black/40 flex items-center justify-center text-white/50 transition-colors">
               <Camera className="w-8 h-8" />
             </div>
           )}
 
           {/* Overlay hover indicator for view */}
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
             <span className="text-white text-xs font-bold px-3 py-1 bg-black/50 rounded-full border border-white/20">Cambiar Foto</span>
           </div>
           

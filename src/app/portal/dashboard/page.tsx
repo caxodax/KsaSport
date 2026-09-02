@@ -137,9 +137,11 @@ export default async function PortalDashboard() {
           </div>
 
           <div className="shrink-0 flex gap-3 flex-col sm:flex-row items-center w-full md:w-auto">
-            <div className="w-full sm:w-auto bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-1 shadow-xl">
-              <QRModal athleteId={athlete.id} status={athlete.status} />
-            </div>
+            <QRModal 
+              athleteId={athlete.id} 
+              status={athlete.status} 
+              triggerClassName="w-full sm:w-auto flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 font-bold py-3 px-6 rounded-2xl transition-all shadow-xl"
+            />
             <Link href="/portal/dashboard/pagos" className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-kasa-dorado to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-kasa-vinotinto font-black py-3 px-6 rounded-2xl transition-all shadow-lg hover:shadow-yellow-500/20 transform hover:-translate-y-0.5">
               <ShoppingCart className="w-5 h-5" />
               PAGAR

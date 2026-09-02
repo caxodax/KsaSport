@@ -4,14 +4,22 @@ import { useState } from 'react';
 import { QrCode, X } from 'lucide-react';
 import QRCodeDisplay from './QRCodeDisplay';
 
-export default function QRModal({ athleteId, status }: { athleteId: string, status: string }) {
+export default function QRModal({ 
+  athleteId, 
+  status,
+  triggerClassName
+}: { 
+  athleteId: string, 
+  status: string,
+  triggerClassName?: string 
+}) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
       <button 
         onClick={() => setIsOpen(true)}
-        className="flex items-center justify-center gap-2 w-full py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold rounded-xl transition-colors border border-gray-200"
+        className={triggerClassName || "flex items-center justify-center gap-2 w-full py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold rounded-xl transition-colors border border-gray-200"}
       >
         <QrCode className="w-5 h-5" />
         Ver Carnet Digital
