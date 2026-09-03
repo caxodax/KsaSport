@@ -2,6 +2,7 @@ import { getServiceSupabase } from '@/lib/supabase';
 import { Users, AlertCircle, CircleDollarSign, TrendingUp, Wallet } from 'lucide-react';
 import DashboardFilters from './DashboardFilters';
 import Pagination from './Pagination';
+import MonthSelector from './MonthSelector';
 
 export const revalidate = 0;
 
@@ -90,6 +91,15 @@ export default async function DashboardPage({
     .from('athlete_exemptions')
     .select('athlete_id, product_id');
 
+  // 6. Configuraciones del club (Penalidades)
+  const { data: settings } = await supabase
+    .from('club_settings')
+    .select('grace_period_days, penalty_amount')
+    .single();
+
+  const gracePeriodDays = settings?.grace_period_days ?? 5;
+  const penaltyAmount = settings?.penalty_amount ?? 5.00;
+
   // --- Calcular KPIs de Mensualidad ---
   // Función: dado un atleta con categoría X, buscar el producto mensualidad que aplique
   const getMensualidadProduct = (category: string) => {
@@ -128,6 +138,8 @@ export default async function DashboardPage({
       entry.recibido += price;
     } else if (a.status === 'Moroso') {
       let monthsOwed = 1;
+      let appliedPenalty = 0;
+
       if (a.paid_until) {
         const paidDate = new Date(a.paid_until);
         const yearDiff = today.getFullYear() - paidDate.getFullYear();
@@ -136,9 +148,18 @@ export default async function DashboardPage({
         if (calculatedMonths >= 1) {
           monthsOwed = calculatedMonths;
         }
+
+        // Calcular si aplica penalidad (hoy > paid_until + grace_period_days)
+        const deadline = new Date(paidDate);
+        deadline.setDate(deadline.getDate() + gracePeriodDays);
+        if (today > deadline) {
+          // Se asume una penalidad por cada mes de mora, o una penalidad única?
+          // Lo más común es aplicar penalidad mensual por atraso.
+          appliedPenalty = penaltyAmount * monthsOwed;
+        }
       }
 
-      const totalOwed = price * monthsOwed;
+      const totalOwed = (price * monthsOwed) + appliedPenalty;
       montoMorosidad += totalOwed;
       entry.morosos++;
       entry.pendiente += totalOwed;
@@ -156,9 +177,12 @@ export default async function DashboardPage({
   return (
     <div className="p-4 sm:p-8">
       {/* Title */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900">Panel de Control</h2>
-          <p className="text-gray-500 mt-1">Resumen financiero y estatus de atletas en tiempo real.</p>
+        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900">Panel de Control</h2>
+            <p className="text-gray-500 mt-1">Resumen financiero y estatus de atletas en tiempo real.</p>
+          </div>
+          <MonthSelector />
         </div>
 
         {/* KPIs de Atletas */}

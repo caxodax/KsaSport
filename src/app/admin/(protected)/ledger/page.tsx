@@ -1,16 +1,40 @@
 import { getServiceSupabase } from '@/lib/supabase';
 import { CircleDollarSign, TrendingUp, CreditCard, ShoppingCart, BarChart3, Receipt, ChevronUp, Users } from 'lucide-react';
+import MonthSelector from '../MonthSelector';
 
 export const revalidate = 0;
 
-export default async function LedgerPage() {
+export default async function LedgerPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const resolvedParams = await searchParams;
+  const monthParam = typeof resolvedParams.month === 'string' ? resolvedParams.month : null;
   const supabase = getServiceSupabase();
 
-  // Fetch ALL completed payments
+  // Calcular rango de fechas
+  let startDate = new Date();
+  startDate.setDate(1);
+  startDate.setHours(0, 0, 0, 0);
+  
+  if (monthParam) {
+    const [year, month] = monthParam.split('-');
+    if (year && month) {
+      startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+    }
+  }
+  
+  const endDate = new Date(startDate);
+  endDate.setMonth(endDate.getMonth() + 1);
+
+  // Fetch ALL completed payments in the month
   const { data: payments } = await supabase
     .from('payments')
     .select('id, amount, method, created_at, products(name), athletes(name, cedula)')
-    .eq('status', 'Completado');
+    .eq('status', 'Completado')
+    .gte('created_at', startDate.toISOString())
+    .lt('created_at', endDate.toISOString());
 
   // Fetch all active installment products (to show debt)
   const { data: installmentProducts } = await supabase
@@ -111,16 +135,19 @@ export default async function LedgerPage() {
   return (
     <div className="p-4 sm:p-8 bg-gray-50/50 min-h-screen">
       {/* Encabezado Analítico */}
-      <div className="mb-8">
-        <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-          <div className="p-2.5 bg-green-100 rounded-xl">
-            <BarChart3 className="w-8 h-8 text-green-700" />
-          </div>
-          Reportes Financieros (Libro Mayor)
-        </h2>
-        <p className="text-gray-500 mt-2 text-lg">
-          Análisis de ingresos reales validados en la plataforma.
-        </p>
+      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
+            <div className="p-2.5 bg-green-100 rounded-xl">
+              <BarChart3 className="w-8 h-8 text-green-700" />
+            </div>
+            Reportes Financieros (Libro Mayor)
+          </h2>
+          <p className="text-gray-500 mt-2 text-lg">
+            Análisis de ingresos reales validados en la plataforma.
+          </p>
+        </div>
+        <MonthSelector />
       </div>
 
       {/* Tarjetas KPI Premium */}
