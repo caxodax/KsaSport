@@ -59,7 +59,7 @@ export default async function DashboardPage({
   // 1. Todos los atletas activos (sin paginación) para KPIs
   let allAthletesQuery = supabase
     .from('athletes')
-    .select('id, status, paid_until, team_id, teams!inner(category)')
+    .select('id, status, paid_until, team_id, has_alliance, teams!inner(category)')
     .in('status', ['Solvente', 'Moroso']);
   if (teamFilter) allAthletesQuery = allAthletesQuery.eq('team_id', teamFilter);
   if (categoryFilter) allAthletesQuery = allAthletesQuery.eq('teams.category', categoryFilter);
@@ -103,6 +103,9 @@ export default async function DashboardPage({
   const today = new Date();
 
   allAthletes?.forEach(a => {
+    // Si la atleta tiene alianza (exonerada), no cuenta para proyecciones financieras de mensualidad
+    if (a.has_alliance) return;
+
     const cat = (a.teams as any)?.category || 'Sin categoría';
     const price = getMensualidadPrice(cat);
     
