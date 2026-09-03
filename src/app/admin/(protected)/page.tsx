@@ -85,15 +85,20 @@ export default async function DashboardPage({
     .select('product_id, athlete_id, amount, status')
     .in('status', ['Completado', 'Pendiente']);
 
+  // 5. Exoneraciones de atletas
+  const { data: allExemptions } = await supabase
+    .from('athlete_exemptions')
+    .select('athlete_id, product_id');
+
   // --- Calcular KPIs de Mensualidad ---
   // Función: dado un atleta con categoría X, buscar el producto mensualidad que aplique
-  const getMensualidadPrice = (category: string): number => {
-    if (!mensualidades) return 0;
+  const getMensualidadProduct = (category: string) => {
+    if (!mensualidades) return null;
     for (const m of mensualidades) {
-      if (!m.categories || m.categories.length === 0) return Number(m.price); // Global
-      if (m.categories.includes(category)) return Number(m.price);
+      if (!m.categories || m.categories.length === 0) return m; // Global
+      if (m.categories.includes(category)) return m;
     }
-    return 0;
+    return null;
   };
 
   let montoSolvente = 0;
@@ -103,16 +108,19 @@ export default async function DashboardPage({
   const today = new Date();
 
   allAthletes?.forEach(a => {
-    // Si la atleta tiene alianza (exonerada), no cuenta para proyecciones financieras de mensualidad
-    if (a.has_alliance) return;
-
     const cat = (a.teams as any)?.category || 'Sin categoría';
-    const price = getMensualidadPrice(cat);
+    const product = getMensualidadProduct(cat);
+    const price = product ? Number(product.price) : 0;
     
     if (!categoryBreakdown.has(cat)) {
       categoryBreakdown.set(cat, { solventes: 0, morosos: 0, price, recibido: 0, pendiente: 0 });
     }
     const entry = categoryBreakdown.get(cat)!;
+
+    // Verificar si la atleta está exonerada ESPECÍFICAMENTE para esta mensualidad
+    const isExempt = product && allExemptions?.some(e => e.athlete_id === a.id && e.product_id === product.id);
+
+    if (isExempt) return; // No suma a las proyecciones financieras de mensualidad
 
     if (a.status === 'Solvente') {
       montoSolvente += price;
