@@ -53,9 +53,6 @@ export default async function DashboardPage({
   
   if (error) console.error('Error fetching athletes:', error);
 
-  const solventes = athletes?.filter(a => a.status === 'Solvente').length || 0;
-  const morosos = athletes?.filter(a => a.status === 'Moroso').length || 0;
-
   const monthParam = typeof resolvedParams.month === 'string' ? resolvedParams.month : '';
   
   // Parse month param or use current month
@@ -130,6 +127,8 @@ export default async function DashboardPage({
 
   let montoSolvente = 0;
   let montoMorosidad = 0;
+  let totalSolventesMes = 0;
+  let totalMorososMes = 0;
   const categoryBreakdown = new Map<string, { solventes: number, morosos: number, price: number, recibido: number, pendiente: number }>();
 
   const today = new Date();
@@ -171,6 +170,7 @@ export default async function DashboardPage({
       montoSolvente += price;
       entry.solventes++;
       entry.recibido += price;
+      totalSolventesMes++;
     } else {
       let appliedPenalty = 0;
 
@@ -186,6 +186,7 @@ export default async function DashboardPage({
       montoMorosidad += totalOwedForMonth;
       entry.morosos++;
       entry.pendiente += totalOwedForMonth;
+      totalMorososMes++;
     }
   });
 
@@ -219,7 +220,7 @@ export default async function DashboardPage({
                 </div>
                 <div className="ml-4 w-0 flex-1">
                   <dt className="text-sm font-medium text-gray-500 truncate">Solventes</dt>
-                  <dd className="text-2xl font-bold text-gray-900">{solventes}</dd>
+                  <dd className="text-2xl font-bold text-gray-900">{totalSolventesMes}</dd>
                 </div>
               </div>
             </div>
@@ -233,7 +234,7 @@ export default async function DashboardPage({
                 </div>
                 <div className="ml-4 w-0 flex-1">
                   <dt className="text-sm font-medium text-gray-500 truncate">Morosidad Activa</dt>
-                  <dd className="text-2xl font-bold text-gray-900">{morosos}</dd>
+                  <dd className="text-2xl font-bold text-gray-900">{totalMorososMes}</dd>
                 </div>
               </div>
             </div>
@@ -263,7 +264,7 @@ export default async function DashboardPage({
                 <div>
                   <p className="text-xs font-bold text-green-600 uppercase tracking-wider">Ingreso Recibido</p>
                   <p className="text-3xl font-black text-green-800 mt-1">${montoSolvente.toFixed(2)}</p>
-                  <p className="text-[11px] text-green-600 mt-1">{allAthletes?.filter(a => a.status === 'Solvente').length || 0} atletas al día</p>
+                  <p className="text-[11px] text-green-600 mt-1">{totalSolventesMes} atletas al día</p>
                 </div>
                 <div className="p-3 bg-green-100 rounded-xl">
                   <CircleDollarSign className="h-7 w-7 text-green-600" />
@@ -278,7 +279,7 @@ export default async function DashboardPage({
                 <div>
                   <p className="text-xs font-bold text-red-600 uppercase tracking-wider">Morosidad Pendiente</p>
                   <p className="text-3xl font-black text-red-800 mt-1">${montoMorosidad.toFixed(2)}</p>
-                  <p className="text-[11px] text-red-600 mt-1">{allAthletes?.filter(a => a.status === 'Moroso').length || 0} atletas en mora</p>
+                  <p className="text-[11px] text-red-600 mt-1">{totalMorososMes} atletas en mora</p>
                 </div>
                 <div className="p-3 bg-red-100 rounded-xl">
                   <AlertCircle className="h-7 w-7 text-red-600" />
