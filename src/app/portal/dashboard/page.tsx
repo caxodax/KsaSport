@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getServiceSupabase } from '@/lib/supabase'
-import { CheckCircle2, AlertCircle, ShoppingCart, Activity, ShieldCheck, User, Calendar, LogOut } from 'lucide-react'
+import { CheckCircle2, AlertCircle, ShoppingCart, Activity, ShieldCheck, User, Calendar, LogOut, Lock, PhoneCall } from 'lucide-react'
 import Link from 'next/link'
 import { logout } from '../actions'
 import QRModal from '@/components/portal/QRModal'
@@ -28,6 +28,115 @@ export default async function PortalDashboard() {
 
   if (!athlete) {
     redirect('/portal/link-profile')
+  }
+
+  // Si el atleta está inactivo, mostrar pantalla de bloqueo
+  if (athlete.status === 'Inactivo') {
+    return (
+      <div className="flex-1 w-full max-w-2xl mx-auto p-4 sm:p-6 lg:p-8 flex flex-col items-center justify-center min-h-[80vh]">
+        <div className="w-full bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden text-center relative">
+          
+          {/* Header con gradiente de advertencia */}
+          <div className="bg-gradient-to-r from-red-900 via-kasa-vinotinto to-red-950 p-8 text-white relative">
+            <div className="absolute top-4 right-4">
+              <form action={logout}>
+                <button 
+                  type="submit" 
+                  className="flex items-center gap-1.5 text-xs font-bold text-white/80 hover:text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full transition-all border border-white/10"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  Cerrar Sesión
+                </button>
+              </form>
+            </div>
+
+            <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center mx-auto mb-4 ring-4 ring-white/20">
+              <Lock className="w-10 h-10 text-white" />
+            </div>
+
+            <span className="inline-block px-3 py-1 bg-red-500/30 border border-red-400/40 text-red-200 text-xs font-black uppercase tracking-widest rounded-full mb-2">
+              Perfil Inactivo
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-black text-white">Acceso Restringido</h1>
+            <p className="text-white/80 text-sm mt-1 max-w-md mx-auto">
+              Tu cuenta de atleta no se encuentra activa en el sistema de Kasa Sports.
+            </p>
+          </div>
+
+          {/* Cuerpo informativo */}
+          <div className="p-6 sm:p-8 space-y-6">
+            
+            {/* Tarjeta de datos del atleta */}
+            <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center shrink-0">
+                  {athlete.avatar_url ? (
+                    <img src={athlete.avatar_url} alt={athlete.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-6 h-6 text-gray-400" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 leading-tight">{athlete.name}</h3>
+                  <p className="text-xs text-gray-500 font-medium">C.I: {athlete.cedula}</p>
+                </div>
+              </div>
+              <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:gap-1 w-full sm:w-auto justify-between sm:justify-start border-t sm:border-t-0 pt-2 sm:pt-0 border-gray-200">
+                <span className="text-xs font-medium text-gray-600 bg-white px-2.5 py-1 rounded-lg border border-gray-200">
+                  {/* @ts-ignore */}
+                  {athlete.teams?.name || 'Sin equipo'}
+                </span>
+                <span className="text-[11px] font-bold text-red-600 bg-red-50 px-2.5 py-0.5 rounded-full border border-red-100">
+                  Estatus: Inactivo
+                </span>
+              </div>
+            </div>
+
+            {/* Mensaje de instrucciones */}
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-left">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <h4 className="font-bold text-amber-900 text-sm">¿Deseas reactivar tu membresía?</h4>
+                  <p className="text-xs text-amber-800 leading-relaxed">
+                    Para reactivar tu cupo deportivo, registrar pagos o consultar tu situación en la academia, debes ponerte en contacto directamente con la administración de Kasa Sports.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Acciones */}
+            <div className="pt-2 flex flex-col sm:flex-row gap-3">
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(`Hola, Administración de Kasa Sports. Mi cuenta está inactiva y deseo consultar sobre mi cupo/reactivación. Atleta: ${athlete.name}, C.I: ${athlete.cedula}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg text-sm"
+              >
+                <PhoneCall className="w-4 h-4" />
+                Contactar al Administrador
+              </a>
+              
+              <form action={logout} className="sm:w-auto">
+                <button
+                  type="submit"
+                  className="w-full sm:w-auto px-5 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors text-sm"
+                >
+                  Cerrar Sesión
+                </button>
+              </form>
+            </div>
+
+          </div>
+
+          {/* Footer discreto */}
+          <div className="bg-gray-50 px-6 py-3 border-t border-gray-100 text-xs text-gray-400">
+            Kasa Sports • Sistema de Control y Gestión Deportiva
+          </div>
+
+        </div>
+      </div>
+    )
   }
 
   // Obtener últimos pagos

@@ -19,10 +19,14 @@ export default async function VerifyAthletePage(props: { params: Promise<{ id: s
   }
 
   const isSolvente = athlete.status === 'Solvente';
+  const isInactivo = athlete.status === 'Inactivo';
+
+  const statusTitle = isInactivo ? 'Inactiva' : isSolvente ? 'Habilitada' : 'Restringida';
+  const statusHeaderBg = isInactivo ? 'bg-gray-800' : isSolvente ? 'bg-green-500' : 'bg-red-600';
+  const pageBg = isInactivo ? 'bg-gray-900' : isSolvente ? 'bg-green-600' : 'bg-red-700';
 
   return (
-    <div className={`min-h-screen flex flex-col items-center justify-center p-4 font-sans
-      ${isSolvente ? 'bg-green-600' : 'bg-red-700'}`}>
+    <div className={`min-h-screen flex flex-col items-center justify-center p-4 font-sans ${pageBg}`}>
       
       {/* Decorative Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -33,15 +37,14 @@ export default async function VerifyAthletePage(props: { params: Promise<{ id: s
       <div className="relative z-10 w-full max-w-sm bg-white rounded-[2rem] shadow-2xl overflow-hidden">
         
         {/* Status Header */}
-        <div className={`py-6 flex flex-col items-center justify-center text-white
-          ${isSolvente ? 'bg-green-500' : 'bg-red-600'}`}>
+        <div className={`py-6 flex flex-col items-center justify-center text-white ${statusHeaderBg}`}>
           {isSolvente ? (
             <CheckCircle2 className="w-16 h-16 mb-2 drop-shadow-md" />
           ) : (
             <AlertOctagon className="w-16 h-16 mb-2 drop-shadow-md" />
           )}
           <h1 className="text-3xl font-black uppercase tracking-widest drop-shadow-md">
-            {isSolvente ? 'Habilitada' : 'Restringida'}
+            {statusTitle}
           </h1>
         </div>
 
@@ -91,13 +94,18 @@ export default async function VerifyAthletePage(props: { params: Promise<{ id: s
             </div>
 
             {/* Paid Until */}
-            {athlete.paid_until && (
+            {isInactivo ? (
+              <div className="text-sm font-semibold rounded-xl p-3 bg-gray-100 text-gray-700">
+                Ficha Inactiva <br/>
+                <span className="text-xs font-normal text-gray-500">Contacte a la administración</span>
+              </div>
+            ) : athlete.paid_until ? (
               <div className={`text-sm font-semibold rounded-xl p-3 
                 ${isSolvente ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
                 {isSolvente ? 'Válido hasta:' : 'Vencido desde:'} <br/>
                 {new Date(athlete.paid_until).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
               </div>
-            )}
+            ) : null}
           </div>
 
         </div>

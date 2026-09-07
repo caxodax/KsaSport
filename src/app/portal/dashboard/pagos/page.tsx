@@ -18,12 +18,16 @@ export default async function PagosPage() {
   // Obtener la categoría y solvencia del atleta
   const { data: athlete } = await adminSupabase
     .from('athletes')
-    .select('id, paid_until, teams(category)')
+    .select('id, status, paid_until, teams(category)')
     .eq('user_id', session.user.id)
     .single()
 
   if (!athlete) {
     redirect('/portal/link-profile')
+  }
+
+  if (athlete.status === 'Inactivo') {
+    redirect('/portal/dashboard')
   }
 
   // @ts-ignore
