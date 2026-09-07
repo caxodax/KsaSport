@@ -2,6 +2,7 @@ import { getServiceSupabase } from '@/lib/supabase'
 import { ShoppingBag, Plus } from 'lucide-react'
 import { createProduct } from './actions'
 import ProductRow, { ProductCard } from './ProductRow'
+import ProductCreateForm from './ProductCreateForm'
 import { checkAdminPermission } from '@/lib/auth-admin'
 
 export const revalidate = 0
@@ -40,96 +41,7 @@ export default async function ProductsPage() {
             <h3 className="text-lg font-bold text-gray-900">Nuevo Producto / Servicio</h3>
           </div>
           
-          <form action={createProduct as any} className="flex flex-col md:flex-row gap-4 items-start">
-            <div className="flex-1 w-full space-y-4">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-[2]">
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
-                  <input 
-                    type="text" 
-                    id="name" 
-                    name="name" 
-                    required
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-kasa-vinotinto outline-none"
-                    placeholder="Ej: Mensualidad, Tryout, Uniforme"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">Precio ($) *</label>
-                  <input 
-                    type="number" 
-                    id="price" 
-                    name="price" 
-                    step="0.01"
-                    required
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-kasa-vinotinto outline-none"
-                    placeholder="Ej: 30.00"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Descripción (Opcional)</label>
-                <input 
-                  type="text" 
-                  id="description" 
-                  name="description" 
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-kasa-vinotinto outline-none"
-                  placeholder="Ej: Pago correspondiente al mes en curso."
-                />
-              </div>
-
-              <div className="flex flex-col gap-2 mt-2">
-                <div className="flex items-center gap-2">
-                  <input 
-                    type="checkbox" 
-                    id="allows_installments" 
-                    name="allows_installments" 
-                    className="w-4 h-4 text-kasa-vinotinto focus:ring-kasa-vinotinto border-gray-300 rounded"
-                  />
-                  <label htmlFor="allows_installments" className="text-sm font-medium text-gray-700">
-                    Permite Abonos (Cuotas parciales)
-                  </label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input 
-                    type="checkbox" 
-                    id="requires_opt_in" 
-                    name="requires_opt_in" 
-                    className="w-4 h-4 text-kasa-dorado focus:ring-kasa-dorado border-gray-300 rounded"
-                  />
-                  <label htmlFor="requires_opt_in" className="text-sm font-medium text-gray-700">
-                    Requiere Confirmación (Ej: Torneos/Ligas)
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex-1 w-full">
-              <label htmlFor="categories" className="block text-sm font-medium text-gray-700 mb-1">Aplica para Categorías</label>
-              <select 
-                id="categories" 
-                name="categories" 
-                multiple
-                className="w-full rounded-lg border border-gray-300 p-2 bg-white text-gray-900 focus:ring-2 focus:ring-kasa-vinotinto outline-none min-h-[110px]"
-              >
-                <option value="Global" className="font-bold text-kasa-vinotinto">Global (Todas las Categorías)</option>
-                {categories?.map((c) => (
-                  <option key={c.name} value={c.name}>{c.name}</option>
-                ))}
-              </select>
-              <p className="text-xs text-gray-500 mt-1">Mantén presionado Ctrl (Windows) o Cmd (Mac) para seleccionar varias. Si eliges "Global", se ignoran las demás.</p>
-            </div>
-
-            <div className="w-full md:w-auto self-end md:self-stretch flex items-end">
-              <button 
-                type="submit" 
-                className="bg-kasa-vinotinto hover:bg-red-900 text-white font-bold py-2 px-6 rounded-lg transition-colors w-full h-[42px] mb-6 md:mb-0"
-              >
-                Crear
-              </button>
-            </div>
-          </form>
+          <ProductCreateForm categories={categories || []} />
         </div>
 
         {/* Lista de Productos */}

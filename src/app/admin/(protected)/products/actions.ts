@@ -10,6 +10,9 @@ export async function createProduct(formData: FormData) {
   const allows_installments = formData.get('allows_installments') === 'on' || formData.get('allows_installments') === 'true'
   const requires_opt_in = formData.get('requires_opt_in') === 'on' || formData.get('requires_opt_in') === 'true'
   
+  const start_date = formData.get('start_date') as string
+  const end_date = formData.get('end_date') as string
+  
   // Extraer múltiples categorías si el usuario selecciona varias (usando un select multiple o checkboxes)
   // Como en NextJS formData.getAll funciona si hay múltiples inputs con el mismo nombre.
   const categories = formData.getAll('categories') as string[]
@@ -29,7 +32,9 @@ export async function createProduct(formData: FormData) {
       price, 
       categories: finalCategories,
       allows_installments,
-      requires_opt_in
+      requires_opt_in,
+      start_date: start_date ? new Date(start_date).toISOString() : null,
+      end_date: end_date ? new Date(end_date).toISOString() : null
     }])
 
   if (error) {
@@ -83,6 +88,9 @@ export async function updateProduct(formData: FormData) {
   const allows_installments = formData.get('allows_installments') === 'on' || formData.get('allows_installments') === 'true'
   const requires_opt_in = formData.get('requires_opt_in') === 'on' || formData.get('requires_opt_in') === 'true'
   
+  const start_date = formData.get('start_date') as string
+  const end_date = formData.get('end_date') as string
+
   const categories = formData.getAll('categories') as string[]
   const finalCategories = categories.includes('Global') || categories.length === 0 
     ? [] 
@@ -98,7 +106,9 @@ export async function updateProduct(formData: FormData) {
       price, 
       categories: finalCategories,
       allows_installments,
-      requires_opt_in
+      requires_opt_in,
+      start_date: start_date ? new Date(start_date).toISOString() : null,
+      end_date: end_date ? new Date(end_date).toISOString() : null
     })
     .eq('id', id)
 

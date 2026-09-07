@@ -14,16 +14,19 @@ type Product = {
   amount_paid?: number
   amount_pending?: number
   months_owed?: number
+  start_date?: string
 }
 
 export default function PaymentForm({ 
   products,
   isLate,
-  penaltyAmount
+  penaltyAmount,
+  gracePeriodDays
 }: { 
   products: Product[],
   isLate?: boolean,
-  penaltyAmount?: number
+  penaltyAmount?: number,
+  gracePeriodDays?: number
 }) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(false)
@@ -150,8 +153,19 @@ export default function PaymentForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {products.map((product) => {
             const isMensualidad = product.name.toLowerCase().includes('mensualidad');
-            const hasPenalty = isMensualidad && isLate;
-            const penaltyTotal = hasPenalty ? (penaltyAmount || 0) * (product.months_owed || 1) : 0;
+            let hasPenalty = false;
+            
+            if (isMensualidad) {
+              if (product.start_date && gracePeriodDays !== undefined) {
+                const startDate = new Date(product.start_date);
+                const deadline = new Date(startDate.getFullYear(), startDate.getMonth(), gracePeriodDays);
+                hasPenalty = new Date() > deadline;
+              } else {
+                hasPenalty = !!isLate;
+              }
+            }
+
+            const penaltyTotal = hasPenalty ? (penaltyAmount || 0) : 0;
             const finalPrice = Number(product.price) + penaltyTotal;
             
             return (
@@ -185,7 +199,7 @@ export default function PaymentForm({
                 ) : null}
                 {hasPenalty && (
                   <p className="text-xs text-red-500 font-medium mt-2 bg-red-50 p-2 rounded-md">
-                    El monto incluye ${penaltyTotal} por {product.months_owed || 1} {product.months_owed === 1 ? 'mes' : 'meses'} de atraso (${penaltyAmount} por mes).
+                    El monto incluye ${penaltyTotal} por pago fuera de la fecha límite (Día {gracePeriodDays}).
                   </p>
                 )}
               </button>

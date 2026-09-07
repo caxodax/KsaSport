@@ -56,6 +56,23 @@ export default async function DashboardPage({
   const solventes = athletes?.filter(a => a.status === 'Solvente').length || 0;
   const morosos = athletes?.filter(a => a.status === 'Moroso').length || 0;
 
+  const monthParam = typeof resolvedParams.month === 'string' ? resolvedParams.month : '';
+  
+  // Parse month param or use current month
+  let targetDate = new Date();
+  if (monthParam) {
+    const [year, month] = monthParam.split('-');
+    if (year && month) {
+      targetDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+    }
+  }
+
+  // Calculate boundaries of selected month
+  const targetYear = targetDate.getFullYear();
+  const targetMonthNum = targetDate.getMonth() + 1;
+  const startOfMonth = new Date(targetYear, targetMonthNum - 1, 1).toISOString();
+  const endOfMonth = new Date(targetYear, targetMonthNum, 0, 23, 59, 59, 999).toISOString();
+
   // ========== ANÁLISIS FINANCIERO ==========
   // 1. Todos los atletas activos (sin paginación) para KPIs
   let allAthletesQuery = supabase
@@ -66,12 +83,12 @@ export default async function DashboardPage({
   if (categoryFilter) allAthletesQuery = allAthletesQuery.eq('teams.category', categoryFilter);
   const { data: allAthletes } = await allAthletesQuery;
 
-  // 2. Productos de mensualidad activos
+  // 2. Productos de mensualidad activos válidos para el mes seleccionado
   const { data: mensualidades } = await supabase
     .from('products')
-    .select('id, name, price, categories')
-    .eq('is_active', true)
-    .ilike('name', '%mensualidad%');
+    .select('id, name, price, categories, start_date, end_date')
+    .ilike('name', '%mensualidad%')
+    .or(`and(start_date.lte.${endOfMonth},end_date.gte.${startOfMonth}),start_date.is.null`);
 
   // 3. Productos con abonos activos
   const { data: installmentProducts } = await supabase
@@ -132,37 +149,43 @@ export default async function DashboardPage({
 
     if (isExempt) return; // No suma a las proyecciones financieras de mensualidad
 
-    if (a.status === 'Solvente') {
+    // Determinar si el atleta pagó el mes objetivo (targetMonth)
+    let paidForTargetMonth = false;
+    
+    if (a.paid_until) {
+      const paidDate = new Date(a.paid_until);
+      // Asumimos que pagó si la fecha pagada cubre el mes objetivo
+      if (paidDate.getFullYear() > targetYear || 
+         (paidDate.getFullYear() === targetYear && paidDate.getMonth() >= targetMonthNum - 1)) {
+        paidForTargetMonth = true;
+      }
+    } else if (a.status === 'Solvente') {
+      // Si es solvente pero no tiene paid_until, asumimos que está al día
+      if (today.getFullYear() > targetYear || 
+         (today.getFullYear() === targetYear && today.getMonth() >= targetMonthNum - 1)) {
+        paidForTargetMonth = true;
+      }
+    }
+
+    if (paidForTargetMonth) {
       montoSolvente += price;
       entry.solventes++;
       entry.recibido += price;
-    } else if (a.status === 'Moroso') {
-      let monthsOwed = 1;
+    } else {
       let appliedPenalty = 0;
 
-      if (a.paid_until) {
-        const paidDate = new Date(a.paid_until);
-        const yearDiff = today.getFullYear() - paidDate.getFullYear();
-        const monthDiff = today.getMonth() - paidDate.getMonth();
-        const calculatedMonths = (yearDiff * 12) + monthDiff;
-        if (calculatedMonths >= 1) {
-          monthsOwed = calculatedMonths;
-        }
-
-        // Calcular si aplica penalidad (hoy > paid_until + grace_period_days)
-        const deadline = new Date(paidDate);
-        deadline.setDate(deadline.getDate() + gracePeriodDays);
-        if (today > deadline) {
-          // Se asume una penalidad por cada mes de mora, o una penalidad única?
-          // Lo más común es aplicar penalidad mensual por atraso.
-          appliedPenalty = penaltyAmount * monthsOwed;
-        }
+      // Calcular si aplica penalidad (la fecha límite es el día 5 del mes objetivo)
+      const targetDeadline = new Date(targetYear, targetMonthNum - 1, gracePeriodDays);
+      
+      // Solo aplicamos la multa si la fecha actual ya sobrepasó la fecha límite del mes cobrado
+      if (today > targetDeadline) {
+        appliedPenalty = penaltyAmount;
       }
 
-      const totalOwed = (price * monthsOwed) + appliedPenalty;
-      montoMorosidad += totalOwed;
+      const totalOwedForMonth = price + appliedPenalty;
+      montoMorosidad += totalOwedForMonth;
       entry.morosos++;
-      entry.pendiente += totalOwed;
+      entry.pendiente += totalOwedForMonth;
     }
   });
 

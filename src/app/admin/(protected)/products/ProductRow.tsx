@@ -13,6 +13,8 @@ type Product = {
   categories: string[]
   allows_installments: boolean
   requires_opt_in: boolean
+  start_date?: string
+  end_date?: string
 }
 
 type Category = { name: string }
@@ -54,6 +56,25 @@ function EditProductForm({ product, allCategories, onCancel }: { product: Produc
             <label className="block text-xs font-medium text-gray-700 mb-1">Precio ($)</label>
             <input 
               type="number" name="price" step="0.01" defaultValue={product.price} required
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-1 focus:ring-kasa-vinotinto outline-none"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <label className="block text-xs font-medium text-gray-700 mb-1">Fecha Desde</label>
+            <input 
+              type="date" name="start_date" 
+              defaultValue={product.start_date ? new Date(product.start_date).toISOString().split('T')[0] : ''} required
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-1 focus:ring-kasa-vinotinto outline-none"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-xs font-medium text-gray-700 mb-1">Fecha Hasta</label>
+            <input 
+              type="date" name="end_date" 
+              defaultValue={product.end_date ? new Date(product.end_date).toISOString().split('T')[0] : ''} required
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-1 focus:ring-kasa-vinotinto outline-none"
             />
           </div>
@@ -143,7 +164,14 @@ export default function ProductRow({ product, allCategories }: { product: Produc
             <ShoppingBag className={`w-5 h-5 ${product.is_active ? 'text-green-600' : 'text-gray-400'}`} />
           </div>
           <div>
-            <div className="text-sm font-bold text-gray-900">{product.name}</div>
+            <div className="text-sm font-bold text-gray-900 flex items-center gap-2">
+              {product.name}
+              {product.start_date && product.end_date && (
+                <span className="bg-gray-100 text-gray-600 text-[10px] px-2 py-0.5 rounded-full font-medium border border-gray-200">
+                  {new Date(product.start_date).toLocaleDateString()} - {new Date(product.end_date).toLocaleDateString()}
+                </span>
+              )}
+            </div>
             <div className="text-xs text-gray-500 truncate max-w-[200px]">{product.description || 'Sin descripción'}</div>
           </div>
         </div>
@@ -236,7 +264,14 @@ export function ProductCard({ product, allCategories }: { product: Product, allC
             <ShoppingBag className={`w-5 h-5 ${product.is_active ? 'text-green-600' : 'text-gray-400'}`} />
           </div>
           <div>
-            <h4 className="font-bold text-gray-900">{product.name}</h4>
+            <h4 className="font-bold text-gray-900 flex flex-col md:flex-row md:items-center md:gap-2">
+              {product.name}
+              {product.start_date && product.end_date && (
+                <span className="bg-gray-100 text-gray-600 text-[10px] px-2 py-0.5 rounded-full font-medium border border-gray-200 mt-1 md:mt-0 max-w-fit">
+                  {new Date(product.start_date).toLocaleDateString()} - {new Date(product.end_date).toLocaleDateString()}
+                </span>
+              )}
+            </h4>
             <span className="font-bold text-kasa-vinotinto">${Number(product.price).toFixed(2)}</span>
           </div>
         </div>

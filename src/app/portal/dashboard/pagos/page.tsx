@@ -67,21 +67,50 @@ export default async function PagosPage() {
     }
   }
 
-  // Obtener productos activos
-  const { data: products } = await adminSupabase
+  // 1. Obtener productos activos
+  const { data: activeProducts } = await adminSupabase
     .from('products')
     .select('*')
     .eq('is_active', true)
-    .order('created_at', { ascending: false })
+
+  // 2. Obtener productos vencidos adeudados (Inactivos, pero que su end_date es mayor a paid_until)
+  let expiredOwedProducts: any[] = []
+  if (paidUntil) {
+    const { data: expired } = await adminSupabase
+      .from('products')
+      .select('*')
+      .eq('is_active', false)
+      .ilike('name', '%mensualidad%')
+      .gt('end_date', new Date(paidUntil).toISOString())
+      .lte('start_date', new Date().toISOString())
+      
+    if (expired) {
+      expiredOwedProducts = expired
+    }
+  } else {
+    // Si no tiene paid_until, debe todas las mensualidades anteriores inactivas
+    const { data: expired } = await adminSupabase
+      .from('products')
+      .select('*')
+      .eq('is_active', false)
+      .ilike('name', '%mensualidad%')
+      .lte('start_date', new Date().toISOString())
+      
+    if (expired) {
+      expiredOwedProducts = expired
+    }
+  }
+
+  const allProducts = [...(activeProducts || []), ...expiredOwedProducts]
 
   // Obtener todos los pagos aprobados/completados del atleta
   const { data: payments } = await adminSupabase
     .from('payments')
     .select('product_id, amount')
     .eq('athlete_id', athlete.id)
-    .in('status', ['Completado', 'Pendiente']) // Incluimos pendientes para no permitirles volver a pagar si ya reportaron
+    .in('status', ['Completado', 'Pendiente'])
 
-  // Obtener opt-ins del atleta para saber a qué torneos está inscrito
+  // Obtener opt-ins del atleta
   const { data: athleteOptIns } = await adminSupabase
     .from('athlete_product_opt_ins')
     .select('product_id')
@@ -89,7 +118,7 @@ export default async function PagosPage() {
 
   const optedInIds = new Set(athleteOptIns?.map(o => o.product_id) || [])
 
-  // Obtener exoneraciones de este atleta
+  // Obtener exoneraciones
   const { data: athleteExemptions } = await adminSupabase
     .from('athlete_exemptions')
     .select('product_id')
@@ -97,12 +126,8 @@ export default async function PagosPage() {
 
   const exemptIds = new Set(athleteExemptions?.map(e => e.product_id) || [])
 
-  // Filtrar productos: 
-  // 1. Si categories es null o array vacío -> Es Global (aplica a todas)
-  // 2. Si categories incluye el categoryName del atleta -> Aplica a este atleta
-  // 3. Si requires_opt_in es true, el atleta DEBE estar en optedInIds
-  // 4. Si el atleta está exonerado (exemptIds), no mostramos el producto para pago
-  const filteredProducts = products?.filter(p => {
+  // Filtrar productos
+  const filteredProducts = allProducts.filter(p => {
     if (exemptIds.has(p.id)) return false
     if (p.requires_opt_in && !optedInIds.has(p.id)) return false
     
@@ -110,37 +135,30 @@ export default async function PagosPage() {
     if (categoryName && p.categories.includes(categoryName)) return true
     return false
   }).map(p => {
-    // Ajustar precio si es mensualidad y debe múltiples meses
-    const isMensualidad = p.name.toLowerCase().includes('mensualidad')
-    let basePrice = Number(p.price)
-    
-    if (isMensualidad && monthsOwed > 1) {
-      basePrice = basePrice * monthsOwed
-    }
+    const basePrice = Number(p.price)
 
-    // Calcular cuánto ha pagado de este producto
+    // Calcular cuánto ha pagado de este producto específico
     const productPayments = payments?.filter(pay => pay.product_id === p.id) || []
     const amountPaid = productPayments.reduce((sum, pay) => sum + Number(pay.amount), 0)
     
-    // Si es mensualidad, restamos los abonos del total acumulado. Si no, del precio original.
     const amountPending = Math.max(0, basePrice - amountPaid)
 
-    // Agregar info extra para PaymentForm
     return {
       ...p,
-      price: basePrice, // El precio base se actualiza al acumulado
-      original_price: Number(p.price), // Guardamos el original por si acaso
-      months_owed: isMensualidad ? monthsOwed : 1,
+      price: basePrice,
+      original_price: Number(p.price),
+      months_owed: 1, // Ya no multiplicamos, cada producto es un mes distinto
       amount_paid: amountPaid,
       amount_pending: amountPending
     }
-  }).filter(p => p.amount_pending > 0 || p.name.toLowerCase().includes('mensualidad'))
+  }).filter(p => p.amount_pending > 0 || (p.is_active && p.name.toLowerCase().includes('mensualidad')))
 
   // Permitir la mensualidad siempre porque es recurrente, aunque su "amount_pending" llegue a 0.
 
   return <PaymentForm 
     products={filteredProducts || []} 
     isLate={isLate} 
-    penaltyAmount={settings?.penalty_amount || 0} 
+    penaltyAmount={settings?.penalty_amount || 0}
+    gracePeriodDays={settings?.grace_period_days || 5}
   />
 }
