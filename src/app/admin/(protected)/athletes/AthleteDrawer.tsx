@@ -212,23 +212,26 @@ export default function AthleteDrawer({
           </div>
 
           {/* Formulario con Scroll */}
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Formulario con Scroll */}
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5 bg-slate-50/50">
             
             {errorMsg && (
-              <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-xs sm:text-sm text-red-700 font-medium flex items-center gap-2 animate-in shake duration-200">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+              <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs sm:text-sm text-rose-800 font-bold flex items-center gap-2.5 shadow-sm animate-in shake duration-200">
+                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
 
             {/* SECCIÓN 1: DATOS PERSONALES */}
-            <div className="space-y-3.5">
-              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
-                1. Información Personal
-              </span>
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-[0_2px_10px_-2px_rgba(0,0,0,0.03)] space-y-3.5">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-black uppercase tracking-wider border border-slate-200">
+                  1. Datos Personales
+                </span>
+              </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
+                <label className="block text-xs font-black text-slate-700 mb-1">
                   Nombre Completo *
                 </label>
                 <input 
@@ -237,14 +240,14 @@ export default function AthleteDrawer({
                   onChange={(e) => setName(e.target.value)}
                   required
                   placeholder="Ej: María Pérez"
-                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 bg-white text-gray-900 text-sm font-medium focus:ring-2 focus:ring-kasa-vinotinto outline-none shadow-sm"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white text-gray-900 text-sm font-semibold focus:ring-2 focus:ring-kasa-vinotinto focus:border-kasa-vinotinto outline-none shadow-xs transition-all"
                   autoFocus
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                  <label className="block text-xs font-black text-slate-700 mb-1">
                     Cédula de Identidad *
                   </label>
                   <input 
@@ -253,12 +256,12 @@ export default function AthleteDrawer({
                     onChange={(e) => setCedula(e.target.value)}
                     required
                     placeholder="Ej: 20123456 (sin puntos)"
-                    className="w-full rounded-xl border border-gray-300 px-4 py-2.5 bg-white text-gray-900 text-sm font-medium focus:ring-2 focus:ring-kasa-vinotinto outline-none shadow-sm"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white text-gray-900 text-sm font-semibold focus:ring-2 focus:ring-kasa-vinotinto focus:border-kasa-vinotinto outline-none shadow-xs transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                  <label className="block text-xs font-black text-slate-700 mb-1">
                     Teléfono de Contacto
                   </label>
                   <input 
@@ -266,22 +269,24 @@ export default function AthleteDrawer({
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="Ej: 0412-1234567"
-                    className="w-full rounded-xl border border-gray-300 px-4 py-2.5 bg-white text-gray-900 text-sm font-medium focus:ring-2 focus:ring-kasa-vinotinto outline-none shadow-sm"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white text-gray-900 text-sm font-semibold focus:ring-2 focus:ring-kasa-vinotinto focus:border-kasa-vinotinto outline-none shadow-xs transition-all"
                   />
                 </div>
               </div>
             </div>
 
             {/* SECCIÓN 2: ASIGNACIÓN DEPORTIVA (DINÁMICA) */}
-            <div className="space-y-3.5 pt-4 border-t border-gray-100">
-              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
-                2. Asignación Deportiva
-              </span>
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-[0_2px_10px_-2px_rgba(0,0,0,0.03)] space-y-3.5">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-black uppercase tracking-wider border border-slate-200">
+                  2. Asignación Deportiva
+                </span>
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Equipo */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                  <label className="block text-xs font-black text-slate-700 mb-1">
                     Equipo Asignado
                   </label>
                   {coachTeamId ? (
@@ -289,13 +294,13 @@ export default function AthleteDrawer({
                       type="text" 
                       disabled 
                       value={teams.find(t => t.id === coachTeamId)?.name || 'Tu Equipo'}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 bg-gray-50 text-gray-500 text-sm font-bold"
+                      className="w-full rounded-xl border border-slate-200 px-4 py-2.5 bg-slate-100 text-slate-600 text-sm font-black"
                     />
                   ) : (
                     <select
                       value={teamId}
                       onChange={(e) => setTeamId(e.target.value)}
-                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 bg-white text-gray-900 text-sm font-medium focus:ring-2 focus:ring-kasa-vinotinto outline-none shadow-sm"
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white text-gray-900 text-sm font-semibold focus:ring-2 focus:ring-kasa-vinotinto focus:border-kasa-vinotinto outline-none shadow-xs transition-all cursor-pointer"
                     >
                       <option value="">Sin equipo asignado</option>
                       {teams.map((t) => (
@@ -309,14 +314,14 @@ export default function AthleteDrawer({
 
                 {/* Posición dinámica */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                  <label className="block text-xs font-black text-slate-700 mb-1">
                     Posición en Cancha
                   </label>
                   {availablePositions.length > 0 ? (
                     <select
                       value={position}
                       onChange={(e) => setPosition(e.target.value)}
-                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 bg-white text-gray-900 text-sm font-medium focus:ring-2 focus:ring-kasa-vinotinto outline-none shadow-sm"
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white text-gray-900 text-sm font-semibold focus:ring-2 focus:ring-kasa-vinotinto focus:border-kasa-vinotinto outline-none shadow-xs transition-all cursor-pointer"
                     >
                       <option value="">Seleccionar Posición</option>
                       {availablePositions.map((p) => (
@@ -333,7 +338,7 @@ export default function AthleteDrawer({
                       type="text"
                       disabled
                       value={!teamId ? 'Selecciona equipo primero' : 'No aplica posiciones'}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 bg-gray-50 text-gray-400 text-xs italic"
+                      className="w-full rounded-xl border border-slate-200 px-4 py-2.5 bg-slate-100 text-slate-400 text-xs italic font-medium"
                     />
                   )}
                 </div>
@@ -342,20 +347,22 @@ export default function AthleteDrawer({
 
             {/* SECCIÓN 3: ESTATUS FINANCIERO Y BENEFICIOS */}
             {isSuperAdmin && (
-              <div className="space-y-3.5 pt-4 border-t border-gray-100">
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
-                  3. Membresía y Solvencia
-                </span>
+              <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-[0_2px_10px_-2px_rgba(0,0,0,0.03)] space-y-3.5">
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-black uppercase tracking-wider border border-slate-200">
+                    3. Membresía y Solvencia
+                  </span>
+                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                    <label className="block text-xs font-black text-slate-700 mb-1">
                       Estatus Financiero
                     </label>
                     <select
                       value={status}
                       onChange={(e) => setStatus(e.target.value)}
-                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 bg-white text-gray-900 text-sm font-medium focus:ring-2 focus:ring-kasa-vinotinto outline-none shadow-sm"
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white text-gray-900 text-sm font-semibold focus:ring-2 focus:ring-kasa-vinotinto focus:border-kasa-vinotinto outline-none shadow-xs transition-all cursor-pointer"
                     >
                       <option value="Solvente">🟢 Solvente</option>
                       <option value="Moroso">🔴 Moroso</option>
@@ -364,31 +371,31 @@ export default function AthleteDrawer({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                    <label className="block text-xs font-black text-slate-700 mb-1">
                       {status === 'Solvente' ? 'Válido Hasta' : 'Vencimiento'}
                     </label>
                     <input 
                       type="date"
                       value={paidUntil}
                       onChange={(e) => setPaidUntil(e.target.value)}
-                      className="w-full rounded-xl border border-gray-300 px-4 py-2 bg-white text-gray-900 text-sm font-medium focus:ring-2 focus:ring-kasa-vinotinto outline-none shadow-sm"
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white text-gray-900 text-sm font-semibold focus:ring-2 focus:ring-kasa-vinotinto focus:border-kasa-vinotinto outline-none shadow-xs transition-all"
                     />
                   </div>
                 </div>
 
                 <div className="pt-2">
-                  <label className="flex items-center gap-2.5 p-3 rounded-xl border border-gray-200 bg-gray-50/70 cursor-pointer hover:bg-gray-100/70 transition-colors">
+                  <label className="flex items-center gap-3 p-3.5 rounded-xl border border-amber-200/80 bg-amber-50/50 cursor-pointer hover:bg-amber-50 transition-colors shadow-2xs">
                     <input 
                       type="checkbox"
                       checked={hasAlliance}
                       onChange={(e) => setHasAlliance(e.target.checked)}
-                      className="w-4 h-4 rounded text-kasa-dorado focus:ring-kasa-dorado border-gray-300"
+                      className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-slate-300"
                     />
                     <div>
-                      <span className="text-xs font-bold text-gray-900 block">
+                      <span className="text-xs font-black text-gray-900 block">
                         🤝 Alianza Comercial / Exoneración
                       </span>
-                      <span className="text-[11px] text-gray-500">
+                      <span className="text-[11px] font-medium text-slate-500">
                         Marcar si esta jugadora cuenta con beca o patrocinio institucional.
                       </span>
                     </div>
@@ -398,69 +405,69 @@ export default function AthleteDrawer({
             )}
 
             {/* SECCIÓN 4: ESTADÍSTICAS DEPORTIVAS (PLEGABLE) */}
-            <div className="pt-4 border-t border-gray-100">
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-[0_2px_10px_-2px_rgba(0,0,0,0.03)]">
               <button
                 type="button"
                 onClick={() => setShowStats(!showStats)}
-                className="w-full flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-gray-100/80 transition-colors text-left"
+                className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition-colors text-left"
               >
                 <div className="flex items-center gap-2">
                   <Award className="w-4 h-4 text-kasa-vinotinto" />
-                  <span className="text-xs font-bold text-gray-800">
+                  <span className="text-xs font-black text-slate-800">
                     Estadísticas de Rendimiento (Opcional)
                   </span>
                 </div>
-                {showStats ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+                {showStats ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
               </button>
 
               {showStats && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-3 p-3 bg-gray-50/50 rounded-xl border border-gray-100 animate-in fade-in duration-200">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-3 p-3.5 bg-slate-50/80 rounded-xl border border-slate-200 animate-in fade-in duration-200">
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">AVG</label>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">AVG</label>
                     <input 
                       type="number"
                       step="0.001"
                       value={statsAvg}
                       onChange={(e) => setStatsAvg(e.target.value)}
                       placeholder="0.000"
-                      className="w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs bg-white outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+                      className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-mono font-bold bg-white outline-none focus:ring-2 focus:ring-kasa-vinotinto shadow-2xs"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">HITS</label>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">HITS</label>
                     <input 
                       type="number"
                       value={statsHits}
                       onChange={(e) => setStatsHits(e.target.value)}
                       placeholder="0"
-                      className="w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs bg-white outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+                      className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-mono font-bold bg-white outline-none focus:ring-2 focus:ring-kasa-vinotinto shadow-2xs"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">CI (RBI)</label>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">CI (RBI)</label>
                     <input 
                       type="number"
                       value={statsRbi}
                       onChange={(e) => setStatsRbi(e.target.value)}
                       placeholder="0"
-                      className="w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs bg-white outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+                      className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-mono font-bold bg-white outline-none focus:ring-2 focus:ring-kasa-vinotinto shadow-2xs"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">CA (Runs)</label>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">CA (Runs)</label>
                     <input 
                       type="number"
                       value={statsRuns}
                       onChange={(e) => setStatsRuns(e.target.value)}
                       placeholder="0"
-                      className="w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs bg-white outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+                      className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-mono font-bold bg-white outline-none focus:ring-2 focus:ring-kasa-vinotinto shadow-2xs"
                     />
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="h-6" />
+            <div className="h-4" />
           </form>
 
           {/* Footer Fijo */}
@@ -489,3 +496,4 @@ export default function AthleteDrawer({
     </div>
   );
 }
+

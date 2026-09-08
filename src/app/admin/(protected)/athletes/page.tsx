@@ -81,24 +81,26 @@ export default async function AthletesPage({
   const totalPages = count ? Math.ceil(count / pageSize) : 0;
 
   return (
-    <div className="p-4 sm:p-8 max-w-7xl mx-auto">
-      {error && (
-        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-2xl text-sm font-medium">
-          <strong>Aviso de conexión:</strong> {error.message}.
-        </div>
-      )}
+    <div className="min-h-full bg-slate-100/70 p-4 sm:p-8">
+      <div className="max-w-7xl mx-auto">
+        {error && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-2xl text-sm font-medium shadow-sm">
+            <strong>Aviso de conexión:</strong> {error.message}.
+          </div>
+        )}
 
-      <AthleteDashboard
-        initialAthletes={(athletes as any) || []}
-        teams={(teamsData as any) || []}
-        categories={(categoriesData as any) || []}
-        isSuperAdmin={Boolean(isSuperAdmin)}
-        coachTeamId={coachTeamId}
-        totalCount={count || 0}
-        totalPages={totalPages}
-        currentPage={page}
-        resolvedParams={resolvedParams}
-      />
+        <AthleteDashboard
+          initialAthletes={(athletes as any) || []}
+          teams={(teamsData as any) || []}
+          categories={(categoriesData as any) || []}
+          isSuperAdmin={Boolean(isSuperAdmin)}
+          coachTeamId={coachTeamId}
+          totalCount={count || 0}
+          totalPages={totalPages}
+          currentPage={page}
+          resolvedParams={resolvedParams}
+        />
+      </div>
     </div>
   );
 }
