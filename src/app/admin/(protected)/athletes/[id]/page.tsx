@@ -145,165 +145,157 @@ export default async function AthleteProfilePage({
             </div>
           )}
           
-          <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start md:items-center">
-            {/* Avatar con Aro, Relieve y Micro-indicador de Estatus */}
-            <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-3xl border-4 border-white bg-gradient-to-br from-rose-50 via-red-50 to-amber-50 flex items-center justify-center overflow-hidden shrink-0 shadow-lg ring-1 ring-slate-200">
-              {athlete.avatar_url ? (
-                <img src={athlete.avatar_url} alt={athlete.name} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-3xl sm:text-4xl font-black text-kasa-vinotinto tracking-wider">
-                  {getInitials(athlete.name)}
-                </span>
-              )}
-              <span 
-                className={`absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-white shadow-xs ${
-                  isSolvente ? 'bg-emerald-500' : isMoroso ? 'bg-rose-500 animate-pulse' : 'bg-slate-400'
-                }`}
-                title={`Estatus: ${athlete.status}`}
-              />
-            </div>
-            
-            {/* Información Principal y Badges */}
-            <div className="flex-1 space-y-3 min-w-0">
-              <div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-900 leading-tight tracking-tight truncate">
-                  {athlete.name}
-                </h1>
-                
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2">
-                  <span className="text-slate-600 font-bold bg-slate-100 px-3 py-1 rounded-xl text-xs border border-slate-200/80 shadow-2xs">
-                    C.I: {athlete.cedula}
+          <div className="flex flex-col xl:flex-row gap-6 xl:gap-8 justify-between xl:items-center">
+            {/* Información y Avatar */}
+            <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start md:items-center flex-1 min-w-0">
+              {/* Avatar con Aro, Relieve y Micro-indicador de Estatus */}
+              <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-3xl border-4 border-white bg-gradient-to-br from-rose-50 via-red-50 to-amber-50 flex items-center justify-center overflow-hidden shrink-0 shadow-lg ring-1 ring-slate-200">
+                {athlete.avatar_url ? (
+                  <img src={athlete.avatar_url} alt={athlete.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-3xl sm:text-4xl font-black text-kasa-vinotinto tracking-wider">
+                    {getInitials(athlete.name)}
                   </span>
+                )}
+                <span 
+                  className={`absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-white shadow-xs ${
+                    isSolvente ? 'bg-emerald-500' : isMoroso ? 'bg-rose-500 animate-pulse' : 'bg-slate-400'
+                  }`}
+                  title={`Estatus: ${athlete.status}`}
+                />
+              </div>
+              
+              {/* Información Principal y Badges */}
+              <div className="flex-1 space-y-3 min-w-0">
+                <div>
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-900 leading-tight tracking-tight truncate">
+                    {athlete.name}
+                  </h1>
+                  
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2">
+                    <span className="text-slate-600 font-bold bg-slate-100 px-3 py-1 rounded-xl text-xs border border-slate-200/80 shadow-2xs">
+                      C.I: {athlete.cedula}
+                    </span>
 
-                  <span className="text-kasa-vinotinto font-black bg-red-50 px-3 py-1 rounded-xl text-xs border border-red-200/80 shadow-2xs flex items-center gap-1.5">
-                    <Trophy className="w-3.5 h-3.5" />
-                    {/* @ts-ignore */}
-                    <span>{athlete.teams?.name || 'Sin equipo asignado'}</span>
-                    {/* @ts-ignore */}
-                    {athlete.teams?.category && (
-                      <span className="text-[10px] text-slate-400 font-bold ml-0.5">
-                        • {athlete.teams.category}
+                    <span className="text-kasa-vinotinto font-black bg-red-50 px-3 py-1 rounded-xl text-xs border border-red-200/80 shadow-2xs flex items-center gap-1.5">
+                      <Trophy className="w-3.5 h-3.5" />
+                      {/* @ts-ignore */}
+                      <span>{athlete.teams?.name || 'Sin equipo asignado'}</span>
+                      {/* @ts-ignore */}
+                      {athlete.teams?.category && (
+                        <span className="text-[10px] text-slate-400 font-bold ml-0.5">
+                          • {athlete.teams.category}
+                        </span>
+                      )}
+                    </span>
+
+                    {athlete.position && (
+                      <span className="inline-block font-mono text-xs font-black text-white bg-gray-950 px-2.5 py-1 rounded-xl border border-gray-800 shadow-xs tracking-wider">
+                        Pos: {athlete.position}
                       </span>
                     )}
-                  </span>
+                  </div>
+                </div>
+                
+                {/* Estatus Financiero y Botón de WhatsApp */}
+                <div className="flex flex-wrap items-center gap-3 pt-2">
+                  <div className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border shadow-2xs ${
+                    isSolvente 
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
+                      : isMoroso 
+                      ? 'bg-rose-50 text-rose-800 border-rose-300' 
+                      : 'bg-slate-100 text-slate-700 border-slate-300'
+                  }`}>
+                    <span className={`w-2.5 h-2.5 rounded-full ${
+                      isSolvente ? 'bg-emerald-500' : isMoroso ? 'bg-rose-500 animate-pulse' : 'bg-slate-400'
+                    }`} />
+                    <div>
+                      <p className="text-[9px] uppercase font-black tracking-wider opacity-75 leading-none">Estatus Financiero</p>
+                      <p className="font-black text-xs mt-0.5">{athlete.status}</p>
+                    </div>
+                  </div>
 
-                  {athlete.position && (
-                    <span className="inline-block font-mono text-xs font-black text-white bg-gray-950 px-2.5 py-1 rounded-xl border border-gray-800 shadow-xs tracking-wider">
-                      Pos: {athlete.position}
+                  {athlete.paid_until && (
+                    <div className="flex items-center gap-2 bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200 shadow-2xs">
+                      <Calendar className="w-4 h-4 text-slate-400" />
+                      <div>
+                        <p className="text-[9px] uppercase font-black text-slate-400 tracking-wider leading-none">
+                          {isSolvente ? 'Válido Hasta' : 'Pendiente Desde'}
+                        </p>
+                        <p className="font-bold text-gray-900 text-xs mt-0.5">
+                          {new Date(athlete.paid_until).toLocaleDateString('es-ES', { month: 'short', year: 'numeric', day: 'numeric' })}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Botón WhatsApp */}
+                  {athlete.phone ? (
+                    <a
+                      href={formatWhatsAppUrl(athlete.phone, athlete.name)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-0.5"
+                      title={`Abrir chat de WhatsApp con ${athlete.phone}`}
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>WhatsApp ({athlete.phone})</span>
+                    </a>
+                  ) : (
+                    <span className="text-xs text-slate-400 font-medium italic">
+                      Sin teléfono registrado
                     </span>
                   )}
                 </div>
               </div>
-              
-              {/* Estatus Financiero y Botón de WhatsApp */}
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <div className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border shadow-2xs ${
-                  isSolvente 
-                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
-                    : isMoroso 
-                    ? 'bg-rose-50 text-rose-800 border-rose-300' 
-                    : 'bg-slate-100 text-slate-700 border-slate-300'
-                }`}>
-                  <span className={`w-2.5 h-2.5 rounded-full ${
-                    isSolvente ? 'bg-emerald-500' : isMoroso ? 'bg-rose-500 animate-pulse' : 'bg-slate-400'
-                  }`} />
-                  <div>
-                    <p className="text-[9px] uppercase font-black tracking-wider opacity-75 leading-none">Estatus Financiero</p>
-                    <p className="font-black text-xs mt-0.5">{athlete.status}</p>
-                  </div>
+            </div>
+
+            {/* Métricas de Campo Integradas en el Card (Responsive First-Mobile) */}
+            <div className="w-full xl:w-auto xl:border-l border-slate-200/80 xl:pl-8 pt-4 xl:pt-0 border-t xl:border-t-0 shrink-0">
+              <div className="flex items-center gap-1.5 mb-2.5">
+                <Activity className="w-4 h-4 text-kasa-vinotinto" />
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                  Métricas de Campo
+                </span>
+              </div>
+              <div className="grid grid-cols-4 gap-2 sm:gap-3">
+                <div className="bg-sky-50/90 px-3 py-2.5 rounded-2xl border border-sky-200/90 text-center min-w-[62px] sm:min-w-[72px] shadow-2xs">
+                  <p className="text-[9px] sm:text-[10px] font-black text-sky-800 uppercase tracking-wider">AVG</p>
+                  <p className="text-base sm:text-xl font-mono font-black text-sky-950 mt-0.5">{athlete.stats_avg ?? '-'}</p>
                 </div>
-
-                {athlete.paid_until && (
-                  <div className="flex items-center gap-2 bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200 shadow-2xs">
-                    <Calendar className="w-4 h-4 text-slate-400" />
-                    <div>
-                      <p className="text-[9px] uppercase font-black text-slate-400 tracking-wider leading-none">
-                        {isSolvente ? 'Válido Hasta' : 'Pendiente Desde'}
-                      </p>
-                      <p className="font-bold text-gray-900 text-xs mt-0.5">
-                        {new Date(athlete.paid_until).toLocaleDateString('es-ES', { month: 'short', year: 'numeric', day: 'numeric' })}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Botón WhatsApp */}
-                {athlete.phone ? (
-                  <a
-                    href={formatWhatsAppUrl(athlete.phone, athlete.name)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-0.5 ml-auto sm:ml-0"
-                    title={`Abrir chat de WhatsApp con ${athlete.phone}`}
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>WhatsApp ({athlete.phone})</span>
-                  </a>
-                ) : (
-                  <span className="text-xs text-slate-400 font-medium italic">
-                    Sin teléfono registrado
-                  </span>
-                )}
+                <div className="bg-indigo-50/90 px-3 py-2.5 rounded-2xl border border-indigo-200/90 text-center min-w-[62px] sm:min-w-[72px] shadow-2xs">
+                  <p className="text-[9px] sm:text-[10px] font-black text-indigo-800 uppercase tracking-wider">HITS</p>
+                  <p className="text-base sm:text-xl font-mono font-black text-indigo-950 mt-0.5">{athlete.stats_hits ?? '-'}</p>
+                </div>
+                <div className="bg-amber-50/90 px-3 py-2.5 rounded-2xl border border-amber-200/90 text-center min-w-[62px] sm:min-w-[72px] shadow-2xs">
+                  <p className="text-[9px] sm:text-[10px] font-black text-amber-800 uppercase tracking-wider">CI</p>
+                  <p className="text-base sm:text-xl font-mono font-black text-amber-950 mt-0.5">{athlete.stats_rbi ?? '-'}</p>
+                </div>
+                <div className="bg-emerald-50/90 px-3 py-2.5 rounded-2xl border border-emerald-200/90 text-center min-w-[62px] sm:min-w-[72px] shadow-2xs">
+                  <p className="text-[9px] sm:text-[10px] font-black text-emerald-800 uppercase tracking-wider">CA</p>
+                  <p className="text-base sm:text-xl font-mono font-black text-emerald-950 mt-0.5">{athlete.stats_runs ?? '-'}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* CUERPO PRINCIPAL: 2 COLUMNAS */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* CUERPO PRINCIPAL */}
+        <div className={`grid grid-cols-1 ${athlete.has_alliance ? 'lg:grid-cols-3' : ''} gap-6`}>
           
-          {/* Columna Izquierda: Alianzas y Rendimiento */}
-          <div className="space-y-6">
-            {athlete.has_alliance ? (
+          {/* Columna Izquierda: Alianzas Comerciales (si aplica) */}
+          {athlete.has_alliance && (
+            <div className="lg:col-span-1">
               <ExemptionManager 
                 athleteId={athlete.id} 
                 products={products || []} 
                 initialExemptions={exemptionIds} 
               />
-            ) : (
-              <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] text-center">
-                <ShieldCheck className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                <h3 className="font-black text-gray-900 text-base">Sin Alianza Comercial</h3>
-                <p className="text-xs text-slate-500 mt-1.5 leading-relaxed font-medium">
-                  Esta jugadora no goza de estatus de alianza comercial. Para activar exoneraciones de cuotas, edita su ficha en el roster y marca la casilla &quot;Alianza Comercial&quot;.
-                </p>
-              </div>
-            )}
-            
-            {/* Rendimiento Deportivo */}
-            <div className="bg-white rounded-3xl border border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-black uppercase tracking-wider border border-slate-200">
-                  Métricas de Campo
-                </span>
-              </div>
-              <h3 className="font-black text-gray-900 text-base mb-4 flex items-center gap-2">
-                <Activity className="w-5 h-5 text-kasa-vinotinto" />
-                Rendimiento Deportivo
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-sky-50/80 p-3.5 rounded-2xl border border-sky-200/80 shadow-2xs">
-                  <p className="text-[10px] font-black text-sky-800 uppercase tracking-wider">AVG</p>
-                  <p className="text-2xl font-mono font-black text-sky-950 mt-0.5">{athlete.stats_avg ?? '-'}</p>
-                </div>
-                <div className="bg-indigo-50/80 p-3.5 rounded-2xl border border-indigo-200/80 shadow-2xs">
-                  <p className="text-[10px] font-black text-indigo-800 uppercase tracking-wider">HITS</p>
-                  <p className="text-2xl font-mono font-black text-indigo-950 mt-0.5">{athlete.stats_hits ?? '-'}</p>
-                </div>
-                <div className="bg-amber-50/80 p-3.5 rounded-2xl border border-amber-200/80 shadow-2xs">
-                  <p className="text-[10px] font-black text-amber-800 uppercase tracking-wider">CI (RBI)</p>
-                  <p className="text-2xl font-mono font-black text-amber-950 mt-0.5">{athlete.stats_rbi ?? '-'}</p>
-                </div>
-                <div className="bg-emerald-50/80 p-3.5 rounded-2xl border border-emerald-200/80 shadow-2xs">
-                  <p className="text-[10px] font-black text-emerald-800 uppercase tracking-wider">CA (RUNS)</p>
-                  <p className="text-2xl font-mono font-black text-emerald-950 mt-0.5">{athlete.stats_runs ?? '-'}</p>
-                </div>
-              </div>
             </div>
-          </div>
+          )}
 
-          {/* Columna Derecha: Finanzas */}
-          <div className="lg:col-span-2 space-y-6">
+          {/* Columna Finanzas: Estado de Cuenta e Historial de Reportes */}
+          <div className={`${athlete.has_alliance ? 'lg:col-span-2' : ''} space-y-6`}>
             
             {/* Estado de Cuenta */}
             <div className="bg-white rounded-3xl border border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] overflow-hidden">
