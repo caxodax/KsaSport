@@ -1,13 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { getServiceSupabase } from '@/lib/supabase';
-import { Users, Plus } from 'lucide-react';
-import DashboardFilters from '../DashboardFilters';
-import Pagination from '../Pagination';
-import { createAthlete } from './actions';
-import AthleteRow, { AthleteCard } from './AthleteRow';
 import { checkAdminPermission } from '@/lib/auth-admin';
-import StatusDateInputs from './StatusDateInputs';
-import AthleteTeamPositionInputs from './AthleteTeamPositionInputs';
+import AthleteDashboard from './AthleteDashboard';
 
 export const revalidate = 0;
 
@@ -43,8 +37,9 @@ export default async function AthletesPage({
   const categoryFilter = typeof resolvedParams.category === 'string' ? resolvedParams.category : '';
   const statusFilter = typeof resolvedParams.status === 'string' ? resolvedParams.status : '';
   
+  // Paginación optimizada a 20 por página
   const page = typeof resolvedParams.page === 'string' ? Number(resolvedParams.page) : 1;
-  const pageSize = 10;
+  const pageSize = 20;
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
@@ -53,9 +48,13 @@ export default async function AthletesPage({
   const { data: categoriesData } = await supabase.from('categories').select('id, name, positions').order('name');
 
   // Consulta de Atletas con Filtros y Paginación
+  const selectQuery = categoryFilter
+    ? 'id, name, cedula, phone, status, team_id, position, stats_avg, stats_hits, stats_rbi, stats_runs, paid_until, has_alliance, avatar_url, teams!inner(id, name, category)'
+    : 'id, name, cedula, phone, status, team_id, position, stats_avg, stats_hits, stats_rbi, stats_runs, paid_until, has_alliance, avatar_url, teams(id, name, category)';
+
   let athletesQuery = supabase
     .from('athletes')
-    .select('id, name, cedula, phone, status, team_id, position, stats_avg, stats_hits, stats_rbi, stats_runs, paid_until, teams!inner(id, name, category)', { count: 'exact' });
+    .select(selectQuery, { count: 'exact' });
 
   // Forzar el filtro si NO es superadmin
   if (!isSuperAdmin) {
@@ -82,176 +81,24 @@ export default async function AthletesPage({
   const totalPages = count ? Math.ceil(count / pageSize) : 0;
 
   return (
-    <div className="p-4 sm:p-8">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900">Roster de Atletas</h2>
-        <p className="text-gray-500 mt-1">Registra y gestiona las jugadoras de Kasa Sports.</p>
-      </div>
-
-      <div className="flex flex-col gap-6">
-        
-        {/* Filtros Reutilizados (Minimalistas) */}
-        {!coachTeamId && (
-          <DashboardFilters 
-            teams={teamsData || []} 
-            categories={categoriesData || []} 
-            basePath="/admin/athletes"
-          />
-        )}
-
-        {/* Formulario Crear Atleta */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 w-full">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-2 bg-red-50 rounded-lg">
-              <Plus className="w-5 h-5 text-kasa-vinotinto" />
-            </div>
-            <h3 className="text-lg font-bold text-gray-900">Registrar Nueva Jugadora</h3>
-          </div>
-          
-          <form action={createAthlete as any} className="flex flex-col md:flex-row gap-4 items-end flex-wrap">
-            {/* Si es coach, forzar su team_id y ocultarlo */}
-            {coachTeamId && <input type="hidden" name="team_id" value={coachTeamId} />}
-            
-            <div className="flex-1 min-w-[200px]">
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo *</label>
-              <input 
-                type="text" 
-                id="name" 
-                name="name" 
-                required
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
-                placeholder="Ej: María Pérez"
-              />
-            </div>
-            <div className="w-full md:w-32">
-              <label htmlFor="cedula" className="block text-sm font-medium text-gray-700 mb-1">Cédula *</label>
-              <input 
-                type="text" 
-                id="cedula" 
-                name="cedula" 
-                required
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
-                placeholder="Ej: 20123456"
-              />
-            </div>
-            <div className="w-full md:w-32">
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-              <input 
-                type="text" 
-                id="phone" 
-                name="phone" 
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
-                placeholder="Opcional"
-              />
-            </div>
-            <AthleteTeamPositionInputs 
-              teams={(teamsData as any) || []} 
-              categories={categoriesData || []} 
-              coachTeamId={coachTeamId} 
-            />
-            <StatusDateInputs />
-            <div className="w-full md:w-auto flex items-center mb-1">
-              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  name="has_alliance"
-                  className="rounded text-kasa-dorado focus:ring-kasa-dorado"
-                />
-                <span className="font-bold">Alianza Comercial</span>
-              </label>
-            </div>
-            <button 
-              type="submit" 
-              className="bg-kasa-vinotinto hover:bg-red-900 text-white font-bold py-2 px-6 rounded-lg transition-colors w-full md:w-auto h-[38px] text-sm"
-            >
-              Registrar
-            </button>
-          </form>
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto">
+      {error && (
+        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-2xl text-sm font-medium">
+          <strong>Aviso de conexión:</strong> {error.message}.
         </div>
+      )}
 
-        {/* Lista de Atletas */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 w-full overflow-hidden">
-          <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-            <h3 className="text-xl font-bold text-kasa-gris flex items-center gap-2">
-              <Users className="w-6 h-6 text-kasa-dorado" />
-              Directorio de Atletas
-            </h3>
-            <span className="bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm">
-              {count || 0} Resultados
-            </span>
-          </div>
-
-          {/* VISTA MÓVIL (Tarjetas) */}
-          <div className="md:hidden flex flex-col p-3 gap-3 bg-gray-50/30">
-            {athletes && athletes.length > 0 ? (
-              athletes.map((athlete) => (
-                <AthleteCard 
-                  key={athlete.id} 
-                  athlete={athlete as any} 
-                  teams={teamsData || []} 
-                  categories={categoriesData || []}
-                  isSuperAdmin={!!isSuperAdmin} 
-                />
-              ))
-            ) : (
-              <div className="text-center p-8 bg-white border border-gray-100 rounded-xl">
-                <Users className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-                <h3 className="text-base font-bold text-gray-900">Sin Atletas</h3>
-                <p className="text-sm text-gray-500 mt-1">Registra la primera jugadora.</p>
-              </div>
-            )}
-          </div>
-
-          {/* VISTA DESKTOP (Tabla Ampliada) */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-white">
-                <tr>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Nombre</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Cédula</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Teléfono</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Equipo</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Estatus</th>
-                  <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
-                {athletes && athletes.length > 0 ? (
-                  athletes.map((athlete) => (
-                    <AthleteRow 
-                      key={athlete.id} 
-                      athlete={athlete as any} 
-                      teams={teamsData || []} 
-                      categories={categoriesData || []}
-                      isSuperAdmin={!!isSuperAdmin} 
-                    />
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="px-8 py-16 text-center">
-                      <Users className="mx-auto h-16 w-16 text-gray-200 mb-4" />
-                      <h3 className="text-lg font-bold text-gray-900">Sin Atletas</h3>
-                      <p className="mt-1 text-base text-gray-500">
-                        Aún no hay atletas registradas que coincidan con la búsqueda.
-                      </p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        
-        {/* Paginación */}
-        {totalPages > 1 && (
-          <Pagination 
-            currentPage={page} 
-            totalPages={totalPages} 
-            searchParams={resolvedParams as Record<string, string>} 
-            basePath="/admin/athletes"
-          />
-        )}
-      </div>
+      <AthleteDashboard
+        initialAthletes={(athletes as any) || []}
+        teams={(teamsData as any) || []}
+        categories={(categoriesData as any) || []}
+        isSuperAdmin={Boolean(isSuperAdmin)}
+        coachTeamId={coachTeamId}
+        totalCount={count || 0}
+        totalPages={totalPages}
+        currentPage={page}
+        resolvedParams={resolvedParams}
+      />
     </div>
   );
 }
