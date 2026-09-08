@@ -41,3 +41,4 @@ SET positions = '[
   {"code": "DC", "name": "Delantero Centro"}
 ]'::jsonb
 WHERE name ILIKE '%fútbol%' OR name ILIKE '%futbol%';
+

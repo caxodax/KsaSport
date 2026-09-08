@@ -89,3 +89,4 @@ export function normalizePositions(raw: any): PositionItem[] {
     })
     .filter((p): p is PositionItem => Boolean(p && p.code));
 }
+
