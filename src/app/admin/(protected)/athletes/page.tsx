@@ -7,6 +7,7 @@ import { createAthlete } from './actions';
 import AthleteRow, { AthleteCard } from './AthleteRow';
 import { checkAdminPermission } from '@/lib/auth-admin';
 import StatusDateInputs from './StatusDateInputs';
+import AthleteTeamPositionInputs from './AthleteTeamPositionInputs';
 
 export const revalidate = 0;
 
@@ -49,7 +50,7 @@ export default async function AthletesPage({
 
   // Datos para los selectores de filtros y el formulario
   const { data: teamsData } = await supabase.from('teams').select('id, name, category').order('name');
-  const { data: categoriesData } = await supabase.from('categories').select('name').order('name');
+  const { data: categoriesData } = await supabase.from('categories').select('id, name, positions').order('name');
 
   // Consulta de Atletas con Filtros y Paginación
   let athletesQuery = supabase
@@ -143,21 +144,11 @@ export default async function AthletesPage({
                 placeholder="Opcional"
               />
             </div>
-            {!coachTeamId && (
-              <div className="flex-1 min-w-[150px]">
-                <label htmlFor="team_id" className="block text-sm font-medium text-gray-700 mb-1">Equipo</label>
-                <select 
-                  id="team_id" 
-                  name="team_id" 
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto bg-white"
-                >
-                  <option value="">Seleccionar Equipo</option>
-                  {teamsData?.map((t) => (
-                    <option key={t.id} value={t.id}>{t.name} ({t.category})</option>
-                  ))}
-                </select>
-              </div>
-            )}
+            <AthleteTeamPositionInputs 
+              teams={(teamsData as any) || []} 
+              categories={categoriesData || []} 
+              coachTeamId={coachTeamId} 
+            />
             <StatusDateInputs />
             <div className="w-full md:w-auto flex items-center mb-1">
               <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
@@ -194,7 +185,13 @@ export default async function AthletesPage({
           <div className="md:hidden flex flex-col p-3 gap-3 bg-gray-50/30">
             {athletes && athletes.length > 0 ? (
               athletes.map((athlete) => (
-                <AthleteCard key={athlete.id} athlete={athlete as any} teams={teamsData || []} isSuperAdmin={!!isSuperAdmin} />
+                <AthleteCard 
+                  key={athlete.id} 
+                  athlete={athlete as any} 
+                  teams={teamsData || []} 
+                  categories={categoriesData || []}
+                  isSuperAdmin={!!isSuperAdmin} 
+                />
               ))
             ) : (
               <div className="text-center p-8 bg-white border border-gray-100 rounded-xl">
@@ -221,7 +218,13 @@ export default async function AthletesPage({
               <tbody className="bg-white divide-y divide-gray-100">
                 {athletes && athletes.length > 0 ? (
                   athletes.map((athlete) => (
-                    <AthleteRow key={athlete.id} athlete={athlete as any} teams={teamsData || []} isSuperAdmin={!!isSuperAdmin} />
+                    <AthleteRow 
+                      key={athlete.id} 
+                      athlete={athlete as any} 
+                      teams={teamsData || []} 
+                      categories={categoriesData || []}
+                      isSuperAdmin={!!isSuperAdmin} 
+                    />
                   ))
                 ) : (
                   <tr>

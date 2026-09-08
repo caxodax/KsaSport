@@ -4,14 +4,23 @@ import { useState } from 'react';
 import { Trash2, Edit2, Check, X, UserSearch } from 'lucide-react';
 import { deleteAthlete, updateAthlete } from './actions';
 import Link from 'next/link';
+import { normalizePositions, PositionItem } from '@/lib/positions';
+
+interface CategoryItem {
+  id?: string;
+  name: string;
+  positions?: any;
+}
 
 export default function AthleteRow({ 
   athlete, 
   teams,
+  categories,
   isSuperAdmin = true
 }: { 
-  athlete: { id: string, name: string, cedula: string, phone: string, status: string, team_id: string, has_alliance?: boolean, teams?: { name: string } | null, paid_until?: string | null, position?: string | null, stats_avg?: number | null, stats_hits?: number | null, stats_rbi?: number | null, stats_runs?: number | null },
-  teams: { id: string, name: string }[],
+  athlete: { id: string, name: string, cedula: string, phone: string, status: string, team_id: string, has_alliance?: boolean, teams?: { name: string, category?: string } | null, paid_until?: string | null, position?: string | null, stats_avg?: number | null, stats_hits?: number | null, stats_rbi?: number | null, stats_runs?: number | null },
+  teams: { id: string, name: string, category?: string }[],
+  categories?: CategoryItem[],
   isSuperAdmin?: boolean
 }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -73,22 +82,26 @@ export default function AthleteRow({
     setHasAlliance(athlete.has_alliance || false);
   }
 
+  const selectedTeam = teams.find(t => t.id === teamId);
+  const currentCategoryName = selectedTeam?.category || (athlete.teams as any)?.category;
+  const currentCategory = categories?.find(c => c.name === currentCategoryName);
+  const availablePositions: PositionItem[] = normalizePositions(currentCategory?.positions);
+
   if (isEditing) {
     return (
-      <tr className="hover:bg-gray-50/80 transition-colors">
+      <tr className="bg-red-50/20">
         <td className="px-6 py-4 whitespace-nowrap">
           <input 
             type="text" 
-            value={name}
+            value={name} 
             onChange={(e) => setName(e.target.value)}
             className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
-            autoFocus
           />
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
           <input 
             type="text" 
-            value={cedula}
+            value={cedula} 
             onChange={(e) => setCedula(e.target.value)}
             className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
           />
@@ -96,7 +109,7 @@ export default function AthleteRow({
         <td className="px-6 py-4 whitespace-nowrap">
           <input 
             type="text" 
-            value={phone}
+            value={phone} 
             onChange={(e) => setPhone(e.target.value)}
             className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
             placeholder="Opcional"
@@ -106,35 +119,44 @@ export default function AthleteRow({
           <select 
             value={teamId}
             onChange={(e) => setTeamId(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+            className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto bg-white"
           >
             <option value="">Sin equipo</option>
-            {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            {teams.map(t => (
+              <option key={t.id} value={t.id}>
+                {t.name} {t.category ? `(${t.category})` : ''}
+              </option>
+            ))}
           </select>
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
           <div className="flex flex-col gap-2">
             <div className="flex gap-2">
-              <select
-                value={position}
-                onChange={(e) => setPosition(e.target.value)}
-                className="w-1/2 rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
-              >
-                <option value="">Posición</option>
-                <option value="P">Pitcher (P)</option>
-                <option value="C">Catcher (C)</option>
-                <option value="1B">1ra Base (1B)</option>
-                <option value="2B">2da Base (2B)</option>
-                <option value="3B">3ra Base (3B)</option>
-                <option value="SS">Shortstop (SS)</option>
-                <option value="SF">Short Field (SF)</option>
-                <option value="LF">Left Field (LF)</option>
-                <option value="LCF">Left Center (LCF)</option>
-                <option value="CF">Center Field (CF)</option>
-                <option value="2F">Second Field (2F)</option>
-                <option value="RCF">Right Center (RCF)</option>
-                <option value="RF">Right Field (RF)</option>
-              </select>
+              {availablePositions.length > 0 ? (
+                <select
+                  value={position}
+                  onChange={(e) => setPosition(e.target.value)}
+                  className="w-1/2 rounded-md border border-gray-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto bg-white"
+                >
+                  <option value="">Posición</option>
+                  {availablePositions.map(p => (
+                    <option key={p.code} value={p.code}>
+                      {p.code} - {p.name}
+                    </option>
+                  ))}
+                  {position && !availablePositions.some(p => p.code === position) && (
+                    <option value={position}>{position}</option>
+                  )}
+                </select>
+              ) : (
+                <select
+                  disabled
+                  className="w-1/2 rounded-md border border-gray-200 px-2 py-1 text-xs bg-gray-50 text-gray-400 cursor-not-allowed"
+                  title="Esta categoría no tiene posiciones configuradas"
+                >
+                  <option value="">No aplica</option>
+                </select>
+              )}
               <input 
                 type="number" 
                 step="0.001"
@@ -297,10 +319,12 @@ export default function AthleteRow({
 export function AthleteCard({ 
   athlete,
   teams,
+  categories,
   isSuperAdmin = true
 }: { 
-  athlete: { id: string, name: string, cedula: string, phone: string, status: string, team_id: string, has_alliance?: boolean, teams?: { name: string } | null, paid_until?: string | null, position?: string | null, stats_avg?: number | null, stats_hits?: number | null, stats_rbi?: number | null, stats_runs?: number | null },
-  teams: { id: string, name: string }[],
+  athlete: { id: string, name: string, cedula: string, phone: string, status: string, team_id: string, has_alliance?: boolean, teams?: { name: string, category?: string } | null, paid_until?: string | null, position?: string | null, stats_avg?: number | null, stats_hits?: number | null, stats_rbi?: number | null, stats_runs?: number | null },
+  teams: { id: string, name: string, category?: string }[],
+  categories?: CategoryItem[],
   isSuperAdmin?: boolean
 }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -317,6 +341,11 @@ export function AthleteCard({
   const [statsRuns, setStatsRuns] = useState(athlete.stats_runs?.toString() || '');
   const [hasAlliance, setHasAlliance] = useState(athlete.has_alliance || false);
   const [loading, setLoading] = useState(false);
+
+  const selectedTeam = teams.find(t => t.id === teamId);
+  const currentCategoryName = selectedTeam?.category || (athlete.teams as any)?.category;
+  const currentCategory = categories?.find(c => c.name === currentCategoryName);
+  const availablePositions: PositionItem[] = normalizePositions(currentCategory?.positions);
 
   const handleSave = async () => {
     if (!name.trim() || !cedula.trim()) return;
@@ -362,27 +391,29 @@ export function AthleteCard({
   }
 
   return (
-    <div className={`bg-white p-3.5 rounded-lg shadow-sm border-l-4 relative ${athlete.status === 'Solvente' ? 'border-green-500' : athlete.status === 'Moroso' ? 'border-red-500' : 'border-gray-400'}`}>
+    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative">
       {isEditing ? (
-        <div className="space-y-2">
-          <input 
-            type="text" 
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
-            placeholder="Nombre Completo"
-          />
+        <div className="space-y-3">
+          <div>
+            <input 
+              type="text" 
+              value={name} 
+              onChange={(e) => setName(e.target.value)}
+              className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+              placeholder="Nombre Completo"
+            />
+          </div>
           <div className="flex gap-2">
             <input 
               type="text" 
-              value={cedula}
+              value={cedula} 
               onChange={(e) => setCedula(e.target.value)}
               className="w-1/2 rounded-md border border-gray-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
               placeholder="Cédula"
             />
             <input 
               type="text" 
-              value={phone}
+              value={phone} 
               onChange={(e) => setPhone(e.target.value)}
               className="w-1/2 rounded-md border border-gray-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
               placeholder="Teléfono"
@@ -392,33 +423,42 @@ export function AthleteCard({
             <select 
               value={teamId}
               onChange={(e) => setTeamId(e.target.value)}
-              className="w-1/2 rounded-md border border-gray-300 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+              className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto bg-white"
             >
               <option value="">Sin equipo</option>
-              {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              {teams.map(t => (
+                <option key={t.id} value={t.id}>
+                  {t.name} {t.category ? `(${t.category})` : ''}
+                </option>
+              ))}
             </select>
           </div>
           <div className="flex gap-2">
-            <select
-              value={position}
-              onChange={(e) => setPosition(e.target.value)}
-              className="w-1/2 rounded-md border border-gray-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
-            >
-              <option value="">Posición</option>
-              <option value="P">Pitcher (P)</option>
-              <option value="C">Catcher (C)</option>
-              <option value="1B">1ra Base (1B)</option>
-              <option value="2B">2da Base (2B)</option>
-              <option value="3B">3ra Base (3B)</option>
-              <option value="SS">Shortstop (SS)</option>
-              <option value="SF">Short Field (SF)</option>
-              <option value="LF">Left Field (LF)</option>
-              <option value="LCF">Left Center (LCF)</option>
-              <option value="CF">Center Field (CF)</option>
-              <option value="2F">Second Field (2F)</option>
-              <option value="RCF">Right Center (RCF)</option>
-              <option value="RF">Right Field (RF)</option>
-            </select>
+            {availablePositions.length > 0 ? (
+              <select
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
+                className="w-1/2 rounded-md border border-gray-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto bg-white"
+              >
+                <option value="">Posición</option>
+                {availablePositions.map(p => (
+                  <option key={p.code} value={p.code}>
+                    {p.code} - {p.name}
+                  </option>
+                ))}
+                {position && !availablePositions.some(p => p.code === position) && (
+                  <option value={position}>{position}</option>
+                )}
+              </select>
+            ) : (
+              <select
+                disabled
+                className="w-1/2 rounded-md border border-gray-200 px-3 py-1.5 text-xs bg-gray-50 text-gray-400 cursor-not-allowed"
+                title="Esta categoría no tiene posiciones configuradas"
+              >
+                <option value="">No aplica</option>
+              </select>
+            )}
             <input 
               type="number" 
               step="0.001"
