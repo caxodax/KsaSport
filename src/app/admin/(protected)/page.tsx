@@ -49,7 +49,7 @@ export default async function DashboardPage({
   const totalPages = count ? Math.ceil(count / pageSize) : 0;
 
   const { data: teamsData } = await supabase.from('teams').select('id, name').order('name');
-  const { data: categoriesData } = await supabase.from('categories').select('name').order('name');
+  const { data: categoriesData } = await supabase.from('categories').select('*').order('name');
   
   if (error) console.error('Error fetching athletes:', error);
 
@@ -114,6 +114,16 @@ export default async function DashboardPage({
   const gracePeriodDays = settings?.grace_period_days ?? 5;
   const penaltyAmount = settings?.penalty_amount ?? 5.00;
 
+  const categoryPenaltyMap = new Map<string, { grace_period_days: number, penalty_amount: number }>();
+  categoriesData?.forEach(c => {
+    if (c.name) {
+      categoryPenaltyMap.set(c.name.trim(), {
+        grace_period_days: c.grace_period_days !== null && c.grace_period_days !== undefined ? Number(c.grace_period_days) : gracePeriodDays,
+        penalty_amount: c.penalty_amount !== null && c.penalty_amount !== undefined ? Number(c.penalty_amount) : penaltyAmount
+      });
+    }
+  });
+
   // --- Calcular KPIs de Mensualidad ---
   // Función: dado un atleta con categoría X, buscar el producto mensualidad que aplique
   const getMensualidadProduct = (category: string) => {
@@ -173,13 +183,16 @@ export default async function DashboardPage({
       totalSolventesMes++;
     } else {
       let appliedPenalty = 0;
+      const catRules = categoryPenaltyMap.get(cat.trim());
+      const catGrace = catRules?.grace_period_days ?? gracePeriodDays;
+      const catPenalty = catRules?.penalty_amount ?? penaltyAmount;
 
-      // Calcular si aplica penalidad (la fecha límite es el día 5 del mes objetivo)
-      const targetDeadline = new Date(targetYear, targetMonthNum - 1, gracePeriodDays);
+      // Calcular si aplica penalidad según los días de gracia de la categoría
+      const targetDeadline = new Date(targetYear, targetMonthNum - 1, catGrace);
       
       // Solo aplicamos la multa si la fecha actual ya sobrepasó la fecha límite del mes cobrado
       if (today > targetDeadline) {
-        appliedPenalty = penaltyAmount;
+        appliedPenalty = catPenalty;
       }
 
       const totalOwedForMonth = price + appliedPenalty;

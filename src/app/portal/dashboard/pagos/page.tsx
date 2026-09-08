@@ -41,19 +41,38 @@ export default async function PagosPage() {
     .eq('id', 1)
     .single()
 
+  let effectiveGracePeriod = settings?.grace_period_days ?? 5
+  let effectivePenaltyAmount = settings?.penalty_amount ?? 10.00
+
+  // Si el atleta pertenece a una categoría, verificar si tiene regla personalizada
+  if (categoryName) {
+    const { data: catData } = await adminSupabase
+      .from('categories')
+      .select('*')
+      .ilike('name', categoryName.trim())
+      .single()
+
+    if (catData?.grace_period_days !== null && catData?.grace_period_days !== undefined) {
+      effectiveGracePeriod = Number(catData.grace_period_days)
+    }
+    if (catData?.penalty_amount !== null && catData?.penalty_amount !== undefined) {
+      effectivePenaltyAmount = Number(catData.penalty_amount)
+    }
+  }
+
   let isLate = false
   let monthsOwed = 1 // Por defecto, se debe 1 mes
 
-  if (paidUntil && settings) {
-    // La fecha límite es paid_until + grace_period_days.
+  if (paidUntil) {
+    // La fecha límite es paid_until + effectiveGracePeriod.
     // Ej: paid_until = 2026-08-31. Mes en curso = Septiembre.
-    // Límite = 5 de Septiembre.
+    // Límite = día effectiveGracePeriod de Septiembre.
     const paidDate = new Date(paidUntil)
     // El mes que debe pagar es el siguiente al pagado
     const dueMonth = paidDate.getMonth() + 1 
     const dueYear = paidDate.getFullYear()
     
-    const limitDate = new Date(dueYear, dueMonth, settings.grace_period_days)
+    const limitDate = new Date(dueYear, dueMonth, effectiveGracePeriod)
     const today = new Date()
     
     // Solo está moroso si hoy es estrictamente mayor que la fecha límite
@@ -162,7 +181,7 @@ export default async function PagosPage() {
   return <PaymentForm 
     products={filteredProducts || []} 
     isLate={isLate} 
-    penaltyAmount={settings?.penalty_amount || 0}
-    gracePeriodDays={settings?.grace_period_days || 5}
+    penaltyAmount={effectivePenaltyAmount}
+    gracePeriodDays={effectiveGracePeriod}
   />
 }
