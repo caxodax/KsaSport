@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Camera, Loader2, Upload, X, User } from 'lucide-react';
 import { updateAvatar } from '@/app/portal/dashboard/actions';
 
@@ -16,7 +17,12 @@ export default function AvatarUpload({
   const [avatar, setAvatar] = useState<string | null>(currentAvatar || null);
   const [isUploading, setIsUploading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const getInitials = (name: string) => {
     const parts = name.trim().split(' ').filter(Boolean);
@@ -88,9 +94,9 @@ export default function AvatarUpload({
       </div>
 
       {/* Modal estilo QR / Perfil Pro */}
-      {isModalOpen && (
+      {isModalOpen && mounted && createPortal(
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200"
           onClick={() => setIsModalOpen(false)}
         >
           <div 
@@ -146,7 +152,8 @@ export default function AvatarUpload({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <input 

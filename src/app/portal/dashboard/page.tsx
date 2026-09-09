@@ -218,7 +218,7 @@ export default async function PortalDashboard() {
     <div className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
       
       {/* HEADER / HERO SECTION (Modern Glassmorphism) */}
-      <div className="relative rounded-3xl overflow-hidden shadow-lg border border-gray-100">
+      <div className="relative z-10 rounded-3xl overflow-hidden shadow-lg border border-gray-100">
         <div className="absolute inset-0 bg-gradient-to-br from-kasa-vinotinto via-red-950 to-black z-0"></div>
         <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] z-0 mix-blend-overlay"></div>
         

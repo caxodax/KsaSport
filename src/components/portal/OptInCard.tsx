@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Trophy, CheckCircle, AlertTriangle, X } from 'lucide-react'
 import { optInToProduct } from '@/app/portal/dashboard/actions'
 
@@ -18,6 +19,11 @@ export default function OptInCard({ athleteId, product }: OptInCardProps) {
   const [showModal, setShowModal] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleConfirm = async () => {
     setLoading(true)
@@ -35,11 +41,11 @@ export default function OptInCard({ athleteId, product }: OptInCardProps) {
   return (
     <>
       <div className="bg-gradient-to-r from-kasa-dorado/10 to-amber-50 rounded-2xl border border-kasa-dorado/30 p-5 shadow-sm relative overflow-hidden group">
-        <div className="absolute -right-4 -top-4 opacity-10 transform group-hover:scale-110 transition-transform">
+        <div className="absolute -right-4 -top-4 opacity-10 pointer-events-none select-none transform group-hover:scale-110 transition-transform">
           <Trophy className="w-32 h-32 text-kasa-dorado" />
         </div>
         
-        <div className="relative z-10">
+        <div className="relative">
           <div className="flex items-center gap-2 mb-2">
             <span className="bg-kasa-dorado text-kasa-vinotinto text-[10px] uppercase tracking-widest font-black px-2 py-1 rounded-md">
               Invitación a Torneo
@@ -65,9 +71,9 @@ export default function OptInCard({ athleteId, product }: OptInCardProps) {
         </div>
       </div>
 
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      {showModal && mounted && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="bg-amber-50 p-6 flex flex-col items-center text-center border-b border-amber-100">
               <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mb-4 shadow-inner">
                 <AlertTriangle className="w-8 h-8" />
@@ -106,7 +112,8 @@ export default function OptInCard({ athleteId, product }: OptInCardProps) {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   )

@@ -1,19 +1,25 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { QrCode, X } from 'lucide-react';
 import QRCodeDisplay from './QRCodeDisplay';
 
 export default function QRModal({ 
   athleteId, 
   status,
-  triggerClassName
+  triggerClassName 
 }: { 
   athleteId: string, 
   status: string,
   triggerClassName?: string 
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <>
@@ -25,9 +31,9 @@ export default function QRModal({
         Ver Carnet Digital
       </button>
 
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-sm relative shadow-2xl animate-in fade-in zoom-in duration-200">
+      {isOpen && mounted && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm relative shadow-2xl animate-in zoom-in-95 duration-200">
             <button 
               onClick={() => setIsOpen(false)}
               className="absolute top-4 right-4 p-2 bg-gray-100 text-gray-500 hover:text-gray-900 rounded-full transition-colors"
@@ -49,7 +55,8 @@ export default function QRModal({
               </p>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
