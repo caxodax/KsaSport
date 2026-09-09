@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getServiceSupabase } from '@/lib/supabase'
-import { CheckCircle2, AlertCircle, ShoppingCart, Activity, ShieldCheck, User, Calendar, LogOut, Lock, PhoneCall } from 'lucide-react'
+import { CheckCircle2, AlertCircle, ShoppingCart, Activity, ShieldCheck, User, Calendar, LogOut, Lock, PhoneCall, Trophy } from 'lucide-react'
 import Link from 'next/link'
 import { logout } from '../actions'
 import QRModal from '@/components/portal/QRModal'
@@ -22,13 +22,24 @@ export default async function PortalDashboard() {
   const adminSupabase = getServiceSupabase()
   const { data: athlete } = await adminSupabase
     .from('athletes')
-    .select('id, name, cedula, status, avatar_url, paid_until, stats_avg, stats_hits, stats_rbi, stats_runs, has_alliance, teams(name)')
+    .select('id, name, cedula, status, avatar_url, paid_until, position, stats_avg, stats_hits, stats_rbi, stats_runs, has_alliance, teams(id, name, logo_url, category)')
     .eq('user_id', session.user.id)
     .single()
 
   if (!athlete) {
     redirect('/portal/link-profile')
   }
+
+  type TeamData = {
+    id?: string;
+    name?: string;
+    logo_url?: string | null;
+    category?: string | null;
+  } | null;
+
+  const team: TeamData = Array.isArray(athlete.teams)
+    ? ((athlete.teams[0] || null) as TeamData)
+    : ((athlete.teams || null) as TeamData);
 
   // Si el atleta está inactivo, mostrar pantalla de bloqueo
   if (athlete.status === 'Inactivo') {
@@ -73,7 +84,9 @@ export default async function PortalDashboard() {
                   {athlete.avatar_url ? (
                     <img src={athlete.avatar_url} alt={athlete.name} className="w-full h-full object-cover" />
                   ) : (
-                    <User className="w-6 h-6 text-gray-400" />
+                    <div className="w-full h-full bg-gradient-to-br from-rose-950 via-kasa-vinotinto to-amber-600 flex items-center justify-center text-white font-black text-sm">
+                      {athlete.name?.slice(0, 2).toUpperCase() || 'KS'}
+                    </div>
                   )}
                 </div>
                 <div>
@@ -82,9 +95,11 @@ export default async function PortalDashboard() {
                 </div>
               </div>
               <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:gap-1 w-full sm:w-auto justify-between sm:justify-start border-t sm:border-t-0 pt-2 sm:pt-0 border-gray-200">
-                <span className="text-xs font-medium text-gray-600 bg-white px-2.5 py-1 rounded-lg border border-gray-200">
-                  {/* @ts-ignore */}
-                  {athlete.teams?.name || 'Sin equipo'}
+                <span className="text-xs font-medium text-gray-700 bg-white px-2.5 py-1 rounded-lg border border-gray-200 flex items-center gap-1.5 shadow-2xs">
+                  {team?.logo_url && (
+                    <img src={team.logo_url} alt="" className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
+                  )}
+                  {team?.name || 'Sin equipo'}
                 </span>
                 <span className="text-[11px] font-bold text-red-600 bg-red-50 px-2.5 py-0.5 rounded-full border border-red-100">
                   Estatus: Inactivo
@@ -219,11 +234,38 @@ export default async function PortalDashboard() {
         <div className="relative z-10 px-6 pb-8 md:px-10 md:pb-10 pt-2 flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-10">
           
           <div className="shrink-0 relative">
-            <div className="w-28 h-28 md:w-36 md:h-36 rounded-full shadow-2xl overflow-hidden ring-4 ring-white/10">
-              <AvatarUpload athleteId={athlete.id} currentAvatar={athlete.avatar_url} />
+            <div className="w-28 h-28 md:w-36 md:h-36 rounded-full shadow-2xl overflow-hidden ring-4 ring-white/15">
+              <AvatarUpload athleteId={athlete.id} currentAvatar={athlete.avatar_url} athleteName={athlete.name} />
             </div>
+
+            {/* Micro-escudo oficial del equipo acoplado (Dual-crest / Pro Athlete Badge) */}
+            {team?.logo_url && (
+              <div 
+                className="absolute -bottom-1 -right-1 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white p-0.5 shadow-2xl ring-2 ring-kasa-dorado border-2 border-white overflow-hidden flex items-center justify-center z-20 transition-transform duration-300 hover:scale-110" 
+                title={`Equipo: ${team?.name}`}
+              >
+                <img 
+                  src={team.logo_url} 
+                  alt={team?.name || 'Escudo del equipo'} 
+                  className="w-full h-full object-cover rounded-full" 
+                />
+              </div>
+            )}
+
+            {/* Micro-indicador de solvencia con pulso */}
+            <div 
+              className={`absolute top-1 right-1 w-4 h-4 rounded-full border-2 border-white z-20 ${
+                athlete.status === 'Solvente' ? 'bg-emerald-500' : 'bg-red-500'
+              }`}
+              title={`Estatus: ${athlete.status}`}
+            >
+              <span className={`absolute inset-0 rounded-full animate-ping opacity-75 ${
+                athlete.status === 'Solvente' ? 'bg-emerald-400' : 'bg-red-400'
+              }`}></span>
+            </div>
+
             {athlete.has_alliance && (
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-kasa-dorado text-kasa-vinotinto text-[10px] uppercase font-black px-3 py-1 rounded-full shadow-lg border border-yellow-300 flex items-center gap-1">
+              <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-kasa-dorado text-kasa-vinotinto text-[10px] uppercase font-black px-3 py-1 rounded-full shadow-lg border border-yellow-300 flex items-center gap-1 z-20">
                 <ShieldCheck className="w-3 h-3" />
                 Alianza
               </div>
@@ -234,14 +276,38 @@ export default async function PortalDashboard() {
             <h1 className="text-2xl md:text-5xl font-black text-white leading-tight tracking-tight drop-shadow-md mb-2">
               {athlete.name}
             </h1>
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-1">
-              <span className="text-white/80 font-medium bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full text-sm border border-white/10">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5 mt-1">
+              <span className="text-white/90 font-medium bg-black/30 backdrop-blur-sm px-3.5 py-1.5 rounded-xl text-xs sm:text-sm border border-white/10">
                 C.I: {athlete.cedula}
               </span>
-              <span className="text-kasa-dorado font-bold bg-kasa-dorado/20 backdrop-blur-sm px-3 py-1 rounded-full text-sm border border-kasa-dorado/30">
-                {/* @ts-ignore */}
-                {athlete.teams?.name || 'Sin asignar'}
-              </span>
+
+              {/* Badge de Equipo Enriquecido: Escudo miniatura + Nombre + Categoría */}
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-white/15 to-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/20 shadow-xs">
+                {team?.logo_url ? (
+                  <img 
+                    src={team.logo_url} 
+                    alt={team?.name} 
+                    className="w-4 h-4 rounded-full object-cover shadow-2xs ring-1 ring-white/30 shrink-0" 
+                  />
+                ) : (
+                  <Trophy className="w-3.5 h-3.5 text-kasa-dorado shrink-0" />
+                )}
+                <span className="text-white font-black text-xs sm:text-sm tracking-wide">
+                  {team?.name || 'Sin equipo asignado'}
+                </span>
+                {team?.category && (
+                  <span className="text-kasa-dorado font-black text-[10px] uppercase tracking-wider pl-1.5 border-l border-white/20">
+                    {team.category}
+                  </span>
+                )}
+              </div>
+
+              {/* Posición táctica si existe */}
+              {athlete.position && (
+                <span className="text-amber-200 font-bold bg-amber-950/40 backdrop-blur-sm px-3 py-1.5 rounded-xl text-xs sm:text-sm border border-amber-400/30">
+                  Pos: {athlete.position}
+                </span>
+              )}
             </div>
           </div>
 

@@ -83,3 +83,4 @@ export async function updateCategoryPenalty(
   revalidatePath('/portal/dashboard/pagos')
   return { success: true }
 }
+

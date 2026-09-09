@@ -10,13 +10,24 @@ export default async function VerifyAthletePage(props: { params: Promise<{ id: s
   
   const { data: athlete } = await adminSupabase
     .from('athletes')
-    .select('*, teams(name)')
+    .select('*, teams(id, name, logo_url, category)')
     .eq('id', params.id)
     .single();
 
   if (!athlete) {
     notFound();
   }
+
+  type TeamData = {
+    id?: string;
+    name?: string;
+    logo_url?: string | null;
+    category?: string | null;
+  } | null;
+
+  const team: TeamData = Array.isArray(athlete.teams)
+    ? ((athlete.teams[0] || null) as TeamData)
+    : ((athlete.teams || null) as TeamData);
 
   const isSolvente = athlete.status === 'Solvente';
   const isInactivo = athlete.status === 'Inactivo';
@@ -53,22 +64,52 @@ export default async function VerifyAthletePage(props: { params: Promise<{ id: s
           
           {/* Floating Avatar */}
           <div className="absolute -top-12 w-24 h-24 bg-white rounded-full p-1 shadow-xl">
-            {athlete.avatar_url ? (
-              <img src={athlete.avatar_url} alt="Profile" className="w-full h-full rounded-full object-cover" />
-            ) : (
-              <div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-                <Camera className="w-8 h-8" />
+            <div className="w-full h-full rounded-full overflow-hidden relative">
+              {athlete.avatar_url ? (
+                <img src={athlete.avatar_url} alt="Profile" className="w-full h-full rounded-full object-cover" />
+              ) : (
+                <div className="w-full h-full rounded-full bg-gradient-to-br from-rose-950 via-kasa-vinotinto to-amber-600 flex items-center justify-center text-white font-black text-2xl">
+                  {athlete.name?.slice(0, 2).toUpperCase() || 'KS'}
+                </div>
+              )}
+            </div>
+
+            {/* Micro-escudo oficial de equipo acoplado */}
+            {team?.logo_url && (
+              <div 
+                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white p-0.5 shadow-lg ring-2 ring-kasa-dorado border border-white overflow-hidden flex items-center justify-center z-10"
+                title={team?.name}
+              >
+                <img 
+                  src={team.logo_url} 
+                  alt={team?.name} 
+                  className="w-full h-full object-cover rounded-full" 
+                />
               </div>
             )}
           </div>
 
           <div className="mt-12 w-full">
             <h2 className="text-2xl font-bold text-gray-900 leading-tight mb-1">{athlete.name}</h2>
-            <p className="text-gray-500 font-medium mb-4">C.I: {athlete.cedula}</p>
+            <p className="text-gray-500 font-medium mb-3">C.I: {athlete.cedula}</p>
             
-            <div className="inline-block bg-gray-100 text-gray-800 text-sm px-4 py-1.5 rounded-full font-bold mb-8">
-              {/* @ts-ignore */}
-              {athlete.teams?.name || 'Sin equipo asignado'}
+            {/* Badge de equipo y categoría */}
+            <div className="inline-flex items-center gap-2 bg-gray-100 text-gray-800 text-xs sm:text-sm px-4 py-1.5 rounded-full font-bold mb-6 border border-gray-200 shadow-2xs">
+              {team?.logo_url ? (
+                <img 
+                  src={team.logo_url} 
+                  alt="" 
+                  className="w-4 h-4 rounded-full object-cover shrink-0" 
+                />
+              ) : (
+                <Trophy className="w-3.5 h-3.5 text-kasa-dorado shrink-0" />
+              )}
+              <span>{team?.name || 'Sin equipo asignado'}</span>
+              {team?.category && (
+                <span className="text-gray-400 font-semibold text-[11px] pl-1.5 border-l border-gray-300">
+                  {team.category}
+                </span>
+              )}
             </div>
 
             {/* Stats Grid */}
