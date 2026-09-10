@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getServiceSupabase } from '@/lib/supabase';
 import { checkAdminPermission } from '@/lib/auth-admin';
 import AthleteDashboard from './AthleteDashboard';
+import { cleanCedula } from '@/lib/cedula';
 
 export const revalidate = 0;
 
@@ -62,7 +63,12 @@ export default async function AthletesPage({
   }
 
   if (query) {
-    athletesQuery = athletesQuery.or(`name.ilike.%${query}%,cedula.ilike.%${query}%`);
+    const cleanQ = cleanCedula(query);
+    if (cleanQ && cleanQ !== query) {
+      athletesQuery = athletesQuery.or(`name.ilike.%${query}%,cedula.ilike.%${cleanQ}%,cedula.ilike.%${query}%`);
+    } else {
+      athletesQuery = athletesQuery.or(`name.ilike.%${query}%,cedula.ilike.%${query}%`);
+    }
   }
   if (teamFilter && !coachTeamId) {
     athletesQuery = athletesQuery.eq('team_id', teamFilter);

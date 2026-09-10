@@ -3,6 +3,7 @@
 import { Check, X, Clock, FileText } from 'lucide-react'
 import { approvePayment, rejectPayment } from './actions'
 import { useState } from 'react'
+import { formatCedula } from '@/lib/cedula'
 
 type Payment = {
   id: string
@@ -72,7 +73,7 @@ export default function PaymentRow({ payment }: { payment: Payment }) {
             </div>
             <div>
               <div className="text-sm font-bold text-gray-900">{payment.athletes?.name || 'Atleta Desconocido'}</div>
-              <div className="text-xs text-gray-500">CI: {payment.athletes?.cedula || 'N/A'}</div>
+              <div className="text-xs text-gray-500">CI: {payment.athletes?.cedula ? formatCedula(payment.athletes.cedula) : 'N/A'}</div>
             </div>
           </div>
         </td>
@@ -172,7 +173,7 @@ export function PaymentCard({ payment }: { payment: Payment }) {
             </div>
             <div>
               <h4 className="font-bold text-gray-900">{payment.athletes?.name || 'Desconocido'}</h4>
-              <span className="text-xs text-gray-500">CI: {payment.athletes?.cedula || 'N/A'}</span>
+              <span className="text-xs text-gray-500">CI: {payment.athletes?.cedula ? formatCedula(payment.athletes.cedula) : 'N/A'}</span>
             </div>
           </div>
           <div className="text-right">

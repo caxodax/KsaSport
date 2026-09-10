@@ -1,6 +1,7 @@
 import { getServiceSupabase } from '@/lib/supabase'
 import { CheckCircle2, AlertOctagon, Trophy, Camera } from 'lucide-react'
 import { notFound } from 'next/navigation'
+import { formatCedula } from '@/lib/cedula'
 
 export const revalidate = 0;
 
@@ -91,7 +92,7 @@ export default async function VerifyAthletePage(props: { params: Promise<{ id: s
 
           <div className="mt-12 w-full">
             <h2 className="text-2xl font-bold text-gray-900 leading-tight mb-1">{athlete.name}</h2>
-            <p className="text-gray-500 font-medium mb-3">C.I: {athlete.cedula}</p>
+            <p className="text-gray-500 font-medium mb-3">C.I: {formatCedula(athlete.cedula)}</p>
             
             {/* Badge de equipo y categoría */}
             <div className="inline-flex items-center gap-2 bg-gray-100 text-gray-800 text-xs sm:text-sm px-4 py-1.5 rounded-full font-bold mb-6 border border-gray-200 shadow-2xs">

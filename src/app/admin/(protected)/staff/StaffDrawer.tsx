@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Shield, User, Phone, IdCard, Briefcase, Trophy, AlertCircle, Loader2, Check } from 'lucide-react';
 import { createStaff, updateStaff } from './actions';
+import { maskCedulaInput, cleanCedula, formatCedula } from '@/lib/cedula';
 
 export const STAFF_ROLES = [
   "Mánager",
@@ -67,7 +68,7 @@ export default function StaffDrawer({
   useEffect(() => {
     if (staffMember) {
       setName(staffMember.name);
-      setCedula(staffMember.cedula);
+      setCedula(formatCedula(staffMember.cedula));
       setPhone(staffMember.phone || '');
       setRole(staffMember.role || STAFF_ROLES[0]);
       setTeamId(staffMember.team_id || '');
@@ -102,7 +103,7 @@ export default function StaffDrawer({
       formData.append('id', staffMember.id);
     }
     formData.append('name', name.trim());
-    formData.append('cedula', cedula.trim());
+    formData.append('cedula', cleanCedula(cedula));
     formData.append('phone', phone.trim());
     formData.append('role', role);
     formData.append('team_id', teamId);
@@ -188,8 +189,8 @@ export default function StaffDrawer({
               <input 
                 type="text" 
                 value={cedula}
-                onChange={e => setCedula(e.target.value)}
-                placeholder="Ej: 28466117"
+                onChange={e => setCedula(maskCedulaInput(e.target.value))}
+                placeholder="Ej: 28.466.117"
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-gray-900 focus:bg-white focus:border-kasa-vinotinto focus:ring-4 focus:ring-kasa-vinotinto/10 outline-none transition-all"
                 required
               />

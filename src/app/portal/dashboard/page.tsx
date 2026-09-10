@@ -8,6 +8,7 @@ import QRModal from '@/components/portal/QRModal'
 import AvatarUpload from '@/components/portal/AvatarUpload'
 import OptInCard from '@/components/portal/OptInCard'
 import TransactionHistory from '@/components/portal/TransactionHistory'
+import { formatCedula } from '@/lib/cedula'
 
 export const revalidate = 0;
 
@@ -91,7 +92,7 @@ export default async function PortalDashboard() {
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900 leading-tight">{athlete.name}</h3>
-                  <p className="text-xs text-gray-500 font-medium">C.I: {athlete.cedula}</p>
+                  <p className="text-xs text-gray-500 font-medium">C.I: {formatCedula(athlete.cedula)}</p>
                 </div>
               </div>
               <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:gap-1 w-full sm:w-auto justify-between sm:justify-start border-t sm:border-t-0 pt-2 sm:pt-0 border-gray-200">
@@ -278,7 +279,7 @@ export default async function PortalDashboard() {
             </h1>
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5 mt-1">
               <span className="text-white/90 font-medium bg-black/30 backdrop-blur-sm px-3.5 py-1.5 rounded-xl text-xs sm:text-sm border border-white/10">
-                C.I: {athlete.cedula}
+                C.I: {formatCedula(athlete.cedula)}
               </span>
 
               {/* Badge de Equipo Enriquecido: Escudo miniatura + Nombre + Categoría */}

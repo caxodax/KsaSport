@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getServiceSupabase } from '@/lib/supabase'
 import { uploadImageToCloudflare } from '@/lib/cloudflare'
+import { cleanCedula } from '@/lib/cedula'
 
 export async function login(formData: FormData) {
   const email = formData.get('email') as string
@@ -69,7 +70,8 @@ export async function logout() {
 }
 
 export async function linkProfile(formData: FormData) {
-  const cedula = formData.get('cedula') as string
+  const rawCedula = formData.get('cedula') as string
+  const cedula = cleanCedula(rawCedula)
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 

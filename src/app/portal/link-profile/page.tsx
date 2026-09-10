@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { linkProfile, logout } from '../actions';
 import { UserCheck, AlertCircle } from 'lucide-react';
+import { maskCedulaInput } from '@/lib/cedula';
 
 export default function LinkProfilePage() {
+  const [cedula, setCedula] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -48,10 +50,15 @@ export default function LinkProfilePage() {
             <input 
               type="text" 
               name="cedula" 
+              value={cedula}
+              onChange={(e) => setCedula(maskCedulaInput(e.target.value))}
               required
               className="w-full rounded-lg border border-gray-300 px-4 py-3 text-base outline-none focus:ring-2 focus:ring-kasa-vinotinto transition-shadow text-center font-bold tracking-wider"
-              placeholder="Ej: 26123456"
+              placeholder="Ej: 26.123.456"
             />
+            <p className="text-xs text-gray-400 mt-1.5 text-center">
+              Puedes escribir con o sin puntos, el sistema lo formateará automáticamente.
+            </p>
           </div>
 
           <button 

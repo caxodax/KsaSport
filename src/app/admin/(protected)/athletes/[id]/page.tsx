@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, User, Calendar, CreditCard, ShieldCheck, Activity, Trophy, MessageCircle, ExternalLink, Receipt } from 'lucide-react'
 import ExemptionManager from './ExemptionManager'
+import { formatCedula } from '@/lib/cedula'
 
 export const revalidate = 0
 
@@ -174,7 +175,7 @@ export default async function AthleteProfilePage({
                   
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2">
                     <span className="text-slate-600 font-bold bg-slate-100 px-3 py-1 rounded-xl text-xs border border-slate-200/80 shadow-2xs">
-                      C.I: {athlete.cedula}
+                      C.I: {formatCedula(athlete.cedula)}
                     </span>
 
                     <span className="text-kasa-vinotinto font-black bg-red-50 px-3 py-1 rounded-xl text-xs border border-red-200/80 shadow-2xs flex items-center gap-1.5">

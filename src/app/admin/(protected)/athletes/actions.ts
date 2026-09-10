@@ -1,10 +1,11 @@
 'use server'
 import { getServiceSupabase } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
+import { cleanCedula } from '@/lib/cedula';
 
 export async function createAthlete(formData: FormData) {
   const name = formData.get('name') as string;
-  const cedula = formData.get('cedula') as string;
+  const cedula = cleanCedula(formData.get('cedula') as string);
   const phone = formData.get('phone') as string;
   const team_id = formData.get('team_id') as string;
   const status = formData.get('status') as string || 'Solvente';
@@ -57,7 +58,7 @@ export async function deleteAthlete(id: string) {
 export async function updateAthlete(formData: FormData) {
   const id = formData.get('id') as string;
   const name = formData.get('name') as string;
-  const cedula = formData.get('cedula') as string;
+  const cedula = cleanCedula(formData.get('cedula') as string);
   const phone = formData.get('phone') as string;
   const team_id = formData.get('team_id') as string;
   const status = formData.get('status') as string;

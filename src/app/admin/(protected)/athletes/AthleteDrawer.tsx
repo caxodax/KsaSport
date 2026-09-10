@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { X, Plus, User, Shield, Phone, Calendar, Award, AlertCircle, Loader2, ChevronDown, ChevronUp, Check } from 'lucide-react';
 import { createAthlete, updateAthlete } from './actions';
 import { PositionItem, normalizePositions } from '@/lib/positions';
+import { maskCedulaInput, cleanCedula, formatCedula } from '@/lib/cedula';
 
 interface TeamItem {
   id: string;
@@ -79,7 +80,7 @@ export default function AthleteDrawer({
   useEffect(() => {
     if (athlete) {
       setName(athlete.name || '');
-      setCedula(athlete.cedula || '');
+      setCedula(formatCedula(athlete.cedula || ''));
       setPhone(athlete.phone || '');
       setTeamId(athlete.team_id || coachTeamId || '');
       setPosition(athlete.position || '');
@@ -149,7 +150,7 @@ export default function AthleteDrawer({
       formData.append('id', athlete.id);
     }
     formData.append('name', name.trim());
-    formData.append('cedula', cedula.trim().replace(/\./g, '')); // Remover puntos para evitar duplicados
+    formData.append('cedula', cleanCedula(cedula));
     formData.append('phone', phone.trim());
     formData.append('team_id', teamId || coachTeamId || '');
     
@@ -253,9 +254,9 @@ export default function AthleteDrawer({
                   <input 
                     type="text" 
                     value={cedula}
-                    onChange={(e) => setCedula(e.target.value)}
+                    onChange={(e) => setCedula(maskCedulaInput(e.target.value))}
                     required
-                    placeholder="Ej: 20123456 (sin puntos)"
+                    placeholder="Ej: 20.123.456"
                     className="w-full rounded-xl border border-slate-300 px-4 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white text-gray-900 text-sm font-semibold focus:ring-2 focus:ring-kasa-vinotinto focus:border-kasa-vinotinto outline-none shadow-xs transition-all"
                   />
                 </div>

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { deleteStaff } from './actions';
 import StaffDrawer, { StaffData, TeamOption, STAFF_ROLES } from './StaffDrawer';
+import { formatCedula, cleanCedula } from '@/lib/cedula';
 
 export default function StaffDashboard({
   initialStaff = [],
@@ -32,9 +33,11 @@ export default function StaffDashboard({
   const filteredStaff = useMemo(() => {
     return initialStaff.filter(item => {
       const q = search.trim().toLowerCase();
+      const cleanQ = cleanCedula(q);
       const matchSearch = !q || 
         item.name.toLowerCase().includes(q) || 
         item.cedula.toLowerCase().includes(q) || 
+        (cleanQ && cleanCedula(item.cedula).includes(cleanQ)) ||
         (item.phone && item.phone.includes(q));
 
       const matchRole = !roleFilter || item.role === roleFilter;
@@ -355,7 +358,7 @@ export default function StaffDashboard({
                         {staff.name}
                       </h3>
                       <p className="text-xs font-semibold text-slate-500 mt-0.5">
-                        C.I: {staff.cedula}
+                        C.I: {formatCedula(staff.cedula)}
                       </p>
 
                       {/* Teléfono + WhatsApp */}
@@ -463,7 +466,7 @@ export default function StaffDashboard({
 
                       {/* Cédula */}
                       <td className="px-6 py-4 whitespace-nowrap text-xs font-semibold text-slate-600">
-                        {staff.cedula}
+                        {formatCedula(staff.cedula)}
                       </td>
 
                       {/* Teléfono */}

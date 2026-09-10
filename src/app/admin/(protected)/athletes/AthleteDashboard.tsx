@@ -10,6 +10,7 @@ import {
 import { deleteAthlete } from './actions';
 import AthleteDrawer from './AthleteDrawer';
 import Pagination from '../Pagination';
+import { formatCedula } from '@/lib/cedula';
 
 interface TeamItem {
   id: string;
@@ -139,7 +140,7 @@ export default function AthleteDashboard({
   };
 
   const handleDelete = async (athlete: AthleteData) => {
-    if (confirm(`¿Seguro que deseas eliminar a la atleta "${athlete.name}" (C.I. ${athlete.cedula})?`)) {
+    if (confirm(`¿Seguro que deseas eliminar a la atleta "${athlete.name}" (C.I. ${formatCedula(athlete.cedula)})?`)) {
       await deleteAthlete(athlete.id);
     }
   };
@@ -359,7 +360,7 @@ export default function AthleteDashboard({
                         
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-xs font-bold text-slate-500">
-                            C.I. {athlete.cedula}
+                            C.I. {formatCedula(athlete.cedula)}
                           </span>
                           {athlete.has_alliance && (
                             <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-50 text-amber-800 border border-amber-200/80 shadow-2xs">
@@ -560,7 +561,7 @@ export default function AthleteDashboard({
                               {athlete.name}
                             </Link>
                             <span className="text-[11px] font-bold text-slate-400">
-                              C.I. {athlete.cedula} {athlete.has_alliance && '• 🤝 Alianza'}
+                              C.I. {formatCedula(athlete.cedula)} {athlete.has_alliance && '• 🤝 Alianza'}
                             </span>
                           </div>
                         </div>

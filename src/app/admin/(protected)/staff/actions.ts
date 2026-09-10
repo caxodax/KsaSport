@@ -1,10 +1,11 @@
 'use server'
 import { getServiceSupabase } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
+import { cleanCedula } from '@/lib/cedula';
 
 export async function createStaff(formData: FormData) {
   const name = formData.get('name') as string;
-  const cedula = formData.get('cedula') as string;
+  const cedula = cleanCedula(formData.get('cedula') as string);
   const phone = formData.get('phone') as string;
   const team_id = formData.get('team_id') as string;
   const role = formData.get('role') as string;
@@ -46,7 +47,7 @@ export async function deleteStaff(id: string) {
 export async function updateStaff(formData: FormData) {
   const id = formData.get('id') as string;
   const name = formData.get('name') as string;
-  const cedula = formData.get('cedula') as string;
+  const cedula = cleanCedula(formData.get('cedula') as string);
   const phone = formData.get('phone') as string;
   const team_id = formData.get('team_id') as string;
   const role = formData.get('role') as string;

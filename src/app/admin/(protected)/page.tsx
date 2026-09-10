@@ -3,6 +3,7 @@ import { Users, AlertCircle, CircleDollarSign, TrendingUp, Wallet } from 'lucide
 import DashboardFilters from './DashboardFilters';
 import Pagination from './Pagination';
 import MonthSelector from './MonthSelector';
+import { cleanCedula, formatCedula } from '@/lib/cedula';
 
 export const revalidate = 0;
 
@@ -30,7 +31,12 @@ export default async function DashboardPage({
     .select('id, name, cedula, status, team_id, teams!inner(id, name, category)', { count: 'exact' });
 
   if (query) {
-    athletesQuery = athletesQuery.or(`name.ilike.%${query}%,cedula.ilike.%${query}%`);
+    const cleanQ = cleanCedula(query);
+    if (cleanQ && cleanQ !== query) {
+      athletesQuery = athletesQuery.or(`name.ilike.%${query}%,cedula.ilike.%${cleanQ}%,cedula.ilike.%${query}%`);
+    } else {
+      athletesQuery = athletesQuery.or(`name.ilike.%${query}%,cedula.ilike.%${query}%`);
+    }
   }
   if (teamFilter) {
     athletesQuery = athletesQuery.eq('team_id', teamFilter);
@@ -396,7 +402,7 @@ export default async function DashboardPage({
                     <div>
                       <h4 className="font-bold text-gray-900 text-base leading-tight">{athlete.name}</h4>
                       <div className="flex items-center gap-2 mt-1">
-                        <p className="text-xs text-gray-500">{athlete.cedula}</p>
+                        <p className="text-xs text-gray-500 font-medium">C.I. {formatCedula(athlete.cedula)}</p>
                         <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
                           {/* @ts-ignore */}
                           {athlete.teams?.name || 'Sin equipo'}
@@ -439,7 +445,7 @@ export default async function DashboardPage({
                         <div className="text-base font-bold text-gray-900">{athlete.name}</div>
                       </td>
                       <td className="px-8 py-5 whitespace-nowrap">
-                        <div className="text-sm text-gray-500 font-medium">{athlete.cedula}</div>
+                        <div className="text-sm text-gray-600 font-bold tracking-wide">{formatCedula(athlete.cedula)}</div>
                       </td>
                       <td className="px-8 py-5 whitespace-nowrap">
                         <div className="text-sm text-gray-500">
