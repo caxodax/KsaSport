@@ -1,6 +1,6 @@
 'use server'
 import { getServiceSupabase } from '@/lib/supabase';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { uploadImageToCloudflare } from '@/lib/cloudflare';
 
 export async function createTeam(formData: FormData) {
@@ -23,7 +23,9 @@ export async function createTeam(formData: FormData) {
     return { error: error.message };
   }
 
+  revalidateTag('teams', { expire: 0 });
   revalidatePath('/admin/teams');
+  revalidatePath('/admin/athletes');
   return { success: true };
 }
 
@@ -35,7 +37,9 @@ export async function deleteTeam(id: string) {
     return { error: error.message };
   }
 
+  revalidateTag('teams', { expire: 0 });
   revalidatePath('/admin/teams');
+  revalidatePath('/admin/athletes');
   return { success: true };
 }
 
@@ -64,6 +68,8 @@ export async function updateTeam(formData: FormData) {
     return { error: error.message };
   }
 
+  revalidateTag('teams', { expire: 0 });
   revalidatePath('/admin/teams');
+  revalidatePath('/admin/athletes');
   return { success: true };
 }

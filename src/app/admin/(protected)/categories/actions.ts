@@ -1,6 +1,6 @@
 'use server'
 import { getServiceSupabase } from '@/lib/supabase';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { normalizePositions } from '@/lib/positions';
 
 export async function createCategory(formData: FormData) {
@@ -18,6 +18,7 @@ export async function createCategory(formData: FormData) {
     return { error: error.message };
   }
 
+  revalidateTag('categories', { expire: 0 });
   revalidatePath('/admin/categories');
   revalidatePath('/admin/teams');
   revalidatePath('/admin/athletes');
@@ -32,6 +33,7 @@ export async function deleteCategory(id: string) {
     return { error: error.message };
   }
 
+  revalidateTag('categories', { expire: 0 });
   revalidatePath('/admin/categories');
   revalidatePath('/admin/teams');
   revalidatePath('/admin/athletes');
@@ -58,6 +60,7 @@ export async function updateCategory(formData: FormData) {
     return { error: error.message };
   }
 
+  revalidateTag('categories', { expire: 0 });
   revalidatePath('/admin/categories');
   revalidatePath('/admin/teams');
   revalidatePath('/admin/athletes');

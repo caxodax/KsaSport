@@ -1,19 +1,13 @@
 import { getServiceSupabase } from '@/lib/supabase';
-import { createClient } from '@/lib/supabase/server';
 import { checkAdminPermission } from '@/lib/auth-admin';
 import LineupClientWrapper from './LineupClientWrapper';
 
 export const revalidate = 0;
 
 export default async function LineupPage() {
-  await checkAdminPermission('view_roster');
+  const { user, permissions } = await checkAdminPermission('view_roster');
+  const isSuperAdmin = permissions.includes('manage_catalog');
   const supabase = getServiceSupabase();
-  const authClient = await createClient();
-  const { data: { user } } = await authClient.auth.getUser();
-
-  // Buscar permisos y rol
-  const { data: adminUser } = await supabase.from('admin_users').select('role_id, admin_roles(name, permissions)').eq('id', user?.id).single();
-  const isSuperAdmin = (adminUser?.admin_roles as any)?.permissions?.includes('manage_catalog');
 
   let coachTeamId: string | null = null;
   let teamName = "Academia Completa";

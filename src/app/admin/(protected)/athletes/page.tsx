@@ -1,8 +1,8 @@
-import { createClient } from '@/lib/supabase/server';
 import { getServiceSupabase } from '@/lib/supabase';
 import { checkAdminPermission } from '@/lib/auth-admin';
 import AthleteDashboard from './AthleteDashboard';
 import { cleanCedula } from '@/lib/cedula';
+import { getCachedTeams, getCachedCategories } from '@/lib/catalogCache';
 
 export const revalidate = 0;
 
@@ -11,15 +11,9 @@ export default async function AthletesPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  await checkAdminPermission('view_roster');
+  const { user, permissions } = await checkAdminPermission('view_roster');
+  const isSuperAdmin = permissions.includes('manage_catalog');
   const supabase = getServiceSupabase();
-  
-  const authClient = await createClient();
-  const { data: { user } } = await authClient.auth.getUser();
-  
-  // Buscar permisos y rol del usuario
-  const { data: adminUser } = await supabase.from('admin_users').select('role_id, admin_roles(name, permissions)').eq('id', user?.id).single();
-  const isSuperAdmin = (adminUser?.admin_roles as any)?.permissions?.includes('manage_catalog');
   
   // Si no es superadmin, buscar su equipo en la tabla staff
   let coachTeamId: string | null = null;
@@ -44,9 +38,11 @@ export default async function AthletesPage({
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
-  // Datos para los selectores de filtros y el formulario
-  const { data: teamsData } = await supabase.from('teams').select('id, name, category').order('name');
-  const { data: categoriesData } = await supabase.from('categories').select('id, name, positions').order('name');
+  // Datos para los selectores de filtros y el formulario (con caché en memoria de 300s)
+  const [teamsData, categoriesData] = await Promise.all([
+    getCachedTeams(),
+    getCachedCategories(),
+  ]);
 
   // Consulta de Atletas con Filtros y Paginación
   const selectQuery = categoryFilter
