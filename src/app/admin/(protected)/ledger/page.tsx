@@ -1,6 +1,7 @@
 import { getServiceSupabase } from '@/lib/supabase';
-import { CircleDollarSign, TrendingUp, CreditCard, ShoppingCart, BarChart3, Receipt, ChevronUp, Users } from 'lucide-react';
-import MonthSelector from '../MonthSelector';
+import { CircleDollarSign, TrendingUp, CreditCard, ShoppingCart, BarChart3, Receipt, ChevronUp, Users, Calendar } from 'lucide-react';
+import DateRangeFilter from '../DateRangeFilter';
+import { parseDateRange } from '@/lib/dateRange';
 
 export const revalidate = 0;
 
@@ -10,31 +11,16 @@ export default async function LedgerPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const resolvedParams = await searchParams;
-  const monthParam = typeof resolvedParams.month === 'string' ? resolvedParams.month : null;
+  const { startDate, endDate, formattedRange } = parseDateRange(resolvedParams);
   const supabase = getServiceSupabase();
 
-  // Calcular rango de fechas
-  let startDate = new Date();
-  startDate.setDate(1);
-  startDate.setHours(0, 0, 0, 0);
-  
-  if (monthParam) {
-    const [year, month] = monthParam.split('-');
-    if (year && month) {
-      startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
-    }
-  }
-  
-  const endDate = new Date(startDate);
-  endDate.setMonth(endDate.getMonth() + 1);
-
-  // Fetch ALL completed payments in the month
+  // Fetch ALL completed payments in the date range
   const { data: payments } = await supabase
     .from('payments')
     .select('id, amount, method, created_at, products(name), athletes(name, cedula)')
     .eq('status', 'Completado')
     .gte('created_at', startDate.toISOString())
-    .lt('created_at', endDate.toISOString());
+    .lte('created_at', endDate.toISOString());
 
   // Fetch all active installment products (to show debt)
   const { data: installmentProducts } = await supabase
@@ -135,19 +121,27 @@ export default async function LedgerPage({
   return (
     <div className="p-4 sm:p-8 bg-gray-50/50 min-h-screen">
       {/* Encabezado Analítico */}
-      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="mb-8 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-            <div className="p-2.5 bg-green-100 rounded-xl">
-              <BarChart3 className="w-8 h-8 text-green-700" />
+          <h2 className="text-2xl sm:text-3xl font-black text-gray-900 flex items-center gap-3">
+            <div className="p-2.5 bg-green-100 rounded-xl shrink-0">
+              <BarChart3 className="w-7 h-7 sm:w-8 sm:h-8 text-green-700" />
             </div>
-            Reportes Financieros (Libro Mayor)
+            <span>Reportes Financieros (Libro Mayor)</span>
           </h2>
-          <p className="text-gray-500 mt-2 text-lg">
-            Análisis de ingresos reales validados en la plataforma.
-          </p>
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            <p className="text-gray-500 text-sm sm:text-base">
+              Análisis de ingresos reales validados en la plataforma.
+            </p>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-green-50 text-green-700 border border-green-200 rounded-full text-xs font-bold shadow-2xs">
+              <Calendar className="w-3.5 h-3.5 text-green-600" />
+              {formattedRange}
+            </span>
+          </div>
         </div>
-        <MonthSelector />
+        <div className="w-full lg:w-auto">
+          <DateRangeFilter />
+        </div>
       </div>
 
       {/* Tarjetas KPI Premium */}

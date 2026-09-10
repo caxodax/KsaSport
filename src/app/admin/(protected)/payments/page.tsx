@@ -1,8 +1,9 @@
 import { getServiceSupabase } from '@/lib/supabase'
-import { Wallet, Clock, Check } from 'lucide-react'
+import { Wallet, Clock, Check, Calendar } from 'lucide-react'
 import PaymentRow, { PaymentCard } from './PaymentRow'
 import { checkAdminPermission } from '@/lib/auth-admin'
-import MonthSelector from '../MonthSelector'
+import DateRangeFilter from '../DateRangeFilter'
+import { parseDateRange } from '@/lib/dateRange'
 
 export const revalidate = 0
 
@@ -13,25 +14,10 @@ export default async function PaymentsPage({
 }) {
   await checkAdminPermission('view_finances')
   const resolvedParams = await searchParams;
-  const monthParam = typeof resolvedParams.month === 'string' ? resolvedParams.month : null;
+  const { startDate, endDate, formattedRange } = parseDateRange(resolvedParams);
   const supabase = getServiceSupabase()
-  
-  // Calcular rango de fechas
-  let startDate = new Date();
-  startDate.setDate(1);
-  startDate.setHours(0, 0, 0, 0);
-  
-  if (monthParam) {
-    const [year, month] = monthParam.split('-');
-    if (year && month) {
-      startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
-    }
-  }
-  
-  const endDate = new Date(startDate);
-  endDate.setMonth(endDate.getMonth() + 1);
 
-  // Obtener pagos con datos de la atleta (inner join)
+  // Obtener pagos con datos de la atleta (inner join) en el rango de fechas seleccionado
   // Ordenamos para que los Pendientes salgan de primero, y luego por fecha más reciente
   const { data: payments } = await supabase
     .from('payments')
@@ -43,7 +29,7 @@ export default async function PaymentsPage({
       )
     `)
     .gte('created_at', startDate.toISOString())
-    .lt('created_at', endDate.toISOString())
+    .lte('created_at', endDate.toISOString())
     .order('status', { ascending: false }) // 'Pendiente' va antes que 'Completado'/'Rechazado' alfabéticamente
     .order('created_at', { ascending: false })
 
@@ -51,12 +37,20 @@ export default async function PaymentsPage({
 
   return (
     <div className="p-4 sm:p-8">
-      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="mb-8 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900">Finanzas y Pagos</h2>
-          <p className="text-gray-500 mt-1">Bandeja de entrada para revisión y aprobación de pagos reportados.</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Finanzas y Pagos</h2>
+          <div className="flex flex-wrap items-center gap-2 mt-1">
+            <p className="text-gray-500 text-sm sm:text-base">Bandeja de entrada para revisión y aprobación de pagos reportados.</p>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-vinotinto-light/20 text-kasa-vinotinto border border-vinotinto-light/30 rounded-full text-xs font-bold shadow-2xs">
+              <Calendar className="w-3.5 h-3.5 text-kasa-vinotinto" />
+              {formattedRange}
+            </span>
+          </div>
         </div>
-        <MonthSelector />
+        <div className="w-full lg:w-auto">
+          <DateRangeFilter />
+        </div>
       </div>
 
       <div className="flex flex-col gap-8">

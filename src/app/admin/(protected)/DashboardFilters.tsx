@@ -28,12 +28,12 @@ export default function DashboardFilters({
 
   const handleFilter = (e: React.FormEvent) => {
     e.preventDefault();
-    const params = new URLSearchParams();
-    if (query) params.set('query', query);
-    if (team) params.set('team', team);
-    if (category) params.set('category', category);
-    if (status && !hideStatus) params.set('status', status);
-    if (role && showRole) params.set('role', role);
+    const params = new URLSearchParams(searchParams.toString());
+    if (query) params.set('query', query); else params.delete('query');
+    if (team) params.set('team', team); else params.delete('team');
+    if (category) params.set('category', category); else params.delete('category');
+    if (status && !hideStatus) params.set('status', status); else params.delete('status');
+    if (role && showRole) params.set('role', role); else params.delete('role');
     params.set('page', '1'); // Reset to page 1 on new filter
     
     router.push(`${basePath}?${params.toString()}`);
@@ -41,7 +41,12 @@ export default function DashboardFilters({
 
   const clearFilters = () => {
     setQuery(''); setTeam(''); setCategory(''); setStatus(''); setRole('');
-    router.push(basePath);
+    const params = new URLSearchParams();
+    const fromVal = searchParams.get('from');
+    const toVal = searchParams.get('to');
+    if (fromVal) params.set('from', fromVal);
+    if (toVal) params.set('to', toVal);
+    router.push(params.toString() ? `${basePath}?${params.toString()}` : basePath);
   }
 
   const hasActiveFilters = query || team || category || (status && !hideStatus) || (role && showRole);

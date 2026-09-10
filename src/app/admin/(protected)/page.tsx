@@ -1,8 +1,9 @@
 import { getServiceSupabase } from '@/lib/supabase';
-import { Users, AlertCircle, CircleDollarSign, TrendingUp, Wallet } from 'lucide-react';
+import { Users, AlertCircle, CircleDollarSign, TrendingUp, Wallet, Calendar } from 'lucide-react';
 import DashboardFilters from './DashboardFilters';
 import Pagination from './Pagination';
-import MonthSelector from './MonthSelector';
+import DateRangeFilter from './DateRangeFilter';
+import { parseDateRange } from '@/lib/dateRange';
 import { cleanCedula, formatCedula } from '@/lib/cedula';
 
 export const revalidate = 0;
@@ -59,22 +60,7 @@ export default async function DashboardPage({
   
   if (error) console.error('Error fetching athletes:', error);
 
-  const monthParam = typeof resolvedParams.month === 'string' ? resolvedParams.month : '';
-  
-  // Parse month param or use current month
-  let targetDate = new Date();
-  if (monthParam) {
-    const [year, month] = monthParam.split('-');
-    if (year && month) {
-      targetDate = new Date(parseInt(year), parseInt(month) - 1, 1);
-    }
-  }
-
-  // Calculate boundaries of selected month
-  const targetYear = targetDate.getFullYear();
-  const targetMonthNum = targetDate.getMonth() + 1;
-  const startOfMonth = new Date(targetYear, targetMonthNum - 1, 1).toISOString();
-  const endOfMonth = new Date(targetYear, targetMonthNum, 0, 23, 59, 59, 999).toISOString();
+  const { startDate, endDate, formattedRange } = parseDateRange(resolvedParams);
 
   // ========== ANÁLISIS FINANCIERO ==========
   // 1. Todos los atletas activos (sin paginación) para KPIs
@@ -86,12 +72,12 @@ export default async function DashboardPage({
   if (categoryFilter) allAthletesQuery = allAthletesQuery.eq('teams.category', categoryFilter);
   const { data: allAthletes } = await allAthletesQuery;
 
-  // 2. Productos de mensualidad activos válidos para el mes seleccionado
+  // 2. Productos de mensualidad activos válidos para el período seleccionado
   const { data: mensualidades } = await supabase
     .from('products')
     .select('id, name, price, categories, start_date, end_date')
     .ilike('name', '%mensualidad%')
-    .or(`and(start_date.lte.${endOfMonth},end_date.gte.${startOfMonth}),start_date.is.null`);
+    .or(`and(start_date.lte.${endDate.toISOString()},end_date.gte.${startDate.toISOString()}),start_date.is.null`);
 
   // 3. Productos con abonos activos
   const { data: installmentProducts } = await supabase
@@ -164,25 +150,27 @@ export default async function DashboardPage({
 
     if (isExempt) return; // No suma a las proyecciones financieras de mensualidad
 
-    // Determinar si el atleta pagó el mes objetivo (targetMonth)
-    let paidForTargetMonth = false;
+    // Determinar si el atleta pagó el período objetivo
+    let paidForPeriod = false;
     
     if (a.paid_until) {
       const paidDate = new Date(a.paid_until);
-      // Asumimos que pagó si la fecha pagada cubre el mes objetivo
-      if (paidDate.getFullYear() > targetYear || 
-         (paidDate.getFullYear() === targetYear && paidDate.getMonth() >= targetMonthNum - 1)) {
-        paidForTargetMonth = true;
+      // Asumimos que pagó si la fecha pagada cubre el inicio del período o es posterior
+      if (paidDate >= startDate || 
+         (paidDate.getFullYear() > startDate.getFullYear() || 
+         (paidDate.getFullYear() === startDate.getFullYear() && paidDate.getMonth() >= startDate.getMonth()))) {
+        paidForPeriod = true;
       }
     } else if (a.status === 'Solvente') {
       // Si es solvente pero no tiene paid_until, asumimos que está al día
-      if (today.getFullYear() > targetYear || 
-         (today.getFullYear() === targetYear && today.getMonth() >= targetMonthNum - 1)) {
-        paidForTargetMonth = true;
+      if (today >= startDate || 
+         (today.getFullYear() > startDate.getFullYear() || 
+         (today.getFullYear() === startDate.getFullYear() && today.getMonth() >= startDate.getMonth()))) {
+        paidForPeriod = true;
       }
     }
 
-    if (paidForTargetMonth) {
+    if (paidForPeriod) {
       montoSolvente += price;
       entry.solventes++;
       entry.recibido += price;
@@ -193,10 +181,10 @@ export default async function DashboardPage({
       const catGrace = catRules?.grace_period_days ?? gracePeriodDays;
       const catPenalty = catRules?.penalty_amount ?? penaltyAmount;
 
-      // Calcular si aplica penalidad según los días de gracia de la categoría
-      const targetDeadline = new Date(targetYear, targetMonthNum - 1, catGrace);
+      // Calcular si aplica penalidad según los días de gracia del período consultado
+      const targetDeadline = new Date(startDate.getFullYear(), startDate.getMonth(), catGrace, 23, 59, 59, 999);
       
-      // Solo aplicamos la multa si la fecha actual ya sobrepasó la fecha límite del mes cobrado
+      // Solo aplicamos la multa si la fecha actual ya sobrepasó la fecha límite del período cobrado
       if (today > targetDeadline) {
         appliedPenalty = catPenalty;
       }
@@ -220,13 +208,21 @@ export default async function DashboardPage({
   return (
     <div className="p-4 sm:p-8">
       {/* Title */}
-        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900">Panel de Control</h2>
-            <p className="text-gray-500 mt-1">Resumen financiero y estatus de atletas en tiempo real.</p>
+      <div className="mb-8 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Panel de Control</h2>
+          <div className="flex flex-wrap items-center gap-2 mt-1">
+            <p className="text-gray-500 text-sm sm:text-base">Resumen financiero y estatus de atletas en tiempo real.</p>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-vinotinto-light/20 text-kasa-vinotinto border border-vinotinto-light/30 rounded-full text-xs font-bold shadow-2xs">
+              <Calendar className="w-3.5 h-3.5 text-kasa-vinotinto" />
+              {formattedRange}
+            </span>
           </div>
-          <MonthSelector />
         </div>
+        <div className="w-full lg:w-auto">
+          <DateRangeFilter />
+        </div>
+      </div>
 
         {/* KPIs de Atletas */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6">
