@@ -5,12 +5,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
   Plus, Search, LayoutGrid, Table as TableIcon, Users, User, 
-  Edit3, Trash2, Filter, ChevronRight, UserSearch, Phone, Award, Shield
+  Edit3, Trash2, Filter, ChevronRight, UserSearch, Phone, Award, Shield,
+  FileSpreadsheet, Loader2
 } from 'lucide-react';
-import { deleteAthlete } from './actions';
+import { deleteAthlete, getAthletesForExport } from './actions';
 import AthleteDrawer from './AthleteDrawer';
 import Pagination from '../Pagination';
 import { formatCedula } from '@/lib/cedula';
+import { exportAthletesToExcel } from '@/lib/exportExcel';
 
 interface TeamItem {
   id: string;
@@ -78,6 +80,50 @@ export default function AthleteDashboard({
   // Drawer
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedAthlete, setSelectedAthlete] = useState<AthleteData | null>(null);
+
+  // Estado de Exportación a Excel
+  const [exporting, setExporting] = useState(false);
+
+  // Manejador de Descarga a Excel
+  const handleExportExcel = async () => {
+    try {
+      setExporting(true);
+      const res = await getAthletesForExport({
+        query: searchQuery.trim() || undefined,
+        teamId: selectedTeam || coachTeamId || undefined,
+        category: selectedCategory || undefined,
+        status: selectedStatus || undefined
+      });
+
+      if (res.error) {
+        alert(`Error al obtener datos: ${res.error}`);
+        return;
+      }
+
+      if (!res.athletes || res.athletes.length === 0) {
+        alert('No hay atletas que coincidan con los filtros seleccionados para exportar.');
+        return;
+      }
+
+      // Etiqueta para el nombre del archivo si hay un filtro aplicado
+      let label = '';
+      if (selectedTeam) {
+        const t = teams.find(item => item.id === selectedTeam);
+        if (t) label = t.name;
+      } else if (selectedCategory) {
+        label = selectedCategory;
+      } else if (selectedStatus) {
+        label = selectedStatus;
+      }
+
+      await exportAthletesToExcel(res.athletes, label);
+    } catch (err: any) {
+      console.error('Error exportando a Excel:', err);
+      alert('Ocurrió un error al generar el archivo Excel.');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   // Sincronizar filtros con la URL
   const applyFilters = (newParams: { query?: string; team?: string; category?: string; status?: string }) => {
@@ -173,14 +219,35 @@ export default function AthleteDashboard({
           </p>
         </div>
 
-        {/* Botón CTA Primario (Abre el Drawer) */}
-        <button
-          onClick={handleOpenCreate}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-kasa-vinotinto via-red-900 to-red-950 hover:from-red-900 hover:to-black text-white font-bold text-sm rounded-2xl shadow-md hover:shadow-xl hover:shadow-red-950/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0 shrink-0"
-        >
-          <Plus className="w-5 h-5" />
-          <span>Registrar Atleta</span>
-        </button>
+        {/* Acciones de Cabecera: Exportar Excel y Registrar Atleta */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto shrink-0">
+          <button
+            onClick={handleExportExcel}
+            disabled={exporting}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-emerald-700 hover:bg-emerald-800 active:bg-emerald-900 text-white font-bold text-sm rounded-2xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 shrink-0 cursor-pointer disabled:opacity-50"
+            title="Descargar lista completa de atletas en Excel (.xlsx)"
+          >
+            {exporting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Generando Excel...</span>
+              </>
+            ) : (
+              <>
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>Exportar Excel</span>
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={handleOpenCreate}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-kasa-vinotinto via-red-900 to-red-950 hover:from-red-900 hover:to-black text-white font-bold text-sm rounded-2xl shadow-md hover:shadow-xl hover:shadow-red-950/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0 shrink-0 cursor-pointer"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Registrar Atleta</span>
+          </button>
+        </div>
       </div>
 
       {/* 2. BARRA DE HERRAMIENTAS: BÚSQUEDA EN TIEMPO REAL, FILTROS Y TOGGLE */}

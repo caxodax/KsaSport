@@ -100,3 +100,52 @@ export async function updateAthlete(formData: FormData) {
   revalidatePath('/admin');
   return { success: true };
 }
+
+export async function getAthletesForExport(filters: {
+  query?: string;
+  teamId?: string;
+  category?: string;
+  status?: string;
+}) {
+  const supabase = getServiceSupabase();
+
+  const selectQuery = filters.category
+    ? 'id, name, cedula, phone, status, team_id, position, paid_until, has_alliance, user_id, created_at, teams!inner(id, name, category)'
+    : 'id, name, cedula, phone, status, team_id, position, paid_until, has_alliance, user_id, created_at, teams(id, name, category)';
+
+  let q = supabase
+    .from('athletes')
+    .select(selectQuery)
+    .order('name', { ascending: true });
+
+  if (filters.teamId) {
+    q = q.eq('team_id', filters.teamId);
+  }
+
+  if (filters.category) {
+    q = q.eq('teams.category', filters.category);
+  }
+
+  if (filters.status) {
+    q = q.eq('status', filters.status);
+  }
+
+  if (filters.query) {
+    const cleanQ = cleanCedula(filters.query);
+    if (cleanQ && cleanQ !== filters.query) {
+      q = q.or(`name.ilike.%${filters.query}%,cedula.ilike.%${cleanQ}%,cedula.ilike.%${filters.query}%`);
+    } else {
+      q = q.or(`name.ilike.%${filters.query}%,cedula.ilike.%${filters.query}%`);
+    }
+  }
+
+  const { data, error } = await q;
+
+  if (error) {
+    console.error('Error fetching athletes for export:', error);
+    return { error: error.message, athletes: [] };
+  }
+
+  return { athletes: data || [] };
+}
+
