@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { 
   Settings as SettingsIcon, Globe, Trophy, ShieldAlert, 
   Save, Check, AlertCircle, Loader2, Calendar, DollarSign,
-  Layers, CheckCircle2, Sparkles, HelpCircle 
+  Layers, CheckCircle2, Sparkles, HelpCircle, ArrowRight,
+  Sliders, Info
 } from 'lucide-react';
 import { updateGlobalSettings, updateCategoryPenalty } from './actions';
 
@@ -46,22 +47,49 @@ export default function SettingsDashboard({
     saving: boolean;
     saved: boolean;
     error: string | null;
+    originalCustom: boolean;
+    originalGraceDays: number;
+    originalPenalty: number;
   };
 
   const initialCatStates: Record<string, CategoryState> = {};
   categories.forEach((cat) => {
     const hasCustom = cat.grace_period_days !== null && cat.grace_period_days !== undefined;
+    const gDays = hasCustom ? Number(cat.grace_period_days) : (settings?.grace_period_days ?? 5);
+    const pAmt = hasCustom ? Number(cat.penalty_amount) : (settings?.penalty_amount ?? 10.00);
+    
     initialCatStates[cat.id] = {
       useCustom: hasCustom,
-      graceDays: hasCustom ? Number(cat.grace_period_days) : (settings?.grace_period_days ?? 5),
-      penalty: hasCustom ? Number(cat.penalty_amount) : (settings?.penalty_amount ?? 10.00),
+      graceDays: gDays,
+      penalty: pAmt,
       saving: false,
       saved: false,
-      error: null
+      error: null,
+      originalCustom: hasCustom,
+      originalGraceDays: gDays,
+      originalPenalty: pAmt
     };
   });
 
   const [categoryStates, setCategoryStates] = useState<Record<string, CategoryState>>(initialCatStates);
+
+  // Helper para icono de disciplina
+  const getCategoryIcon = (name: string) => {
+    const lower = name.toLowerCase();
+    if (lower.includes('fútbol') || lower.includes('futbol') || lower.includes('soccer')) {
+      return '⚽';
+    }
+    if (lower.includes('kickingball') || lower.includes('kick')) {
+      return '🏆';
+    }
+    if (lower.includes('basket') || lower.includes('baloncesto')) {
+      return '🏀';
+    }
+    if (lower.includes('volei') || lower.includes('voley') || lower.includes('volley')) {
+      return '🏐';
+    }
+    return '🏅';
+  };
 
   // Manejador Guardar Regla Global
   const handleSaveGlobal = async (e: React.FormEvent) => {
@@ -81,33 +109,41 @@ export default function SettingsDashboard({
       setGlobalError(res.error);
     } else {
       setGlobalSuccess(true);
-      setTimeout(() => setGlobalSuccess(false), 3000);
+      setTimeout(() => setGlobalSuccess(false), 3500);
     }
   };
 
   // Manejador Toggle Personalizar para una categoría
   const handleToggleCustom = (catId: string, enabled: boolean) => {
-    setCategoryStates(prev => ({
-      ...prev,
-      [catId]: {
-        ...prev[catId],
-        useCustom: enabled,
-        saved: false,
-        error: null
-      }
-    }));
+    setCategoryStates(prev => {
+      const current = prev[catId];
+      if (!current) return prev;
+      return {
+        ...prev,
+        [catId]: {
+          ...current,
+          useCustom: enabled,
+          saved: false,
+          error: null
+        }
+      };
+    });
   };
 
   // Manejador Cambio en inputs de categoría
   const handleCategoryFieldChange = (catId: string, field: 'graceDays' | 'penalty', value: number) => {
-    setCategoryStates(prev => ({
-      ...prev,
-      [catId]: {
-        ...prev[catId],
-        [field]: value,
-        saved: false
-      }
-    }));
+    setCategoryStates(prev => {
+      const current = prev[catId];
+      if (!current) return prev;
+      return {
+        ...prev,
+        [catId]: {
+          ...current,
+          [field]: value,
+          saved: false
+        }
+      };
+    });
   };
 
   // Guardar Política de una Categoría
@@ -135,14 +171,21 @@ export default function SettingsDashboard({
     } else {
       setCategoryStates(prev => ({
         ...prev,
-        [catId]: { ...prev[catId], saving: false, saved: true }
+        [catId]: { 
+          ...prev[catId], 
+          saving: false, 
+          saved: true,
+          originalCustom: prev[catId].useCustom,
+          originalGraceDays: prev[catId].graceDays,
+          originalPenalty: prev[catId].penalty
+        }
       }));
       setTimeout(() => {
         setCategoryStates(prev => {
           if (!prev[catId]) return prev;
           return { ...prev, [catId]: { ...prev[catId], saved: false } };
         });
-      }, 3000);
+      }, 3500);
     }
   };
 
@@ -179,7 +222,7 @@ export default function SettingsDashboard({
                 Regla General del Club (Base Global)
               </h2>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Aplica a todas las disciplinas que no tengan una regla personalizada, o para atletas de nuevo ingreso sin categoría asignada.
+                Aplica a todas las disciplinas que no tengan una regla personalizada, o para atletas sin categoría específica.
               </p>
             </div>
           </div>
@@ -218,7 +261,7 @@ export default function SettingsDashboard({
                 </div>
               </div>
               <p className="mt-2 text-xs text-slate-500 font-medium leading-relaxed">
-                Cantidad de días del mes actual que la atleta puede esperar para pagar su mensualidad sin recibir recargo. (Ej: 5 = tiene hasta el día 5 del mes).
+                Cantidad de días del mes actual que la atleta puede esperar para pagar su mensualidad sin recibir recargo.
               </p>
             </div>
 
@@ -248,9 +291,20 @@ export default function SettingsDashboard({
 
           </div>
 
+          {/* Simulación en vivo de la regla global */}
+          <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/90 text-xs text-slate-700 flex items-start gap-3">
+            <Sparkles className="w-4 h-4 text-kasa-vinotinto shrink-0 mt-0.5" />
+            <div>
+              <span className="font-black text-gray-900 block mb-0.5">Efecto de la Regla Base:</span>
+              <p className="leading-relaxed font-medium text-slate-600">
+                Las atletas tienen hasta el <strong className="font-bold text-gray-900">día {globalGrace}</strong> de cada mes para cancelar su mensualidad sin recargo. A partir del <strong className="font-bold text-gray-900">día {globalGrace + 1}</strong> se sumará automáticamente una penalidad de <strong className="font-bold text-gray-900">${Number(globalPenalty).toFixed(2)} USD</strong>.
+              </p>
+            </div>
+          </div>
+
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100">
             {globalSuccess ? (
-              <div className="flex items-center gap-2 text-emerald-700 text-xs font-black bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-200">
+              <div className="flex items-center gap-2 text-emerald-700 text-xs font-black bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-200 shadow-2xs">
                 <Check className="w-4 h-4 text-emerald-600" />
                 <span>¡Regla global guardada exitosamente!</span>
               </div>
@@ -259,7 +313,7 @@ export default function SettingsDashboard({
             <button 
               type="submit" 
               disabled={savingGlobal}
-              className="w-full sm:w-auto bg-gradient-to-r from-kasa-vinotinto to-red-900 hover:from-red-900 hover:to-kasa-vinotinto text-white text-xs sm:text-sm font-black py-3 px-8 rounded-2xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2 transform hover:-translate-y-0.5"
+              className="w-full sm:w-auto bg-gradient-to-r from-kasa-vinotinto to-red-900 hover:from-red-900 hover:to-kasa-vinotinto text-white text-xs sm:text-sm font-black py-3 px-8 rounded-2xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2 transform hover:-translate-y-0.5 cursor-pointer"
             >
               {savingGlobal ? (
                 <>
@@ -281,20 +335,20 @@ export default function SettingsDashboard({
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 border-l-[6px] border-l-kasa-dorado shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5 mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center border border-amber-200/80 shadow-2xs shrink-0">
-              <Trophy className="w-6 h-6" />
+            <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center border border-amber-200/80 shadow-2xs shrink-0 text-xl">
+              🏆
             </div>
             <div>
               <h2 className="text-lg font-black text-gray-900">
                 Reglas Personalizadas por Disciplina
               </h2>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Adapta los plazos de gracia y multas específicas según las necesidades operativas de cada categoría deportiva.
+                Activa o desactiva condiciones particulares para cada deporte, o ajusta sus días y montos de forma individual.
               </p>
             </div>
           </div>
           <span className="px-3 py-1 rounded-xl bg-amber-50 text-amber-900 text-xs font-black uppercase tracking-wider border border-amber-200 shadow-2xs self-start sm:self-auto">
-            {categories.length} Disciplinas Activas
+            {categories.length} Disciplinas Registradas
           </span>
         </div>
 
@@ -313,158 +367,247 @@ export default function SettingsDashboard({
                 penalty: globalPenalty,
                 saving: false,
                 saved: false,
-                error: null
+                error: null,
+                originalCustom: false,
+                originalGraceDays: globalGrace,
+                originalPenalty: globalPenalty
               };
+
+              const isDirty = state.useCustom !== state.originalCustom ||
+                (state.useCustom && (state.graceDays !== state.originalGraceDays || state.penalty !== state.originalPenalty));
+
+              const cleanName = cat.name?.trim() || 'Categoría';
+              const icon = getCategoryIcon(cleanName);
 
               return (
                 <div
                   key={cat.id}
-                  className={`rounded-3xl p-5 sm:p-6 border transition-all flex flex-col justify-between shadow-2xs ${
+                  className={`rounded-3xl p-5 sm:p-6 border-2 transition-all flex flex-col justify-between ${
                     state.useCustom
-                      ? 'bg-amber-50/30 border-amber-300/80 shadow-sm'
-                      : 'bg-slate-50/70 border-slate-200/80'
+                      ? 'bg-gradient-to-br from-amber-50/40 via-white to-amber-50/20 border-amber-400/90 shadow-md ring-2 ring-amber-400/20'
+                      : 'bg-white border-slate-200/90 hover:border-slate-300 shadow-2xs'
                   }`}
                 >
-                  <div>
+                  <div className="space-y-4">
+                    
                     {/* Cabecera de Categoría */}
-                    <div className="flex items-start justify-between gap-3 mb-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full bg-kasa-vinotinto" />
-                          <h3 className="text-base font-black text-gray-900">
-                            {cat.name}
-                          </h3>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl shrink-0 border ${
+                          state.useCustom 
+                            ? 'bg-amber-100 border-amber-300 shadow-2xs' 
+                            : 'bg-slate-100 border-slate-200'
+                        }`}>
+                          {icon}
                         </div>
-                        <p className="text-[11px] text-slate-500 font-semibold mt-1">
-                          {cat.athletesCount ?? 0} atletas inscritas • {cat.teamsCount ?? 0} equipos
-                        </p>
+                        <div>
+                          <h3 className="text-base font-black text-gray-900 leading-tight">
+                            {cleanName}
+                          </h3>
+                          <p className="text-[11px] text-slate-500 font-semibold mt-0.5">
+                            {cat.athletesCount ?? 0} atletas inscritas • {cat.teamsCount ?? 0} equipos
+                          </p>
+                        </div>
                       </div>
 
-                      {/* Micro-badge de Estado */}
-                      <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border shadow-2xs ${
+                      {/* Badge de Estado */}
+                      <span className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border shrink-0 shadow-2xs flex items-center gap-1.5 ${
                         state.useCustom
                           ? 'bg-amber-100 text-amber-950 border-amber-300'
-                          : 'bg-white text-slate-600 border-slate-200'
+                          : 'bg-slate-100 text-slate-600 border-slate-200'
                       }`}>
-                        {state.useCustom ? '⭐ Personalizado' : '🌐 Regla Global'}
+                        {state.useCustom ? (
+                          <>
+                            <Sparkles className="w-3 h-3 text-amber-600" />
+                            Personalizado
+                          </>
+                        ) : (
+                          <>
+                            <Globe className="w-3 h-3 text-slate-400" />
+                            Regla Global
+                          </>
+                        )}
                       </span>
                     </div>
 
-                    {/* Switch Toggle iOS Style */}
-                    <div className="bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between mb-4">
-                      <div className="pr-3">
-                        <p className="text-xs font-black text-gray-900">
-                          Personalizar política para {cat.name}
-                        </p>
-                        <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-snug">
-                          {state.useCustom 
-                            ? 'Usa plazos y multas propios de esta disciplina.' 
-                            : `Hereda los ${globalGrace} días de gracia y multa de $${Number(globalPenalty).toFixed(2)}.`}
-                        </p>
+                    {/* INTERRUPTOR ACCESIBLE Y 100% CLICKEABLE */}
+                    <div 
+                      onClick={() => handleToggleCustom(cat.id, !state.useCustom)}
+                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-4 select-none ${
+                        state.useCustom 
+                          ? 'bg-amber-100/50 border-amber-300/80 hover:bg-amber-100/70 shadow-2xs' 
+                          : 'bg-slate-50 border-slate-200/90 hover:bg-slate-100/80'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 transition-colors ${
+                          state.useCustom ? 'bg-amber-500 text-white shadow-2xs' : 'bg-slate-200 text-slate-600'
+                        }`}>
+                          {state.useCustom ? 'ON' : 'OFF'}
+                        </div>
+                        <div className="truncate">
+                          <p className="text-xs sm:text-sm font-black text-gray-900 truncate">
+                            ¿Personalizar cobros para {cleanName}?
+                          </p>
+                          <p className="text-[11px] text-slate-500 font-medium mt-0.5 truncate">
+                            {state.useCustom 
+                              ? 'Activado: usa condiciones particulares para esta disciplina.' 
+                              : `Desactivado: hereda los ${globalGrace} días y $${Number(globalPenalty).toFixed(2)} del club.`}
+                          </p>
+                        </div>
                       </div>
-                      <div className="relative inline-flex items-center shrink-0">
-                        <input
-                          type="checkbox"
-                          checked={state.useCustom}
-                          onChange={(e) => handleToggleCustom(cat.id, e.target.checked)}
-                          className="sr-only peer"
+
+                      {/* Switch Button */}
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={state.useCustom}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleCustom(cat.id, !state.useCustom);
+                        }}
+                        className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${
+                          state.useCustom ? 'bg-amber-500' : 'bg-slate-300'
+                        }`}
+                      >
+                        <span className="sr-only">Activar política personalizada</span>
+                        <span
+                          className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                            state.useCustom ? 'translate-x-5' : 'translate-x-0'
+                          }`}
                         />
-                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-kasa-dorado shadow-inner"></div>
-                      </div>
+                      </button>
                     </div>
 
                     {/* Mensaje de Error si aplica */}
                     {state.error && (
-                      <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
+                      <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2.5">
                         <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
                         <span>{state.error}</span>
                       </div>
                     )}
 
-                    {/* Inputs de Morosidad */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                      
-                      {/* Días de Gracia */}
-                      <div>
-                        <label className="block text-[10px] font-black uppercase text-slate-500 tracking-wider mb-1">
-                          Días de Gracia
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="number"
-                            disabled={!state.useCustom}
-                            value={state.useCustom ? state.graceDays : globalGrace}
-                            onChange={(e) => handleCategoryFieldChange(cat.id, 'graceDays', Math.max(0, parseInt(e.target.value) || 0))}
-                            min={0}
-                            max={31}
-                            className={`w-full rounded-xl border px-3.5 py-2 text-xs font-bold transition-all shadow-2xs pr-12 ${
-                              state.useCustom
-                                ? 'bg-white text-gray-900 border-slate-300 focus:ring-2 focus:ring-kasa-dorado/20 focus:border-kasa-dorado outline-none'
-                                : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
-                            }`}
-                          />
-                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400 font-black text-[10px] uppercase">
-                            días
+                    {/* CONTENIDO CONDICIONAL: PERSONALIZADO VS HEREDADO */}
+                    {state.useCustom ? (
+                      <div className="space-y-3.5 pt-1">
+                        {/* Inputs de Morosidad */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          
+                          {/* Días de Gracia */}
+                          <div>
+                            <label className="block text-[10px] font-black uppercase text-slate-600 tracking-wider mb-1.5">
+                              Días de Gracia ({cleanName}) *
+                            </label>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                value={state.graceDays}
+                                onChange={(e) => handleCategoryFieldChange(cat.id, 'graceDays', Math.max(0, parseInt(e.target.value) || 0))}
+                                min={0}
+                                max={31}
+                                className="w-full rounded-2xl border border-slate-300 px-3.5 py-2.5 text-sm font-bold bg-white text-gray-900 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all shadow-2xs pr-14"
+                              />
+                              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400 font-black text-[11px] uppercase">
+                                días
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Penalidad ($) */}
+                          <div>
+                            <label className="block text-[10px] font-black uppercase text-slate-600 tracking-wider mb-1.5">
+                              Penalidad por Mora ($ USD) *
+                            </label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 font-black text-sm">
+                                $
+                              </div>
+                              <input
+                                type="number"
+                                step="0.01"
+                                min={0}
+                                value={state.penalty}
+                                onChange={(e) => handleCategoryFieldChange(cat.id, 'penalty', Math.max(0, parseFloat(e.target.value) || 0))}
+                                className="w-full rounded-2xl border border-slate-300 pl-8 pr-3.5 py-2.5 text-sm font-mono font-black bg-white text-gray-900 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all shadow-2xs"
+                              />
+                            </div>
+                          </div>
+
+                        </div>
+
+                        {/* Simulación en vivo para la disciplina */}
+                        <div className="bg-amber-50/90 border border-amber-200/90 rounded-2xl p-3.5 text-xs text-amber-950 flex items-start gap-2.5">
+                          <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                          <div className="space-y-0.5">
+                            <span className="font-black text-amber-900 block">Simulación en vivo para {cleanName}:</span>
+                            <p className="text-amber-900/90 leading-relaxed font-medium">
+                              Las atletas de <strong className="font-black text-amber-950">{cleanName}</strong> tienen hasta el <strong className="font-black text-amber-950">día {state.graceDays}</strong> de cada mes para pagar sin recargo. A partir del <strong className="font-black text-amber-950">día {state.graceDays + 1}</strong> se sumará una penalidad de <strong className="font-black text-amber-950">${Number(state.penalty).toFixed(2)} USD</strong>.
+                            </p>
                           </div>
                         </div>
                       </div>
-
-                      {/* Penalidad ($) */}
-                      <div>
-                        <label className="block text-[10px] font-black uppercase text-slate-500 tracking-wider mb-1">
-                          Penalidad ($)
-                        </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 font-black text-xs">
-                            $
-                          </div>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min={0}
-                            disabled={!state.useCustom}
-                            value={state.useCustom ? state.penalty : globalPenalty}
-                            onChange={(e) => handleCategoryFieldChange(cat.id, 'penalty', Math.max(0, parseFloat(e.target.value) || 0))}
-                            className={`w-full rounded-xl border pl-7 pr-3.5 py-2 text-xs font-mono font-black transition-all shadow-2xs ${
-                              state.useCustom
-                                ? 'bg-white text-gray-900 border-slate-300 focus:ring-2 focus:ring-kasa-dorado/20 focus:border-kasa-dorado outline-none'
-                                : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
-                            }`}
-                          />
+                    ) : (
+                      /* Estado Desactivado: Heredando Regla General */
+                      <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 text-xs text-slate-600 space-y-2">
+                        <div className="flex items-center gap-2 font-black text-slate-800">
+                          <Globe className="w-4 h-4 text-slate-500 shrink-0" />
+                          <span>Heredando Política General del Club</span>
                         </div>
+                        <p className="leading-relaxed font-medium">
+                          Esta disciplina no tiene recargos particulares. Aplica la regla base: hasta el <strong className="font-bold text-gray-900">día {globalGrace}</strong> sin recargo y multa de <strong className="font-bold text-gray-900">${Number(globalPenalty).toFixed(2)} USD</strong> desde el día {globalGrace + 1}.
+                        </p>
+                        <p className="text-[11px] text-slate-400 font-medium">
+                          💡 Activa el interruptor arriba si necesitas fijar condiciones diferentes para {cleanName}.
+                        </p>
                       </div>
+                    )}
 
-                    </div>
                   </div>
 
-                  {/* Botón Guardar de la Categoría */}
-                  <div className="pt-3 border-t border-slate-200/80 flex items-center justify-between">
-                    {state.saved ? (
-                      <span className="text-emerald-700 text-xs font-black flex items-center gap-1">
-                        <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        Guardado
-                      </span>
-                    ) : (
-                      <span className="text-[11px] text-slate-400 font-medium">
-                        {state.useCustom ? 'Regla particular activa' : 'Heredando regla global'}
-                      </span>
-                    )}
+                  {/* PIE DE TARJETA: BOTÓN GUARDAR Y RETROALIMENTACIÓN */}
+                  <div className="pt-4 mt-4 border-t border-slate-200/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      {state.saved ? (
+                        <span className="text-emerald-700 text-xs font-black flex items-center gap-1.5 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 shadow-2xs">
+                          <Check className="w-4 h-4 text-emerald-600" />
+                          Guardado en Supabase
+                        </span>
+                      ) : isDirty ? (
+                        <span className="text-[11px] font-black text-amber-700 flex items-center gap-1.5 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">
+                          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                          Cambios sin guardar
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-slate-400 font-semibold flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-slate-300" />
+                          {state.useCustom ? 'Política personalizada activa' : 'Regla general activa'}
+                        </span>
+                      )}
+                    </div>
 
                     <button
                       type="button"
                       onClick={() => handleSaveCategory(cat.id)}
                       disabled={state.saving}
-                      className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-black text-white text-xs font-black transition-all shadow-xs disabled:opacity-50 flex items-center gap-1.5"
+                      className={`w-full sm:w-auto px-5 py-2.5 rounded-xl font-black text-xs transition-all shadow-md hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer ${
+                        state.useCustom
+                          ? 'bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-black'
+                          : 'bg-slate-900 hover:bg-black active:bg-slate-800 text-white'
+                      }`}
                     >
                       {state.saving ? (
                         <>
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <Loader2 className="w-4 h-4 animate-spin" />
                           <span>Guardando...</span>
                         </>
                       ) : (
                         <>
-                          <Save className="w-3.5 h-3.5" />
-                          <span>Aplicar</span>
+                          <Save className="w-4 h-4" />
+                          <span>
+                            {state.useCustom 
+                              ? `Guardar Política ${cleanName}` 
+                              : `Restablecer a Regla Base`}
+                          </span>
                         </>
                       )}
                     </button>
@@ -480,4 +623,3 @@ export default function SettingsDashboard({
     </div>
   );
 }
-

@@ -80,6 +80,7 @@ export async function updateCategoryPenalty(
 
   revalidatePath('/admin/settings')
   revalidatePath('/admin')
+  revalidatePath('/admin/payments')
   revalidatePath('/portal/dashboard/pagos')
   return { success: true }
 }
