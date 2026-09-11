@@ -28,3 +28,4 @@ CREATE INDEX IF NOT EXISTS idx_payments_status_created ON payments(status, creat
 -- 4. Índices en Roles Administrativos (admin_users)
 -- Acelera la verificación de permisos por usuario
 CREATE INDEX IF NOT EXISTS idx_admin_users_role_id ON admin_users(role_id);
+

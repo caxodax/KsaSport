@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Medal, LayoutDashboard, Users, Shield, Trophy, Menu, Tags, X, ShoppingBag, Wallet, Settings, LogOut, BarChart3 } from 'lucide-react';
+import { Medal, LayoutDashboard, Users, Shield, Trophy, Menu, Tags, X, ShoppingBag, Wallet, Settings, LogOut, BarChart3, UserCog } from 'lucide-react';
 import { logoutAdmin } from '../login/actions';
 
 export default function Sidebar({ permissions, roleName, email }: { permissions: string[], roleName: string, email: string }) {
@@ -20,6 +20,7 @@ export default function Sidebar({ permissions, roleName, email }: { permissions:
     { href: '/admin/payments', label: 'Finanzas y Pagos', icon: Wallet, permission: 'view_finances' },
     { href: '/admin/ledger', label: 'Reportes Financieros', icon: BarChart3, permission: 'view_finances' },
     { href: '/admin/settings', label: 'Configuración', icon: Settings, permission: 'manage_settings' },
+    { href: '/admin/users', label: 'Usuarios y Roles', icon: UserCog, permission: 'manage_roles' },
   ].filter(link => !link.permission || permissions.includes(link.permission));
 
   const closeMenu = () => setIsOpen(false);
