@@ -8,3 +8,4 @@ INSERT INTO admin_roles (id, name, permissions) VALUES
 ON CONFLICT (id) DO UPDATE SET 
     name = EXCLUDED.name,
     permissions = EXCLUDED.permissions;
+

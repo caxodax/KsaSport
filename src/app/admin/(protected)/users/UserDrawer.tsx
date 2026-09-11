@@ -38,12 +38,14 @@ export default function UserDrawer({
   editingUser,
   roles,
   teams,
+  onUserSaved,
 }: {
   isOpen: boolean;
   onClose: () => void;
   editingUser: AdminUserData | null;
   roles: AdminRoleItem[];
   teams: { id: string; name: string; category?: string }[];
+  onUserSaved?: (user: AdminUserData, isEdit: boolean) => void;
 }) {
   const isEditing = !!editingUser;
 
@@ -102,6 +104,9 @@ export default function UserDrawer({
           setLoading(false);
           return;
         }
+        if (res?.user && onUserSaved) {
+          onUserSaved(res.user, true);
+        }
       } else {
         formData.append('email', email);
         formData.append('password', password);
@@ -110,6 +115,9 @@ export default function UserDrawer({
           setError(res.error);
           setLoading(false);
           return;
+        }
+        if (res?.user && onUserSaved) {
+          onUserSaved(res.user, false);
         }
       }
 
@@ -391,3 +399,4 @@ export default function UserDrawer({
     </div>
   );
 }
+

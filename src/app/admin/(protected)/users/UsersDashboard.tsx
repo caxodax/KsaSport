@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Users, UserPlus, Search, Shield, Key, Trash2, Edit3, Trophy, 
-  Crown, Coins, Compass, CheckCircle2, AlertTriangle, Loader2 
+  Crown, Coins, Compass, CheckCircle2, AlertTriangle, Loader2, Check 
 } from 'lucide-react';
 import UserDrawer, { AdminUserData, AdminRoleItem } from './UserDrawer';
 import { revokeAdminUser } from './actions';
@@ -19,6 +20,7 @@ export default function UsersDashboard({
   teams: { id: string; name: string; category?: string }[];
   currentUserId: string;
 }) {
+  const router = useRouter();
   const [users, setUsers] = useState<AdminUserData[]>(initialUsers);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState('');
@@ -27,6 +29,24 @@ export default function UsersDashboard({
 
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    setUsers(initialUsers);
+  }, [initialUsers]);
+
+  const handleUserSaved = (savedUser: AdminUserData, isEdit: boolean) => {
+    if (isEdit) {
+      setUsers((prev) => prev.map((u) => (u.id === savedUser.id ? savedUser : u)));
+      setSuccessToast(`Usuario ${savedUser.email} actualizado exitosamente.`);
+    } else {
+      setUsers((prev) => [savedUser, ...prev.filter((u) => u.id !== savedUser.id)]);
+      setSuccessToast(`Usuario ${savedUser.email} creado y añadido a la lista.`);
+    }
+
+    setTimeout(() => setSuccessToast(null), 4000);
+    router.refresh();
+  };
 
   // Filtrado en memoria
   const filteredUsers = users.filter((u) => {
@@ -155,6 +175,13 @@ export default function UsersDashboard({
         <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-semibold flex items-center gap-2">
           <AlertTriangle className="w-5 h-5 shrink-0 text-red-600" />
           <span>{actionError}</span>
+        </div>
+      )}
+
+      {successToast && (
+        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2.5 shadow-xs animate-in fade-in slide-in-from-top-2 duration-200">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+          <span>{successToast}</span>
         </div>
       )}
 
@@ -387,8 +414,10 @@ export default function UsersDashboard({
         editingUser={editingUser}
         roles={roles}
         teams={teams}
+        onUserSaved={handleUserSaved}
       />
 
     </div>
   );
 }
+

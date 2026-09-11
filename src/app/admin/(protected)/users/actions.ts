@@ -104,9 +104,42 @@ export async function createAdminUser(formData: FormData) {
     }
   }
 
+  // Obtener rol enriquecido
+  const { data: roleInfo } = await adminSupabase
+    .from('admin_roles')
+    .select('id, name, permissions')
+    .eq('id', roleId)
+    .single();
+
+  // Obtener staff y equipo vinculado
+  let staffPayload = null;
+  const { data: staffData } = await adminSupabase
+    .from('staff')
+    .select('id, name, team_id, teams(id, name, category)')
+    .eq('user_id', targetUserId)
+    .single();
+
+  if (staffData) {
+    staffPayload = {
+      id: staffData.id,
+      name: staffData.name,
+      team_id: staffData.team_id,
+      teams: Array.isArray(staffData.teams) ? staffData.teams[0] : staffData.teams,
+    };
+  }
+
+  const savedUser = {
+    id: targetUserId,
+    email,
+    role_id: roleId,
+    created_at: new Date().toISOString(),
+    admin_roles: roleInfo || { id: roleId, name: roleId },
+    staff: staffPayload,
+  };
+
   revalidatePath('/admin/users');
   revalidatePath('/admin/staff');
-  return { success: true };
+  return { success: true, user: savedUser };
 }
 
 /**
@@ -175,10 +208,48 @@ export async function updateAdminUser(formData: FormData) {
       .eq('user_id', userId);
   }
 
+  // Obtener rol enriquecido
+  const { data: roleInfo } = await adminSupabase
+    .from('admin_roles')
+    .select('id, name, permissions')
+    .eq('id', roleId)
+    .single();
+
+  const { data: currentAdmin } = await adminSupabase
+    .from('admin_users')
+    .select('email, created_at')
+    .eq('id', userId)
+    .single();
+
+  let staffPayload = null;
+  const { data: staffData } = await adminSupabase
+    .from('staff')
+    .select('id, name, team_id, teams(id, name, category)')
+    .eq('user_id', userId)
+    .single();
+
+  if (staffData) {
+    staffPayload = {
+      id: staffData.id,
+      name: staffData.name,
+      team_id: staffData.team_id,
+      teams: Array.isArray(staffData.teams) ? staffData.teams[0] : staffData.teams,
+    };
+  }
+
+  const updatedUser = {
+    id: userId,
+    email: currentAdmin?.email || '',
+    role_id: roleId,
+    created_at: currentAdmin?.created_at || new Date().toISOString(),
+    admin_roles: roleInfo || { id: roleId, name: roleId },
+    staff: staffPayload,
+  };
+
   revalidatePath('/admin/users');
   revalidatePath('/admin/staff');
   revalidatePath('/admin/athletes');
-  return { success: true };
+  return { success: true, user: updatedUser };
 }
 
 /**
