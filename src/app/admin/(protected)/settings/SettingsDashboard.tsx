@@ -5,15 +5,20 @@ import {
   Settings as SettingsIcon, Globe, Trophy, ShieldAlert, 
   Save, Check, AlertCircle, Loader2, Calendar, DollarSign,
   Layers, CheckCircle2, Sparkles, HelpCircle, ArrowRight,
-  Sliders, Info
+  Sliders, Info, Landmark
 } from 'lucide-react';
 import { updateGlobalSettings, updateCategoryPenalty } from './actions';
+import ExchangeRateSettings from './ExchangeRateSettings';
+import { ExchangeRateResult, RateHistoryItem } from '@/lib/exchangeRate';
 
 export interface ClubSettings {
   id: number;
   grace_period_days: number;
   penalty_amount: number;
   updated_at?: string;
+  last_bcv_usd?: number;
+  last_bcv_eur?: number;
+  bcv_updated_at?: string;
 }
 
 export interface CategorySettingItem {
@@ -27,11 +32,18 @@ export interface CategorySettingItem {
 
 export default function SettingsDashboard({
   settings,
-  categories = []
+  categories = [],
+  currentRates,
+  ratesHistory = []
 }: {
   settings: ClubSettings;
   categories: CategorySettingItem[];
+  currentRates?: ExchangeRateResult;
+  ratesHistory?: RateHistoryItem[];
 }) {
+  // Pestaña Activa
+  const [activeTab, setActiveTab] = useState<'penalties' | 'rates'>('penalties');
+
   // Estado para la Regla Global
   const [globalGrace, setGlobalGrace] = useState(settings?.grace_period_days ?? 5);
   const [globalPenalty, setGlobalPenalty] = useState(settings?.penalty_amount ?? 10.00);
@@ -210,8 +222,43 @@ export default function SettingsDashboard({
         </div>
       </div>
 
-      {/* SECCIÓN 1: REGLA GENERAL DE LA ACADEMIA (FALLBACK GLOBAL) */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 border-l-[6px] border-l-kasa-vinotinto shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] relative">
+      {/* CONMUTADOR DE PESTAÑAS */}
+      <div className="flex items-center gap-2 p-1.5 bg-slate-100 rounded-2xl w-fit border border-slate-200/80 shadow-2xs">
+        <button
+          type="button"
+          onClick={() => setActiveTab('penalties')}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer ${
+            activeTab === 'penalties'
+              ? 'bg-white text-kasa-vinotinto shadow-2xs'
+              : 'text-slate-500 hover:text-slate-900'
+          }`}
+        >
+          <Sliders className="w-4 h-4" />
+          <span>Cobros & Morosidad</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('rates')}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer ${
+            activeTab === 'rates'
+              ? 'bg-white text-emerald-800 shadow-2xs'
+              : 'text-slate-500 hover:text-slate-900'
+          }`}
+        >
+          <Landmark className="w-4 h-4" />
+          <span>Configuración de Tasa</span>
+        </button>
+      </div>
+
+      {activeTab === 'rates' ? (
+        <ExchangeRateSettings 
+          currentRates={currentRates || { usd: 842.2067, eur: 977.8778, date: new Date().toISOString().split('T')[0], source: 'settings' }}
+          history={ratesHistory}
+        />
+      ) : (
+        <div className="space-y-8">
+          {/* SECCIÓN 1: REGLA GENERAL DE LA ACADEMIA (FALLBACK GLOBAL) */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 border-l-[6px] border-l-kasa-vinotinto shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] relative">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5 mb-6">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-2xl bg-red-50 text-kasa-vinotinto flex items-center justify-center border border-red-200/80 shadow-2xs shrink-0">
@@ -619,6 +666,9 @@ export default function SettingsDashboard({
           </div>
         )}
       </div>
+
+        </div>
+      )}
 
     </div>
   );

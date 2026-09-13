@@ -98,6 +98,11 @@ export default async function PaymentsPage({
       reference: p.reference_number || p.reference || '',
       amount: Number(p.amount) || 0,
       status: (p.status as any) || 'Pendiente',
+      rateType: p.rate_type || 'USD',
+      exchangeRate: p.exchange_rate ? Number(p.exchange_rate) : undefined,
+      transferredAmount: p.transferred_amount ? Number(p.transferred_amount) : undefined,
+      paymentCurrency: p.payment_currency || 'USD',
+      dateRate: p.date_rate || undefined
     };
   });
 

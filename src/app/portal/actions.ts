@@ -165,7 +165,16 @@ export async function reportPayment(formData: FormData) {
   const product_id = formData.get('product_id') as string
   const splitsJson = formData.get('splits_json') as string
   
-  let splits: { amount: string, method: string, reference: string }[] = []
+  let splits: { 
+    amount: string, 
+    method: string, 
+    reference: string,
+    rate_type?: string,
+    exchange_rate?: number | string,
+    transferred_amount?: number | string,
+    payment_currency?: string,
+    date_rate?: string
+  }[] = []
   if (splitsJson) {
     splits = JSON.parse(splitsJson)
   } else {
@@ -189,12 +198,21 @@ export async function reportPayment(formData: FormData) {
     }
   }
 
-  // En lugar de agrupar "Mixto", insertamos una fila por cada comprobante/fracción
+  // En lugar de agrupar "Mixto", insertamos una fila por cada comprobante/fracción con su tasa congelada
+  const todayDateStr = new Date().toISOString().split('T')[0];
+
   const rowsToInsert = splits.map((s, index) => ({
     athlete_id: athlete.id,
     product_id,
     amount: Number(s.amount),
     currency: 'USD',
+    rate_type: s.rate_type || 'USD',
+    exchange_rate: Number(s.exchange_rate) || 1.0000,
+    transferred_amount: s.transferred_amount !== undefined && s.transferred_amount !== null && s.transferred_amount !== '' 
+      ? Number(s.transferred_amount) 
+      : Number(s.amount),
+    payment_currency: s.payment_currency || 'USD',
+    date_rate: s.date_rate || todayDateStr,
     method: s.method,
     concept: splits.length > 1 ? `${concept} (Parte ${index + 1}/${splits.length})` : concept,
     status: 'Pendiente',

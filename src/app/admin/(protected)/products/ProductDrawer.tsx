@@ -12,6 +12,7 @@ export interface ProductData {
   name: string;
   description?: string | null;
   price: number;
+  rate_type?: 'USD' | 'EUR' | 'USDT' | string;
   is_active: boolean;
   categories: string[];
   allows_installments: boolean;
@@ -42,6 +43,7 @@ export default function ProductDrawer({
 
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
+  const [rateType, setRateType] = useState<'USD' | 'EUR' | 'USDT'>('USD');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [description, setDescription] = useState('');
@@ -56,6 +58,7 @@ export default function ProductDrawer({
     if (product) {
       setName(product.name || '');
       setPrice(product.price ? String(product.price) : '');
+      setRateType((product.rate_type as any) || 'USD');
       setStartDate(product.start_date ? new Date(product.start_date).toISOString().split('T')[0] : '');
       setEndDate(product.end_date ? new Date(product.end_date).toISOString().split('T')[0] : '');
       setDescription(product.description || '');
@@ -71,6 +74,7 @@ export default function ProductDrawer({
       // Valores por defecto para nuevo producto
       setName('');
       setPrice('');
+      setRateType('USD');
       
       // Fecha de inicio: Hoy
       const today = new Date().toISOString().split('T')[0];
@@ -123,18 +127,16 @@ export default function ProductDrawer({
 
     const numericPrice = parseFloat(price);
     if (isNaN(numericPrice) || numericPrice < 0) {
-      setErrorMsg('Ingresa un precio válido mayor o igual a 0.');
+      setErrorMsg('El precio debe ser un número válido igual o mayor a cero.');
       return;
     }
 
     if (!startDate || !endDate) {
-      setErrorMsg('Debes establecer una fecha de inicio y de fin.');
+      setErrorMsg('Las fechas de inicio y fin de vigencia son obligatorias.');
       return;
     }
 
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    if (start > end) {
+    if (new Date(startDate) > new Date(endDate)) {
       setErrorMsg('La fecha de inicio no puede ser posterior a la fecha de fin.');
       return;
     }
@@ -148,6 +150,7 @@ export default function ProductDrawer({
     }
     formData.append('name', name.trim());
     formData.append('price', String(numericPrice));
+    formData.append('rate_type', rateType);
     formData.append('start_date', startDate);
     formData.append('end_date', endDate);
     formData.append('description', description.trim());
@@ -241,24 +244,41 @@ export default function ProductDrawer({
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-black uppercase text-slate-500 tracking-wider mb-1.5">
-                  Precio Base ($ USD) *
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <DollarSign className="w-4 h-4" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-black uppercase text-slate-500 tracking-wider mb-1.5">
+                    Precio Base *
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <DollarSign className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      placeholder="30.00"
+                      required
+                      className="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl border border-slate-300 text-sm font-mono font-black text-gray-900 placeholder:font-normal placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-kasa-vinotinto/20 focus:border-kasa-vinotinto transition-all shadow-2xs"
+                    />
                   </div>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="30.00"
-                    required
-                    className="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl border border-slate-300 text-sm font-mono font-black text-gray-900 placeholder:font-normal placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-kasa-vinotinto/20 focus:border-kasa-vinotinto transition-all shadow-2xs"
-                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black uppercase text-slate-500 tracking-wider mb-1.5">
+                    Tipo de Tasa / Moneda *
+                  </label>
+                  <select
+                    value={rateType}
+                    onChange={(e) => setRateType(e.target.value as any)}
+                    className="w-full px-3 py-2.5 bg-white rounded-xl border border-slate-300 text-xs font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-kasa-vinotinto/20 focus:border-kasa-vinotinto transition-all shadow-2xs"
+                  >
+                    <option value="USD">USD — Dólar BCV Oficial</option>
+                    <option value="EUR">EUR — Euro BCV Oficial</option>
+                    <option value="USDT">USDT — Tether Cripto (1:1)</option>
+                  </select>
                 </div>
               </div>
             </div>

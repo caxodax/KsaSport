@@ -9,24 +9,33 @@ type Product = {
   id: string
   name: string
   price: number
+  rate_type?: string
   description: string
   allows_installments?: boolean
   amount_paid?: number
   amount_pending?: number
   months_owed?: number
   start_date?: string
+  penalty_applied?: number
 }
 
 export default function PaymentForm({ 
   products,
   isLate,
   penaltyAmount,
-  gracePeriodDays
+  gracePeriodDays,
+  rates
 }: { 
   products: Product[],
   isLate?: boolean,
   penaltyAmount?: number,
-  gracePeriodDays?: number
+  gracePeriodDays?: number,
+  rates?: {
+    usd: number;
+    eur: number;
+    date: string;
+    source: string;
+  }
 }) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(false)
@@ -36,19 +45,39 @@ export default function PaymentForm({
   type PaymentSplit = {
     id: number;
     amount: string;
+    transferred_amount?: string;
+    payment_currency?: string;
+    exchange_rate?: string;
+    date_rate?: string;
+    rate_type?: string;
     method: string;
     reference_number: string;
     file: File | null;
   }
   const [splits, setSplits] = useState<PaymentSplit[]>([])
 
+  const getRateForProduct = (rateType?: string) => {
+    if (rateType === 'EUR') return Number(rates?.eur) || 977.8778;
+    return Number(rates?.usd) || 842.2067;
+  };
+
   const handleSelect = (product: Product) => {
     setSelectedProduct(product)
-    const pending = product.amount_pending ?? product.price
-    setAmountToPay(pending.toString())
+    const pending = product.amount_pending !== undefined ? product.amount_pending : product.price
+    const pendingStr = pending.toString()
+    setAmountToPay(pendingStr)
+
+    const effectiveRate = getRateForProduct(product.rate_type)
+    const dateRate = rates?.date || new Date().toISOString().split('T')[0]
+
     setSplits([{
       id: Date.now(),
-      amount: pending.toString(),
+      amount: pendingStr,
+      transferred_amount: (pending * effectiveRate).toFixed(2),
+      payment_currency: 'USD',
+      exchange_rate: effectiveRate.toFixed(4),
+      date_rate: dateRate,
+      rate_type: product.rate_type || 'USD',
       method: '',
       reference_number: '',
       file: null
@@ -65,9 +94,17 @@ export default function PaymentForm({
       return
     }
 
+    const effectiveRate = getRateForProduct(selectedProduct?.rate_type)
+    const dateRate = rates?.date || new Date().toISOString().split('T')[0]
+
     setSplits([...splits, {
       id: Date.now(),
       amount: remaining.toString(),
+      transferred_amount: (remaining * effectiveRate).toFixed(2),
+      payment_currency: 'USD',
+      exchange_rate: effectiveRate.toFixed(4),
+      date_rate: dateRate,
+      rate_type: selectedProduct?.rate_type || 'USD',
       method: '',
       reference_number: '',
       file: null
@@ -81,7 +118,63 @@ export default function PaymentForm({
   }
 
   const updateSplit = (id: number, field: keyof PaymentSplit, value: any) => {
-    setSplits(splits.map(s => s.id === id ? { ...s, [field]: value } : s))
+    const effectiveRate = getRateForProduct(selectedProduct?.rate_type)
+    const dateRate = rates?.date || new Date().toISOString().split('T')[0]
+
+    setSplits(splits.map(s => {
+      if (s.id !== id) return s
+
+      if (field === 'method') {
+        const isBs = value === 'Pago Móvil' || value === 'Transferencia Bancaria'
+        const isUsdt = value === 'USDT'
+        const numAmount = Number(s.amount) || 0
+
+        let currency = 'USD'
+        let rate = '1.0000'
+        let transferred = s.amount
+
+        if (isBs) {
+          currency = 'VES'
+          rate = effectiveRate.toFixed(4)
+          transferred = (numAmount * effectiveRate).toFixed(2)
+        } else if (isUsdt) {
+          currency = 'USDT'
+          rate = '1.0000'
+          transferred = numAmount.toFixed(2)
+        } else {
+          currency = 'USD'
+          rate = '1.0000'
+          transferred = numAmount.toFixed(2)
+        }
+
+        return {
+          ...s,
+          method: value,
+          payment_currency: currency,
+          exchange_rate: rate,
+          transferred_amount: transferred,
+          date_rate: dateRate,
+          rate_type: selectedProduct?.rate_type || 'USD'
+        }
+      }
+
+      if (field === 'amount') {
+        const numAmount = Number(value) || 0
+        let transferred = s.transferred_amount
+        if (s.payment_currency === 'VES') {
+          transferred = (numAmount * effectiveRate).toFixed(2)
+        } else {
+          transferred = numAmount.toFixed(2)
+        }
+        return {
+          ...s,
+          amount: value,
+          transferred_amount: transferred
+        }
+      }
+
+      return { ...s, [field]: value }
+    }))
     setError('')
   }
 
@@ -112,11 +205,16 @@ export default function PaymentForm({
     formData.append('concept', selectedProduct.name)
     formData.append('total_amount', amountToPay)
     
-    // Serializar los datos de texto (metodos y referencias)
+    // Serializar los datos de texto incluyendo datos congelados de tasa
     const splitsData = splits.map(s => ({
       amount: s.amount,
       method: s.method,
-      reference: s.reference_number
+      reference: s.reference_number,
+      rate_type: s.rate_type || selectedProduct.rate_type || 'USD',
+      exchange_rate: s.exchange_rate || '1.0000',
+      transferred_amount: s.transferred_amount || s.amount,
+      payment_currency: s.payment_currency || 'USD',
+      date_rate: s.date_rate || rates?.date || new Date().toISOString().split('T')[0]
     }))
     formData.append('splits_json', JSON.stringify(splitsData))
 
@@ -167,12 +265,20 @@ export default function PaymentForm({
 
             const penaltyTotal = hasPenalty ? (penaltyAmount || 0) : 0;
             const finalPrice = Number(product.price) + penaltyTotal;
+            const finalPending = Math.max(0, finalPrice - (product.amount_paid || 0));
+            const currSymbol = product.rate_type === 'EUR' ? '€' : '$';
             
             return (
               <button
                 key={product.id}
-                onClick={() => handleSelect({ ...product, price: finalPrice, name: hasPenalty ? `${product.name} + Recargo por Mora` : product.name })}
-                className="text-left bg-white p-6 rounded-2xl border border-gray-200 hover:border-kasa-dorado hover:shadow-md transition-all group relative overflow-hidden"
+                onClick={() => handleSelect({ 
+                  ...product, 
+                  price: finalPrice, 
+                  amount_pending: finalPending,
+                  penalty_applied: penaltyTotal,
+                  name: hasPenalty ? `${product.name} + Recargo por Mora` : product.name 
+                })}
+                className="text-left bg-white p-6 rounded-2xl border border-gray-200 hover:border-kasa-dorado hover:shadow-md transition-all group relative overflow-hidden cursor-pointer"
               >
                 {hasPenalty && (
                   <div className="absolute top-0 right-0 bg-red-100 text-red-700 text-[10px] font-bold px-3 py-1 rounded-bl-lg">
@@ -183,9 +289,14 @@ export default function PaymentForm({
                   <h3 className="font-bold text-gray-900 text-lg group-hover:text-kasa-vinotinto transition-colors pr-2">
                     {product.name}
                   </h3>
-                  <span className="font-bold text-kasa-vinotinto bg-red-50 px-3 py-1 rounded-full shrink-0">
-                    ${finalPrice.toFixed(2)}
-                  </span>
+                  <div className="text-right shrink-0">
+                    <span className="font-bold text-kasa-vinotinto bg-red-50 px-3 py-1 rounded-full inline-block">
+                      {currSymbol}{finalPrice.toFixed(2)}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-bold block mt-0.5 uppercase">
+                      {product.rate_type || 'USD'}
+                    </span>
+                  </div>
                 </div>
                 {product.months_owed && product.months_owed > 1 && isMensualidad ? (
                   <p className="text-sm font-bold text-orange-600 mb-1">Adeuda {product.months_owed} meses</p>
@@ -193,13 +304,13 @@ export default function PaymentForm({
                 <p className="text-sm text-gray-500">{product.description}</p>
                 {product.amount_paid && product.amount_paid > 0 ? (
                   <div className="mt-3 flex justify-between items-center bg-orange-50 px-3 py-2 rounded-lg border border-orange-100">
-                    <span className="text-xs font-bold text-orange-800">Abonado: ${product.amount_paid.toFixed(2)}</span>
-                    <span className="text-xs font-bold text-red-600">Resta: ${product.amount_pending?.toFixed(2)}</span>
+                    <span className="text-xs font-bold text-orange-800">Abonado: {currSymbol}{product.amount_paid.toFixed(2)}</span>
+                    <span className="text-xs font-bold text-red-600">Resta: {currSymbol}{finalPending.toFixed(2)}</span>
                   </div>
                 ) : null}
                 {hasPenalty && (
                   <p className="text-xs text-red-500 font-medium mt-2 bg-red-50 p-2 rounded-md">
-                    El monto incluye ${penaltyTotal} por pago fuera de la fecha límite (Día {gracePeriodDays}).
+                    El monto incluye ${penaltyTotal.toFixed(2)} por pago fuera de la fecha límite (Día {gracePeriodDays}).
                   </p>
                 )}
               </button>
@@ -219,10 +330,19 @@ export default function PaymentForm({
             <div>
               <p className="text-sm text-gray-500">Concepto seleccionado:</p>
               <h3 className="font-bold text-xl text-gray-900">{selectedProduct.name}</h3>
+              {selectedProduct.penalty_applied && selectedProduct.penalty_applied > 0 ? (
+                <p className="text-xs text-rose-600 font-bold mt-1">
+                  Incluye recargo de mora: +${selectedProduct.penalty_applied.toFixed(2)}
+                </p>
+              ) : null}
             </div>
             <div className="text-right">
-              <p className="text-sm text-gray-500">Monto Base:</p>
-              <span className="font-bold text-2xl text-kasa-vinotinto">${(selectedProduct.amount_pending ?? selectedProduct.price).toFixed(2)}</span>
+              <p className="text-sm text-gray-500">Total a Pagar:</p>
+              <span className="font-bold text-2xl text-kasa-vinotinto">
+                {selectedProduct.rate_type === 'EUR' ? '€' : '$'}
+                {(selectedProduct.amount_pending ?? selectedProduct.price).toFixed(2)}
+              </span>
+              <span className="text-xs text-slate-400 block font-bold uppercase">{selectedProduct.rate_type || 'USD'}</span>
             </div>
           </div>
 
@@ -279,7 +399,9 @@ export default function PaymentForm({
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Monto de esta parte ($)</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Monto de esta parte ({selectedProduct.rate_type === 'EUR' ? '€ EUR' : '$ ' + (selectedProduct.rate_type || 'USD')}) *
+                      </label>
                       <input 
                         type="number" 
                         step="0.01"
@@ -287,25 +409,63 @@ export default function PaymentForm({
                         value={split.amount}
                         onChange={(e) => updateSplit(split.id, 'amount', e.target.value)}
                         required
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto font-mono font-bold"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Método</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Método de Pago *</label>
                       <select 
                         value={split.method}
                         onChange={(e) => updateSplit(split.id, 'method', e.target.value)}
                         required
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto font-bold text-gray-800"
                       >
                         <option value="">Selecciona...</option>
                         <option value="Pago Móvil">Pago Móvil (Bs)</option>
-                        <option value="Transferencia Bancaria">Transferencia Bancaria</option>
-                        <option value="Zelle">Zelle</option>
-                        <option value="Efectivo">Efectivo</option>
+                        <option value="Transferencia Bancaria">Transferencia Bancaria (Bs)</option>
+                        <option value="Zelle">Zelle (USD)</option>
+                        <option value="Efectivo">Efectivo ($ / €)</option>
+                        <option value="USDT">USDT / Binance</option>
                       </select>
                     </div>
                   </div>
+
+                  {/* Bloque de Conversión Automática de Tasa BCV (Bolívares) */}
+                  {(split.method === 'Pago Móvil' || split.method === 'Transferencia Bancaria') && (
+                    <div className="mb-4 p-3.5 bg-sky-50/90 rounded-xl border border-sky-200 text-xs">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2.5 border-b border-sky-200/80">
+                        <span className="font-bold text-sky-950 flex items-center gap-1.5">
+                          <span>🏦</span> Tasa Oficial BCV ({split.date_rate || rates?.date || 'Hoy'}):
+                        </span>
+                        <span className="font-mono font-black text-sky-900 bg-white px-2.5 py-0.5 rounded-md border border-sky-200 shadow-2xs">
+                          Bs. {Number(split.exchange_rate || getRateForProduct(selectedProduct.rate_type)).toFixed(2)} / {selectedProduct.rate_type || 'USD'}
+                        </span>
+                      </div>
+
+                      <div className="mt-2.5">
+                        <label className="block text-[11px] font-black uppercase text-sky-900 tracking-wider mb-1">
+                          Monto Transferido en Bolívares (Bs.) *
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-sky-700 font-bold text-xs">
+                            Bs.
+                          </div>
+                          <input 
+                            type="number"
+                            step="0.01"
+                            value={split.transferred_amount || ''}
+                            onChange={(e) => updateSplit(split.id, 'transferred_amount', e.target.value)}
+                            required
+                            placeholder="Calculado automáticamente"
+                            className="w-full pl-10 pr-3 py-2 bg-white rounded-lg border border-sky-300 text-sm font-mono font-black text-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-2xs"
+                          />
+                        </div>
+                        <p className="text-[10px] text-sky-700 mt-1">
+                          Monto total en Bolívares reflejado en tu comprobante de transferencia bancaria o Pago Móvil.
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="mb-4">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Referencia</label>

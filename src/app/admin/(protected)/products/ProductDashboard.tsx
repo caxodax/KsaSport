@@ -295,10 +295,11 @@ export default function ProductDashboard({
                       </div>
                     </div>
 
-                    {/* Precio de Alto Contraste */}
+                    {/* Precio de Alto Contraste con Moneda */}
                     <div className="text-right shrink-0 self-start">
-                      <span className="inline-flex items-center px-3 py-1.5 bg-slate-900 text-white font-mono font-black text-sm sm:text-base rounded-2xl shadow-xs border border-slate-800 whitespace-nowrap">
-                        ${Number(p.price).toFixed(2)}
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 text-white font-mono font-black text-sm sm:text-base rounded-2xl shadow-xs border border-slate-800 whitespace-nowrap">
+                        <span>{p.rate_type === 'EUR' ? '€' : '$'}{Number(p.price).toFixed(2)}</span>
+                        <span className="text-[10px] text-slate-400 font-sans uppercase font-bold">{p.rate_type || 'USD'}</span>
                       </span>
                     </div>
                   </div>
@@ -460,8 +461,9 @@ export default function ProductDashboard({
 
                       {/* Precio */}
                       <td className="py-4 px-6 whitespace-nowrap">
-                        <span className="font-mono font-black text-sm sm:text-base text-gray-900 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs inline-block">
-                          ${Number(p.price).toFixed(2)}
+                        <span className="font-mono font-black text-sm sm:text-base text-gray-900 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs inline-flex items-center gap-1.5">
+                          <span>{p.rate_type === 'EUR' ? '€' : '$'}{Number(p.price).toFixed(2)}</span>
+                          <span className="text-[10px] text-slate-500 font-sans uppercase font-bold">{p.rate_type || 'USD'}</span>
                         </span>
                       </td>
 

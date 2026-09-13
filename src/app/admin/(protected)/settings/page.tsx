@@ -1,6 +1,7 @@
 import { getServiceSupabase } from '@/lib/supabase'
 import { checkAdminPermission } from '@/lib/auth-admin'
 import SettingsDashboard from './SettingsDashboard'
+import { getTodayRates, getExchangeRatesHistory } from '@/lib/exchangeRate'
 
 export const revalidate = 0
 
@@ -53,12 +54,19 @@ export default async function SettingsPage() {
     athletesCount: athletesCountMap[c.name?.trim()] || 0
   }))
 
+  // 5. Tasas oficiales e histórico
+  const currentRates = await getTodayRates();
+  const ratesHistory = await getExchangeRatesHistory(30);
+
   return (
     <div className="p-4 sm:p-8 max-w-5xl mx-auto">
       <SettingsDashboard
         settings={settings || { id: 1, grace_period_days: 5, penalty_amount: 10.00 }}
         categories={enrichedCategories}
+        currentRates={currentRates}
+        ratesHistory={ratesHistory}
       />
     </div>
   )
 }
+

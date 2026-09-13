@@ -408,8 +408,18 @@ export default async function AthleteProfilePage({
                           </div>
                         </td>
                         <td className="py-4 px-6">
-                          <div className="font-mono font-black text-gray-900 text-sm">${Number(pay.amount).toFixed(2)}</div>
-                          <div className="text-xs text-slate-500 font-medium">{(pay.products as any)?.name || 'Cuota'}</div>
+                          <div className="font-mono font-black text-gray-900 text-sm">
+                            ${Number(pay.amount).toFixed(2)} <span className="text-[10px] text-slate-400 font-normal">{pay.rate_type || 'USD'}</span>
+                          </div>
+                          {pay.payment_currency === 'VES' && pay.transferred_amount ? (
+                            <div className="text-xs font-mono font-bold text-slate-700">
+                              Bs. {Number(pay.transferred_amount).toLocaleString('es-VE', { minimumFractionDigits: 2 })}
+                              {pay.exchange_rate && Number(pay.exchange_rate) > 1 && (
+                                <span className="text-[10px] text-slate-400 font-normal ml-1">(@ {Number(pay.exchange_rate).toFixed(2)} Bs.)</span>
+                              )}
+                            </div>
+                          ) : null}
+                          <div className="text-xs text-slate-500 font-medium mt-0.5">{(pay.products as any)?.name || 'Cuota'}</div>
                           {pay.receipt_url && (
                             <a 
                               href={pay.receipt_url} 

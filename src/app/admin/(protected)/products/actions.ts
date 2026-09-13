@@ -12,6 +12,7 @@ export async function createProduct(formData: FormData) {
   
   const start_date = formData.get('start_date') as string
   const end_date = formData.get('end_date') as string
+  const rate_type = (formData.get('rate_type') as string) || 'USD'
   
   // Extraer múltiples categorías si el usuario selecciona varias (usando un select multiple o checkboxes)
   // Como en NextJS formData.getAll funciona si hay múltiples inputs con el mismo nombre.
@@ -30,6 +31,7 @@ export async function createProduct(formData: FormData) {
       name, 
       description, 
       price, 
+      rate_type,
       categories: finalCategories,
       allows_installments,
       requires_opt_in,
@@ -90,6 +92,7 @@ export async function updateProduct(formData: FormData) {
   
   const start_date = formData.get('start_date') as string
   const end_date = formData.get('end_date') as string
+  const rate_type = (formData.get('rate_type') as string) || 'USD'
 
   const categories = formData.getAll('categories') as string[]
   const finalCategories = categories.includes('Global') || categories.length === 0 
@@ -104,6 +107,7 @@ export async function updateProduct(formData: FormData) {
       name, 
       description, 
       price, 
+      rate_type,
       categories: finalCategories,
       allows_installments,
       requires_opt_in,

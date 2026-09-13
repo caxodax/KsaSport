@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getServiceSupabase } from '@/lib/supabase'
 import PaymentForm from './PaymentForm'
 import { redirect } from 'next/navigation'
+import { getTodayRates } from '@/lib/exchangeRate'
 
 export const revalidate = 0
 
@@ -170,18 +171,21 @@ export default async function PagosPage() {
       ...p,
       price: basePrice,
       original_price: Number(p.price),
+      rate_type: p.rate_type || 'USD',
       months_owed: 1, // Ya no multiplicamos, cada producto es un mes distinto
       amount_paid: amountPaid,
       amount_pending: amountPending
     }
   }).filter(p => p.amount_pending > 0 || (p.is_active && p.name.toLowerCase().includes('mensualidad')))
 
-  // Permitir la mensualidad siempre porque es recurrente, aunque su "amount_pending" llegue a 0.
+  // Obtener tasa oficial del día desde BD
+  const rates = await getTodayRates()
 
   return <PaymentForm 
     products={filteredProducts || []} 
     isLate={isLate} 
     penaltyAmount={effectivePenaltyAmount}
     gracePeriodDays={effectiveGracePeriod}
+    rates={rates}
   />
 }
