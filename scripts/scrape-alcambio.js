@@ -23,10 +23,25 @@ const DATA_DIR = path.resolve(__dirname, '../data');
 const JSON_FILE = path.join(DATA_DIR, 'rates_history.json');
 const CSV_FILE = path.join(DATA_DIR, 'rates_history.csv');
 
+const PV_CARACAS_OFFSET_MS = 14400 * 1000; // 4 horas en ms (UTC-4 Venezuela)
+
+function getAlCambioDateSearch(dateObj = new Date()) {
+  const t = dateObj.getTime() - PV_CARACAS_OFFSET_MS;
+  const n = new Date(t);
+  const day = n.getUTCDay();
+  let daysToSubtract = 0;
+  if (day === 6) daysToSubtract = 1;      // Sábado -> viernes
+  else if (day === 0) daysToSubtract = 2; // Domingo -> viernes
+
+  const startDate = Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate() - daysToSubtract) + PV_CARACAS_OFFSET_MS;
+  const endDate = startDate + 480 * 60 * 1000; // + 8 horas
+  return { startDate, endDate, filterByField: 'dateBcvFees' };
+}
+
 async function fetchFromAlCambio() {
   const query = `
-    query {
-      getCountryConversions(payload: { countryCode: "VE" }) {
+    query getRates($countryCode: String!, $dateSearch: DateSearchInput) {
+      getCountryConversions(payload: { countryCode: $countryCode }, dateSearch: $dateSearch) {
         _id
         dateBcv
         conversionRates {
@@ -49,6 +64,8 @@ async function fetchFromAlCambio() {
     }
   `;
 
+  const dateSearch = getAlCambioDateSearch();
+
   const response = await fetch('https://api.alcambio.app/graphql', {
     method: 'POST',
     headers: {
@@ -56,7 +73,13 @@ async function fetchFromAlCambio() {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
       'Accept': 'application/json'
     },
-    body: JSON.stringify({ query })
+    body: JSON.stringify({
+      query,
+      variables: {
+        countryCode: 'VE',
+        dateSearch
+      }
+    })
   });
 
   if (!response.ok) {
@@ -69,17 +92,43 @@ async function fetchFromAlCambio() {
   }
 
   const data = json.data;
-  const rates = data?.getCountryConversions?.conversionRates || [];
+  let rates = data?.getCountryConversions?.conversionRates || [];
   const binance = data?.getBinanceP2PAverages;
 
-  // 1. Extraer Tasa Oficial USD BCV (el registro official === true con baseValue mayor o más reciente)
-  const usdOfficial = rates
-    .filter(r => r?.rateCurrency?.code === 'USD' && r?.official === true && r?.baseValue > 1)
-    .pop();
+  // Respaldo por si dateSearch retornara vacío
+  if (rates.length === 0) {
+    const fallbackQuery = `
+      query {
+        getCountryConversions(payload: { countryCode: "VE" }) {
+          conversionRates {
+            rateCurrency { code }
+            baseValue
+            official
+          }
+        }
+      }
+    `;
+    const fallbackRes = await fetch('https://api.alcambio.app/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: fallbackQuery })
+    });
+    if (fallbackRes.ok) {
+      const fallbackJson = await fallbackRes.json();
+      rates = fallbackJson.data?.getCountryConversions?.conversionRates || [];
+    }
+  }
+
+  // 1. Extraer Tasa Oficial USD BCV (con baseValue > 1 y official === true)
+  const usdOfficial = rates.find(
+    r => r?.rateCurrency?.code === 'USD' && r?.official === true && Number(r?.baseValue) > 1
+  ) || rates.filter(r => r?.rateCurrency?.code === 'USD' && Number(r?.baseValue) > 1).pop();
   const usdRate = usdOfficial ? Number(usdOfficial.baseValue) : null;
 
   // 2. Extraer Tasa Oficial EUR BCV
-  const eurOfficial = rates.find(r => r?.rateCurrency?.code === 'EUR' && r?.official === true);
+  const eurOfficial = rates.find(
+    r => r?.rateCurrency?.code === 'EUR' && r?.official === true && Number(r?.baseValue) > 1
+  ) || rates.find(r => r?.rateCurrency?.code === 'EUR' && Number(r?.baseValue) > 1);
   const eurRate = eurOfficial ? Number(eurOfficial.baseValue) : null;
 
   // 3. Extraer Tasa USDT Promedio (Binance P2P)

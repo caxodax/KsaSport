@@ -20,21 +20,46 @@ export interface RateHistoryItem {
   created_at: string;
 }
 
+const PV_CARACAS_OFFSET_MS = 14400 * 1000; // 4 horas en ms (UTC-4 Venezuela)
+
+/**
+ * Calcula el rango dateSearch para la API de AlCambio.
+ * Reproduce la función oficial del frontend de AlCambio:
+ * Si es sábado (día 6) retrocede 1 día (viernes).
+ * Si es domingo (día 0) retrocede 2 días (viernes).
+ * En días de semana ordinarios, busca la ventana del día actual.
+ */
+export function getAlCambioDateSearch(dateObj = new Date()) {
+  const t = dateObj.getTime() - PV_CARACAS_OFFSET_MS;
+  const n = new Date(t);
+  const day = n.getUTCDay();
+  let daysToSubtract = 0;
+  if (day === 6) daysToSubtract = 1;
+  else if (day === 0) daysToSubtract = 2;
+
+  const startDate = Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate() - daysToSubtract) + PV_CARACAS_OFFSET_MS;
+  const endDate = startDate + 480 * 60 * 1000; // + 8 horas
+  return { startDate, endDate, filterByField: 'dateBcvFees' };
+}
+
 /**
  * Fuente ÚNICA y Principal: AlCambio.app (GraphQL API)
  * Extrae Dólar BCV, Euro BCV y USDT Promedio (Binance P2P).
+ * Emplea dateSearch para obtener la tasa activa oficial (evitando adelantos de días no bancarios).
  */
 export async function fetchAlCambioRates(): Promise<{ usd: number; eur: number; usdt: number; date: string } | null> {
   try {
     const query = `
-      query {
-        getCountryConversions(payload: { countryCode: "VE" }) {
+      query getRates($countryCode: String!, $dateSearch: DateSearchInput) {
+        getCountryConversions(payload: { countryCode: $countryCode }, dateSearch: $dateSearch) {
+          dateBcv
           conversionRates {
+            type
+            official
+            baseValue
             rateCurrency {
               code
             }
-            baseValue
-            official
           }
         }
         getBinanceP2PAverages {
@@ -43,6 +68,8 @@ export async function fetchAlCambioRates(): Promise<{ usd: number; eur: number; 
         }
       }
     `;
+
+    const dateSearch = getAlCambioDateSearch();
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 7000);
@@ -54,7 +81,13 @@ export async function fetchAlCambioRates(): Promise<{ usd: number; eur: number; 
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
         'Accept': 'application/json'
       },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({
+        query,
+        variables: {
+          countryCode: 'VE',
+          dateSearch
+        }
+      }),
       signal: controller.signal,
       cache: 'no-store'
     });
@@ -64,17 +97,45 @@ export async function fetchAlCambioRates(): Promise<{ usd: number; eur: number; 
     if (!res.ok) return null;
 
     const json = await res.json();
-    const rates = json.data?.getCountryConversions?.conversionRates || [];
+    let rates = json.data?.getCountryConversions?.conversionRates || [];
     const binance = json.data?.getBinanceP2PAverages;
 
-    // 1. Tasa USD oficial
-    const usdOfficial = rates
-      .filter((r: any) => r?.rateCurrency?.code === 'USD' && r?.official === true && r?.baseValue > 1)
-      .pop();
+    // Respaldo por si dateSearch retornara vacío
+    if (rates.length === 0) {
+      const fallbackQuery = `
+        query {
+          getCountryConversions(payload: { countryCode: "VE" }) {
+            conversionRates {
+              type
+              official
+              baseValue
+              rateCurrency { code }
+            }
+          }
+        }
+      `;
+      const fallbackRes = await fetch('https://api.alcambio.app/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: fallbackQuery }),
+        cache: 'no-store'
+      });
+      if (fallbackRes.ok) {
+        const fallbackJson = await fallbackRes.json();
+        rates = fallbackJson.data?.getCountryConversions?.conversionRates || [];
+      }
+    }
+
+    // 1. Tasa USD oficial (con baseValue > 1 y official === true)
+    const usdOfficial = rates.find(
+      (r: any) => r?.rateCurrency?.code === 'USD' && r?.official === true && Number(r?.baseValue) > 1
+    ) || rates.filter((r: any) => r?.rateCurrency?.code === 'USD' && Number(r?.baseValue) > 1).pop();
     const usd = usdOfficial ? Number(usdOfficial.baseValue) : null;
 
     // 2. Tasa EUR oficial
-    const eurOfficial = rates.find((r: any) => r?.rateCurrency?.code === 'EUR' && r?.official === true);
+    const eurOfficial = rates.find(
+      (r: any) => r?.rateCurrency?.code === 'EUR' && r?.official === true && Number(r?.baseValue) > 1
+    ) || rates.find((r: any) => r?.rateCurrency?.code === 'EUR' && Number(r?.baseValue) > 1);
     const eur = eurOfficial ? Number(eurOfficial.baseValue) : null;
 
     // 3. Tasa USDT Promedio (Binance P2P)
