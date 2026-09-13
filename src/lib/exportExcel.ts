@@ -817,3 +817,543 @@ export async function exportLedgerToExcel(data: LedgerExportData) {
   window.URL.revokeObjectURL(url);
 }
 
+export interface PaymentsExportItem {
+  id: string;
+  date: string;
+  athleteName: string;
+  athleteCedula: string;
+  concept: string;
+  method: string;
+  reference: string;
+  amount: number;
+  status: 'Completado' | 'Pendiente' | 'Rechazado' | string;
+}
+
+export interface PaymentsExportData {
+  dateRangeStr: string;
+  totalCount: number;
+  completedCount: number;
+  pendingCount: number;
+  rejectedCount: number;
+  completedTotal: number;
+  pendingTotal: number;
+  rejectedTotal: number;
+  methods: { name: string; count: number; total: number; percentage: number }[];
+  concepts: { name: string; count: number; total: number; percentage: number }[];
+  payments: PaymentsExportItem[];
+}
+
+/**
+ * Genera y descarga directamente un archivo Excel profesional (.xlsx)
+ * con el reporte de Finanzas y Pagos respetando el rango de fechas activo.
+ */
+export async function exportPaymentsToExcel(data: PaymentsExportData) {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'KsaSports Management';
+  workbook.lastModifiedBy = 'KsaSports Admin';
+  workbook.created = new Date();
+  workbook.modified = new Date();
+
+  const thinBorder = {
+    top: { style: 'thin' as const, color: { argb: 'FFE2E8F0' } },
+    left: { style: 'thin' as const, color: { argb: 'FFE2E8F0' } },
+    bottom: { style: 'thin' as const, color: { argb: 'FFE2E8F0' } },
+    right: { style: 'thin' as const, color: { argb: 'FFE2E8F0' } }
+  };
+
+  const totalBorder = {
+    top: { style: 'thin' as const, color: { argb: 'FF94A3B8' } },
+    left: { style: 'thin' as const, color: { argb: 'FFE2E8F0' } },
+    bottom: { style: 'thin' as const, color: { argb: 'FF94A3B8' } },
+    right: { style: 'thin' as const, color: { argb: 'FFE2E8F0' } }
+  };
+
+  const doubleBottomBorder = {
+    top: { style: 'thin' as const, color: { argb: 'FF94A3B8' } },
+    left: { style: 'thin' as const, color: { argb: 'FFE2E8F0' } },
+    bottom: { style: 'double' as const, color: { argb: 'FF475569' } },
+    right: { style: 'thin' as const, color: { argb: 'FFE2E8F0' } }
+  };
+
+  // ==========================================
+  // PESTAÑA 1: HISTORIAL DE PAGOS (OPERATIVO)
+  // ==========================================
+  const wsPayments = workbook.addWorksheet('Historial de Pagos', {
+    views: [{ showGridLines: true }]
+  });
+
+  // Título Vinotinto Corporativo
+  wsPayments.mergeCells('A1:I1');
+  const titleCell = wsPayments.getCell('A1');
+  titleCell.value = 'KSA SPORTS - BANDEJA DE FINANZAS Y CONTROL DE PAGOS';
+  titleCell.font = { name: 'Segoe UI', size: 13, bold: true, color: { argb: 'FFFFFFFF' } };
+  titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF800020' } };
+  titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+  wsPayments.getRow(1).height = 30;
+
+  // Subtítulo con Período y Métricas
+  wsPayments.mergeCells('A2:I2');
+  const subCell = wsPayments.getCell('A2');
+  subCell.value = `Filtro de Fechas: ${data.dateRangeStr}  |  Total Pagos: ${data.totalCount}  |  Aprobados: $${data.completedTotal.toFixed(2)}  |  Por Revisar: ${data.pendingCount}`;
+  subCell.font = { name: 'Segoe UI', size: 10, italic: true, color: { argb: 'FF334155' } };
+  subCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+  subCell.alignment = { vertical: 'middle', horizontal: 'center' };
+  wsPayments.getRow(2).height = 20;
+
+  wsPayments.getRow(3).height = 10;
+
+  // Encabezados de Columna
+  const paymentHeaders = [
+    { header: '#', key: 'idx', width: 8 },
+    { header: 'Fecha y Hora', key: 'date', width: 18 },
+    { header: 'Atleta / Pagador', key: 'athlete', width: 28 },
+    { header: 'Cédula', key: 'cedula', width: 18 },
+    { header: 'Concepto / Motivo', key: 'concept', width: 28 },
+    { header: 'Método de Pago', key: 'method', width: 18 },
+    { header: 'N° Referencia', key: 'reference', width: 18 },
+    { header: 'Monto ($)', key: 'amount', width: 16 },
+    { header: 'Estado', key: 'status', width: 16 },
+  ];
+
+  const headerRow = wsPayments.getRow(4);
+  headerRow.height = 26;
+  paymentHeaders.forEach((ph, idx) => {
+    const cell = headerRow.getCell(idx + 1);
+    cell.value = ph.header;
+    cell.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF800020' } };
+    cell.alignment = { 
+      vertical: 'middle', 
+      horizontal: idx === 7 ? 'right' : (idx === 2 || idx === 4 ? 'left' : 'center') 
+    };
+    cell.border = thinBorder;
+  });
+
+  let curRowIdx = 5;
+
+  if (data.payments.length === 0) {
+    wsPayments.mergeCells(`A5:I5`);
+    const emptyCell = wsPayments.getCell('A5');
+    emptyCell.value = 'No hay pagos reportados en este período de fechas.';
+    emptyCell.font = { name: 'Segoe UI', size: 10, italic: true, color: { argb: 'FF94A3B8' } };
+    emptyCell.alignment = { vertical: 'middle', horizontal: 'center' };
+    wsPayments.getRow(5).height = 26;
+    curRowIdx++;
+  } else {
+    data.payments.forEach((p, i) => {
+      const row = wsPayments.getRow(curRowIdx);
+      row.height = 22;
+
+      const c1 = row.getCell(1);
+      c1.value = i + 1;
+      c1.alignment = { vertical: 'middle', horizontal: 'center' };
+      c1.border = thinBorder;
+
+      const c2 = row.getCell(2);
+      c2.value = formatDateTime(p.date);
+      c2.alignment = { vertical: 'middle', horizontal: 'center' };
+      c2.border = thinBorder;
+
+      const c3 = row.getCell(3);
+      c3.value = p.athleteName || 'Atleta Desconocido';
+      c3.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF1E293B' } };
+      c3.alignment = { vertical: 'middle', horizontal: 'left' };
+      c3.border = thinBorder;
+
+      const c4 = row.getCell(4);
+      c4.value = p.athleteCedula ? formatCedula(p.athleteCedula) : 'N/A';
+      c4.alignment = { vertical: 'middle', horizontal: 'center' };
+      c4.border = thinBorder;
+
+      const c5 = row.getCell(5);
+      c5.value = p.concept || 'Sin Concepto';
+      c5.alignment = { vertical: 'middle', horizontal: 'left' };
+      c5.border = thinBorder;
+
+      const c6 = row.getCell(6);
+      c6.value = p.method || 'No Especificado';
+      c6.alignment = { vertical: 'middle', horizontal: 'center' };
+      c6.border = thinBorder;
+
+      const c7 = row.getCell(7);
+      c7.value = p.reference || 'N/A';
+      c7.alignment = { vertical: 'middle', horizontal: 'center' };
+      c7.border = thinBorder;
+
+      const c8 = row.getCell(8);
+      c8.value = p.amount;
+      c8.numFmt = '"$"#,##0.00';
+      c8.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF800020' } };
+      c8.alignment = { vertical: 'middle', horizontal: 'right' };
+      c8.border = thinBorder;
+
+      const c9 = row.getCell(9);
+      c9.value = p.status;
+      c9.alignment = { vertical: 'middle', horizontal: 'center' };
+      c9.border = thinBorder;
+
+      // Resaltado de Estado (Semáforo contable)
+      if (p.status === 'Completado') {
+        c9.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF15803D' } };
+        c9.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCFCE7' } };
+      } else if (p.status === 'Pendiente') {
+        c9.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FFB45309' } };
+        c9.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF3C7' } };
+      } else if (p.status === 'Rechazado') {
+        c9.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FFB91C1C' } };
+        c9.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } };
+      } else {
+        c9.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF475569' } };
+      }
+
+      if (i % 2 === 1) {
+        for (let col = 1; col <= 8; col++) {
+          row.getCell(col).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+        }
+      }
+      curRowIdx++;
+    });
+
+    // Bloque de Totales al pie de la tabla
+    const totalStatusItems = [
+      { label: 'TOTAL APROBADO (Completado):', count: data.completedCount, amount: data.completedTotal, color: 'FF15803D' },
+      { label: 'TOTAL POR REVISAR (Pendiente):', count: data.pendingCount, amount: data.pendingTotal, color: 'FFB45309' },
+      { label: 'TOTAL RECHAZADO:', count: data.rejectedCount, amount: data.rejectedTotal, color: 'FFB91C1C' },
+      { 
+        label: 'TOTAL REPORTADO GLOBAL:', 
+        count: data.totalCount, 
+        amount: data.completedTotal + data.pendingTotal + data.rejectedTotal, 
+        color: 'FF0F172A',
+        isGrandTotal: true 
+      },
+    ];
+
+    totalStatusItems.forEach(item => {
+      const totRow = wsPayments.getRow(curRowIdx);
+      totRow.height = 24;
+
+      totRow.getCell(6).value = item.label;
+      totRow.getCell(6).font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: item.color } };
+      totRow.getCell(6).alignment = { vertical: 'middle', horizontal: 'right' };
+
+      totRow.getCell(7).value = `${item.count} pagos`;
+      totRow.getCell(7).font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF475569' } };
+      totRow.getCell(7).alignment = { vertical: 'middle', horizontal: 'center' };
+
+      const amtCell = totRow.getCell(8);
+      amtCell.value = item.amount;
+      amtCell.numFmt = '"$"#,##0.00';
+      amtCell.font = { name: 'Segoe UI', size: 11, bold: true, color: { argb: item.color } };
+      amtCell.alignment = { vertical: 'middle', horizontal: 'right' };
+
+      for (let col = 1; col <= 9; col++) {
+        const c = totRow.getCell(col);
+        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+        c.border = item.isGrandTotal ? doubleBottomBorder : totalBorder;
+      }
+      curRowIdx++;
+    });
+  }
+
+  // Autoajuste columnas Pestaña 1
+  paymentHeaders.forEach((ph, idx) => {
+    const col = wsPayments.getColumn(idx + 1);
+    let max = ph.header.length;
+    col.eachCell?.({ includeEmpty: false }, (cell, rowNumber) => {
+      if (rowNumber <= 2) return;
+      const str = cell.value ? cell.value.toString() : '';
+      if (str.length > max) max = str.length;
+    });
+    col.width = Math.max(max + 4, ph.width);
+  });
+
+  // ==========================================
+  // PESTAÑA 2: RESUMEN DE FINANZAS Y DESGLOSE
+  // ==========================================
+  const wsSummary = workbook.addWorksheet('Resumen de Finanzas', {
+    views: [{ showGridLines: true }]
+  });
+
+  wsSummary.mergeCells('A1:E1');
+  const sumTitle = wsSummary.getCell('A1');
+  sumTitle.value = 'KSA SPORTS - RESUMEN CONSOLIDADO DE FINANZAS';
+  sumTitle.font = { name: 'Segoe UI', size: 13, bold: true, color: { argb: 'FFFFFFFF' } };
+  sumTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF800020' } };
+  sumTitle.alignment = { vertical: 'middle', horizontal: 'center' };
+  wsSummary.getRow(1).height = 30;
+
+  wsSummary.mergeCells('A2:E2');
+  const sumSub = wsSummary.getCell('A2');
+  sumSub.value = `Período Analizado: ${data.dateRangeStr}  |  Generado: ${new Date().toLocaleDateString('es-VE')}`;
+  sumSub.font = { name: 'Segoe UI', size: 10, italic: true, color: { argb: 'FF334155' } };
+  sumSub.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+  sumSub.alignment = { vertical: 'middle', horizontal: 'center' };
+  wsSummary.getRow(2).height = 20;
+
+  wsSummary.getRow(3).height = 10;
+
+  // --- SECCIÓN 1: BALANCE POR ESTADO ---
+  const s1Row = wsSummary.getRow(4);
+  s1Row.getCell(1).value = '1. BALANCE GENERAL POR ESTADO DE PAGO';
+  s1Row.getCell(1).font = { name: 'Segoe UI', size: 11, bold: true, color: { argb: 'FF800020' } };
+  s1Row.height = 22;
+
+  const statusHeaders = ['Estado', 'Cantidad de Pagos', 'Monto Total ($)', '% del Monto Total'];
+  const s1HeaderRow = wsSummary.getRow(5);
+  s1HeaderRow.height = 24;
+  statusHeaders.forEach((h, i) => {
+    const c = s1HeaderRow.getCell(i + 1);
+    c.value = h;
+    c.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF800020' } };
+    c.alignment = { vertical: 'middle', horizontal: i === 0 ? 'left' : (i >= 2 ? 'right' : 'center') };
+    c.border = thinBorder;
+  });
+
+  const grandTotalAmount = data.completedTotal + data.pendingTotal + data.rejectedTotal;
+
+  const statusRows = [
+    { name: 'Completado (Aprobado)', count: data.completedCount, amount: data.completedTotal, color: 'FF15803D', bg: 'FFDCFCE7' },
+    { name: 'Pendiente (Por Revisar)', count: data.pendingCount, amount: data.pendingTotal, color: 'FFB45309', bg: 'FFFEF3C7' },
+    { name: 'Rechazado', count: data.rejectedCount, amount: data.rejectedTotal, color: 'FFB91C1C', bg: 'FFFEE2E2' },
+  ];
+
+  let sumRowIdx = 6;
+  statusRows.forEach(st => {
+    const r = wsSummary.getRow(sumRowIdx);
+    r.height = 22;
+
+    const c1 = r.getCell(1);
+    c1.value = st.name;
+    c1.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: st.color } };
+    c1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: st.bg } };
+    c1.border = thinBorder;
+
+    const c2 = r.getCell(2);
+    c2.value = st.count;
+    c2.numFmt = '#,##0';
+    c2.alignment = { vertical: 'middle', horizontal: 'center' };
+    c2.border = thinBorder;
+
+    const c3 = r.getCell(3);
+    c3.value = st.amount;
+    c3.numFmt = '"$"#,##0.00';
+    c3.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: st.color } };
+    c3.alignment = { vertical: 'middle', horizontal: 'right' };
+    c3.border = thinBorder;
+
+    const c4 = r.getCell(4);
+    c4.value = grandTotalAmount > 0 ? st.amount / grandTotalAmount : 0;
+    c4.numFmt = '0.0%';
+    c4.alignment = { vertical: 'middle', horizontal: 'right' };
+    c4.border = thinBorder;
+
+    sumRowIdx++;
+  });
+
+  // Total balance general
+  const sTotRow = wsSummary.getRow(sumRowIdx);
+  sTotRow.height = 24;
+  sTotRow.getCell(1).value = 'TOTAL REPORTADO';
+  sTotRow.getCell(1).font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF0F172A' } };
+
+  const sTotCount = sTotRow.getCell(2);
+  sTotCount.value = data.totalCount;
+  sTotCount.numFmt = '#,##0';
+  sTotCount.font = { name: 'Segoe UI', size: 10, bold: true };
+  sTotCount.alignment = { vertical: 'middle', horizontal: 'center' };
+
+  const sTotAmount = sTotRow.getCell(3);
+  sTotAmount.value = grandTotalAmount;
+  sTotAmount.numFmt = '"$"#,##0.00';
+  sTotAmount.font = { name: 'Segoe UI', size: 11, bold: true, color: { argb: 'FF0F172A' } };
+  sTotAmount.alignment = { vertical: 'middle', horizontal: 'right' };
+
+  const sTotPct = sTotRow.getCell(4);
+  sTotPct.value = 1.0;
+  sTotPct.numFmt = '0.0%';
+  sTotPct.font = { name: 'Segoe UI', size: 10, bold: true };
+  sTotPct.alignment = { vertical: 'middle', horizontal: 'right' };
+
+  for (let c = 1; c <= 4; c++) {
+    const cell = sTotRow.getCell(c);
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+    cell.border = doubleBottomBorder;
+  }
+  sumRowIdx++;
+
+  wsSummary.getRow(sumRowIdx).height = 14;
+  sumRowIdx++;
+
+  // --- SECCIÓN 2: DESGLOSE POR MÉTODO DE PAGO ---
+  const s2Row = wsSummary.getRow(sumRowIdx);
+  s2Row.getCell(1).value = '2. INGRESOS POR MÉTODO DE PAGO';
+  s2Row.getCell(1).font = { name: 'Segoe UI', size: 11, bold: true, color: { argb: 'FF800020' } };
+  s2Row.height = 22;
+  sumRowIdx++;
+
+  const mHeaders = ['#', 'Método de Pago', 'Transacciones', 'Monto Total ($)', '% Participación'];
+  const mHeaderRow = wsSummary.getRow(sumRowIdx);
+  mHeaderRow.height = 24;
+  mHeaders.forEach((h, i) => {
+    const c = mHeaderRow.getCell(i + 1);
+    c.value = h;
+    c.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF800020' } };
+    c.alignment = { vertical: 'middle', horizontal: i === 1 ? 'left' : (i >= 3 ? 'right' : 'center') };
+    c.border = thinBorder;
+  });
+  sumRowIdx++;
+
+  if (data.methods.length === 0) {
+    wsSummary.mergeCells(`A${sumRowIdx}:E${sumRowIdx}`);
+    const emptyM = wsSummary.getCell(`A${sumRowIdx}`);
+    emptyM.value = 'No hay transacciones registradas por método de pago.';
+    emptyM.font = { name: 'Segoe UI', size: 10, italic: true, color: { argb: 'FF94A3B8' } };
+    emptyM.alignment = { vertical: 'middle', horizontal: 'center' };
+    wsSummary.getRow(sumRowIdx).height = 22;
+    sumRowIdx++;
+  } else {
+    data.methods.forEach((m, i) => {
+      const r = wsSummary.getRow(sumRowIdx);
+      r.height = 21;
+
+      const c1 = r.getCell(1);
+      c1.value = i + 1;
+      c1.alignment = { vertical: 'middle', horizontal: 'center' };
+      c1.border = thinBorder;
+
+      const c2 = r.getCell(2);
+      c2.value = m.name;
+      c2.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF1E293B' } };
+      c2.alignment = { vertical: 'middle', horizontal: 'left' };
+      c2.border = thinBorder;
+
+      const c3 = r.getCell(3);
+      c3.value = m.count;
+      c3.numFmt = '#,##0';
+      c3.alignment = { vertical: 'middle', horizontal: 'center' };
+      c3.border = thinBorder;
+
+      const c4 = r.getCell(4);
+      c4.value = m.total;
+      c4.numFmt = '"$"#,##0.00';
+      c4.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF15803D' } };
+      c4.alignment = { vertical: 'middle', horizontal: 'right' };
+      c4.border = thinBorder;
+
+      const c5 = r.getCell(5);
+      c5.value = m.percentage / 100;
+      c5.numFmt = '0.0%';
+      c5.alignment = { vertical: 'middle', horizontal: 'right' };
+      c5.border = thinBorder;
+
+      if (i % 2 === 1) {
+        for (let col = 1; col <= 5; col++) {
+          r.getCell(col).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+        }
+      }
+      sumRowIdx++;
+    });
+  }
+
+  wsSummary.getRow(sumRowIdx).height = 14;
+  sumRowIdx++;
+
+  // --- SECCIÓN 3: INGRESOS POR CONCEPTO ---
+  if (data.concepts && data.concepts.length > 0) {
+    const s3Row = wsSummary.getRow(sumRowIdx);
+    s3Row.getCell(1).value = '3. INGRESOS POR CONCEPTO / MOTIVO';
+    s3Row.getCell(1).font = { name: 'Segoe UI', size: 11, bold: true, color: { argb: 'FF800020' } };
+    s3Row.height = 22;
+    sumRowIdx++;
+
+    const cHeaders = ['#', 'Concepto / Motivo', 'Transacciones', 'Monto Total ($)', '% Participación'];
+    const cHeaderRow = wsSummary.getRow(sumRowIdx);
+    cHeaderRow.height = 24;
+    cHeaders.forEach((h, i) => {
+      const c = cHeaderRow.getCell(i + 1);
+      c.value = h;
+      c.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+      c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF800020' } };
+      c.alignment = { vertical: 'middle', horizontal: i === 1 ? 'left' : (i >= 3 ? 'right' : 'center') };
+      c.border = thinBorder;
+    });
+    sumRowIdx++;
+
+    data.concepts.forEach((cp, i) => {
+      const r = wsSummary.getRow(sumRowIdx);
+      r.height = 21;
+
+      const c1 = r.getCell(1);
+      c1.value = i + 1;
+      c1.alignment = { vertical: 'middle', horizontal: 'center' };
+      c1.border = thinBorder;
+
+      const c2 = r.getCell(2);
+      c2.value = cp.name;
+      c2.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF1E293B' } };
+      c2.alignment = { vertical: 'middle', horizontal: 'left' };
+      c2.border = thinBorder;
+
+      const c3 = r.getCell(3);
+      c3.value = cp.count;
+      c3.numFmt = '#,##0';
+      c3.alignment = { vertical: 'middle', horizontal: 'center' };
+      c3.border = thinBorder;
+
+      const c4 = r.getCell(4);
+      c4.value = cp.total;
+      c4.numFmt = '"$"#,##0.00';
+      c4.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF15803D' } };
+      c4.alignment = { vertical: 'middle', horizontal: 'right' };
+      c4.border = thinBorder;
+
+      const c5 = r.getCell(5);
+      c5.value = cp.percentage / 100;
+      c5.numFmt = '0.0%';
+      c5.alignment = { vertical: 'middle', horizontal: 'right' };
+      c5.border = thinBorder;
+
+      if (i % 2 === 1) {
+        for (let col = 1; col <= 5; col++) {
+          r.getCell(col).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+        }
+      }
+      sumRowIdx++;
+    });
+  }
+
+  // Autoajuste columnas Pestaña 2
+  wsSummary.columns.forEach((col, colIdx) => {
+    let max = 14;
+    col.eachCell?.({ includeEmpty: false }, (cell, rowNumber) => {
+      if (rowNumber <= 2) return;
+      const str = cell.value ? cell.value.toString() : '';
+      if (str.length > max) max = str.length;
+    });
+    col.width = Math.min(Math.max(max + 4, colIdx === 1 ? 30 : 16), 45);
+  });
+
+  // ==========================================
+  // DISPARAR DESCARGA EN EL NAVEGADOR
+  // ==========================================
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { 
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+  });
+  
+  const cleanRange = data.dateRangeStr.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const fileName = `KsaSports_Finanzas_Pagos_${cleanRange}.xlsx`;
+
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+}
+
+
