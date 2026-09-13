@@ -28,3 +28,4 @@ SET
   usdt_promedio = COALESCE(usdt_promedio, 960.0000),
   last_usdt_promedio = COALESCE(last_usdt_promedio, 960.0000)
 WHERE id = 1;
+

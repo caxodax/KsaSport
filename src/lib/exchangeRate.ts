@@ -1,5 +1,4 @@
 import { getServiceSupabase } from '@/lib/supabase';
-import https from 'https';
 
 export interface ExchangeRateResult {
   usd: number;
@@ -7,7 +6,7 @@ export interface ExchangeRateResult {
   usdt?: number;
   usdt_promedio?: number;
   date: string; // YYYY-MM-DD
-  source: 'bcv' | 'dolarapi' | 'manual' | 'settings' | 'binance';
+  source: 'alcambio' | 'bcv' | 'manual' | 'settings' | 'binance';
   updated_at?: string;
 }
 
@@ -22,206 +21,138 @@ export interface RateHistoryItem {
 }
 
 /**
- * Capa 1: Scrapping directo de https://www.bcv.org.ve/
- * Extrae tanto los montos USD/EUR como la "Fecha Valor" oficial publicada por el BCV.
+ * Fuente ÚNICA y Principal: AlCambio.app (GraphQL API)
+ * Extrae Dólar BCV, Euro BCV y USDT Promedio (Binance P2P).
  */
-export async function scrapeBcvRates(): Promise<{ usd: number; eur: number; date: string; dateLabel?: string } | null> {
-  return new Promise((resolve) => {
-    try {
-      const req = https.get(
-        'https://www.bcv.org.ve/',
-        {
-          rejectUnauthorized: false,
-          timeout: 8000,
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'es-ES,es;q=0.9',
-          }
-        },
-        (res) => {
-          if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
-            resolve(null);
-            return;
-          }
-
-          let data = '';
-          res.on('data', (chunk) => {
-            data += chunk;
-          });
-
-          res.on('end', () => {
-            try {
-              const dolarMatch = data.match(/id="dolar"[\s\S]*?<strong[^>]*>\s*([\d,\.]+)\s*<\/strong>/i);
-              const euroMatch = data.match(/id="euro"[\s\S]*?<strong[^>]*>\s*([\d,\.]+)\s*<\/strong>/i);
-
-              // Extracción de la "Fecha Valor" oficial determinada por el BCV (ej: 2026-09-15)
-              const dateMatch = data.match(/class="date-display-single"[^>]*content="(\d{4}-\d{2}-\d{2})/i) ||
-                                data.match(/content="(\d{4}-\d{2}-\d{2})T[^"]*"[^>]*class="date-display-single"/i) ||
-                                data.match(/Fecha\s*Valor:[\s\S]*?content="(\d{4}-\d{2}-\d{2})/i);
-              const labelMatch = data.match(/class="date-display-single"[^>]*>([^<]+)<\/span>/i);
-
-              if (dolarMatch && euroMatch) {
-                const usd = parseFloat(dolarMatch[1].replace(/\./g, '').replace(',', '.'));
-                const eur = parseFloat(euroMatch[1].replace(/\./g, '').replace(',', '.'));
-                const date = dateMatch ? dateMatch[1] : new Date().toISOString().split('T')[0];
-                const dateLabel = labelMatch ? labelMatch[1].replace(/\s+/g, ' ').trim() : undefined;
-
-                if (!isNaN(usd) && usd > 0 && !isNaN(eur) && eur > 0) {
-                  resolve({ usd, eur, date, dateLabel });
-                  return;
-                }
-              }
-              resolve(null);
-            } catch {
-              resolve(null);
-            }
-          });
-        }
-      );
-
-      req.on('timeout', () => {
-        req.destroy();
-        resolve(null);
-      });
-
-      req.on('error', () => {
-        resolve(null);
-      });
-    } catch {
-      resolve(null);
-    }
-  });
-}
-
-/**
- * Capa 2: Fallback a API confiable (DolarApi Venezuela)
- */
-export async function fetchDolarApiRates(): Promise<{ usd: number; eur: number; date: string } | null> {
+export async function fetchAlCambioRates(): Promise<{ usd: number; eur: number; usdt: number; date: string } | null> {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const query = `
+      query {
+        getCountryConversions(payload: { countryCode: "VE" }) {
+          conversionRates {
+            rateCurrency {
+              code
+            }
+            baseValue
+            official
+          }
+        }
+        getBinanceP2PAverages {
+          sellAverage
+          buyAverage
+        }
+      }
+    `;
 
-    const [usdRes, eurRes] = await Promise.all([
-      fetch('https://ve.dolarapi.com/v1/dolares/oficial', { 
-        signal: controller.signal,
-        cache: 'no-store'
-      }).catch(() => null),
-      fetch('https://ve.dolarapi.com/v1/euros/oficial', { 
-        signal: controller.signal,
-        cache: 'no-store'
-      }).catch(() => null)
-    ]);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 7000);
+
+    const res = await fetch('https://api.alcambio.app/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ query }),
+      signal: controller.signal,
+      cache: 'no-store'
+    });
 
     clearTimeout(timeoutId);
 
-    if (!usdRes || !usdRes.ok || !eurRes || !eurRes.ok) {
-      return null;
+    if (!res.ok) return null;
+
+    const json = await res.json();
+    const rates = json.data?.getCountryConversions?.conversionRates || [];
+    const binance = json.data?.getBinanceP2PAverages;
+
+    // 1. Tasa USD oficial
+    const usdOfficial = rates
+      .filter((r: any) => r?.rateCurrency?.code === 'USD' && r?.official === true && r?.baseValue > 1)
+      .pop();
+    const usd = usdOfficial ? Number(usdOfficial.baseValue) : null;
+
+    // 2. Tasa EUR oficial
+    const eurOfficial = rates.find((r: any) => r?.rateCurrency?.code === 'EUR' && r?.official === true);
+    const eur = eurOfficial ? Number(eurOfficial.baseValue) : null;
+
+    // 3. Tasa USDT Promedio (Binance P2P)
+    let usdt = 960.00;
+    if (binance?.buyAverage && binance?.sellAverage) {
+      const buy = Number(binance.buyAverage);
+      const sell = Number(binance.sellAverage);
+      usdt = Number(((buy + sell) / 2).toFixed(4));
     }
 
-    const usdData = await usdRes.json();
-    const eurData = await eurRes.json();
+    if (!usd || !eur || usd <= 0 || eur <= 0) return null;
 
-    const usd = Number(usdData?.promedio);
-    const eur = Number(eurData?.promedio);
-    const date = usdData?.fechaActualizacion
-      ? String(usdData.fechaActualizacion).split('T')[0]
-      : new Date().toISOString().split('T')[0];
+    // Fecha actual en hora de Venezuela (America/Caracas, UTC-4)
+    const formatter = new Intl.DateTimeFormat('en-CA', { 
+      timeZone: 'America/Caracas', 
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit' 
+    });
+    const date = formatter.format(new Date());
 
-    if (!isNaN(usd) && usd > 0 && !isNaN(eur) && eur > 0) {
-      return { usd, eur, date };
-    }
-    return null;
-  } catch {
+    return {
+      usd: Number(usd.toFixed(4)),
+      eur: Number(eur.toFixed(4)),
+      usdt,
+      date
+    };
+  } catch (err) {
+    console.error('Error al consultar AlCambio.app:', err);
     return null;
   }
 }
 
 /**
- * Capa 3: Consulta el promedio ponderado de USDT / VES en Binance P2P vía API
- */
-export async function fetchUsdtPromedio(): Promise<{ rate: number; source: string } | null> {
-  try {
-    const res = await fetch('https://criptoya.com/api/binancep2p/usdt/ves', { cache: 'no-store' });
-    if (res.ok) {
-      const data = await res.json();
-      const ask = Number(data?.ask) || 0;
-      const bid = Number(data?.bid) || 0;
-      const avg = (ask + bid) / 2;
-      if (avg > 0) {
-        return { rate: Number(avg.toFixed(4)), source: 'binancep2p' };
-      }
-    }
-  } catch {}
-
-  try {
-    const res = await fetch('https://api.yadio.io/rate/VES/USD', { cache: 'no-store' });
-    if (res.ok) {
-      const data = await res.json();
-      if (data?.rate > 0) {
-        return { rate: Number(Number(data.rate).toFixed(4)), source: 'yadio' };
-      }
-    }
-  } catch {}
-
-  return null;
-}
-
-/**
- * Sincroniza las tasas oficiales (BCV -> Fallback DolarApi) y USDT Promedio (Binance P2P)
- * y persiste en exchange_rate_history y club_settings.
+ * Sincroniza las tasas oficiales y USDT Promedio usando AlCambio.app como fuente ÚNICA.
+ * En caso de falla, no consulta proveedores alternos y reporta error para contingencia manual.
  */
 export async function syncRates(): Promise<{ success: boolean; result?: ExchangeRateResult; error?: string }> {
-  let usd = 0;
-  let eur = 0;
-  let date = new Date().toISOString().split('T')[0];
-  let source: 'bcv' | 'dolarapi' = 'bcv';
+  const rates = await fetchAlCambioRates();
 
-  // 1. Intentar Scrapping BCV (obtiene USD, EUR y Fecha Valor oficial)
-  const bcvResult = await scrapeBcvRates();
-  if (bcvResult) {
-    usd = bcvResult.usd;
-    eur = bcvResult.eur;
-    date = bcvResult.date; // Fecha Valor oficial (ej: 2026-09-15)
-    source = 'bcv';
-  } else {
-    // 2. Intentar Fallback DolarApi
-    const apiResult = await fetchDolarApiRates();
-    if (apiResult) {
-      usd = apiResult.usd;
-      eur = apiResult.eur;
-      date = apiResult.date;
-      source = 'dolarapi';
-    } else {
-      return { 
-        success: false, 
-        error: 'No se pudo conectar con el Banco Central de Venezuela ni con el servicio de contingencia.' 
-      };
-    }
+  if (!rates) {
+    return { 
+      success: false, 
+      error: 'No se pudo conectar con AlCambio.app. Por favor, realiza la carga manual de contingencia en el formulario inferior.' 
+    };
   }
 
-  // 2. Obtener USDT Promedio (Binance P2P)
-  const usdtResult = await fetchUsdtPromedio();
-  const usdtVal = usdtResult?.rate || 960.00;
-
+  const { usd, eur, usdt: usdtVal, date } = rates;
+  const source = 'alcambio';
   const supabase = getServiceSupabase();
 
-  // 3. Upsert en exchange_rate_history con la Fecha Valor oficial y usdt_promedio
+  // 1. Guardar en exchange_rate_history
   const rows = [
     { date_rate: date, currency: 'USD', rate: usd, usdt_promedio: usdtVal, source },
     { date_rate: date, currency: 'EUR', rate: eur, usdt_promedio: usdtVal, source }
   ];
 
-  const { error: upsertError } = await supabase
+  let { error: upsertError } = await supabase
     .from('exchange_rate_history')
     .upsert(rows, { onConflict: 'date_rate,currency' });
+
+  if (upsertError && upsertError.message?.includes('usdt_promedio')) {
+    const fallbackRows = [
+      { date_rate: date, currency: 'USD', rate: usd, source },
+      { date_rate: date, currency: 'EUR', rate: eur, source }
+    ];
+    const retry = await supabase
+      .from('exchange_rate_history')
+      .upsert(fallbackRows, { onConflict: 'date_rate,currency' });
+    upsertError = retry.error;
+  }
 
   if (upsertError) {
     console.error('Error al guardar en exchange_rate_history:', upsertError);
   }
 
-  // 4. Actualizar club_settings para caché de alta velocidad
-  await supabase
+  // 2. Actualizar club_settings para caché de alta velocidad
+  let { error: settingsError } = await supabase
     .from('club_settings')
     .update({
       last_bcv_usd: usd,
@@ -231,6 +162,17 @@ export async function syncRates(): Promise<{ success: boolean; result?: Exchange
       bcv_updated_at: new Date().toISOString()
     })
     .eq('id', 1);
+
+  if (settingsError && settingsError.message?.includes('usdt_promedio')) {
+    await supabase
+      .from('club_settings')
+      .update({
+        last_bcv_usd: usd,
+        last_bcv_eur: eur,
+        bcv_updated_at: new Date().toISOString()
+      })
+      .eq('id', 1);
+  }
 
   return {
     success: true,
@@ -267,9 +209,20 @@ export async function saveManualRate(
     { date_rate: dateRate, currency: 'EUR', rate: eurRate, usdt_promedio: usdtVal, source: 'manual' }
   ];
 
-  const { error: upsertError } = await supabase
+  let { error: upsertError } = await supabase
     .from('exchange_rate_history')
     .upsert(rows, { onConflict: 'date_rate,currency' });
+
+  if (upsertError && upsertError.message?.includes('usdt_promedio')) {
+    const fallbackRows = [
+      { date_rate: dateRate, currency: 'USD', rate: usdRate, source: 'manual' },
+      { date_rate: dateRate, currency: 'EUR', rate: eurRate, source: 'manual' }
+    ];
+    const retry = await supabase
+      .from('exchange_rate_history')
+      .upsert(fallbackRows, { onConflict: 'date_rate,currency' });
+    upsertError = retry.error;
+  }
 
   if (upsertError) {
     return { success: false, error: upsertError.message };
@@ -286,10 +239,19 @@ export async function saveManualRate(
       updateData.usdt_promedio = usdtVal;
       updateData.last_usdt_promedio = usdtVal;
     }
-    await supabase
+    const { error: settingsError } = await supabase
       .from('club_settings')
       .update(updateData)
       .eq('id', 1);
+
+    if (settingsError && settingsError.message?.includes('usdt_promedio')) {
+      delete updateData.usdt_promedio;
+      delete updateData.last_usdt_promedio;
+      await supabase
+        .from('club_settings')
+        .update(updateData)
+        .eq('id', 1);
+    }
   }
 
   return { success: true };
