@@ -34,15 +34,26 @@ export default function SettingsDashboard({
   settings,
   categories = [],
   currentRates,
-  ratesHistory = []
+  ratesHistory = [],
+  initialTab = 'penalties'
 }: {
   settings: ClubSettings;
   categories: CategorySettingItem[];
   currentRates?: ExchangeRateResult;
   ratesHistory?: RateHistoryItem[];
+  initialTab?: 'penalties' | 'rates';
 }) {
   // Pestaña Activa
-  const [activeTab, setActiveTab] = useState<'penalties' | 'rates'>('penalties');
+  const [activeTab, setActiveTab] = useState<'penalties' | 'rates'>(initialTab);
+
+  const handleTabChange = (tab: 'penalties' | 'rates') => {
+    setActiveTab(tab);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', tab);
+      window.history.replaceState(null, '', url.toString());
+    }
+  };
 
   // Estado para la Regla Global
   const [globalGrace, setGlobalGrace] = useState(settings?.grace_period_days ?? 5);
@@ -202,52 +213,118 @@ export default function SettingsDashboard({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       
-      {/* CABECERA PRINCIPAL */}
+      {/* NAVEGACIÓN SUPERIOR DE PESTAÑAS (ALTA VISIBILIDAD) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        {/* Pestaña: Tasa Oficial (BCV) */}
+        <button
+          type="button"
+          onClick={() => handleTabChange('rates')}
+          className={`p-4 sm:p-5 rounded-3xl border-2 text-left transition-all cursor-pointer flex items-center justify-between gap-4 ${
+            activeTab === 'rates'
+              ? 'bg-gradient-to-br from-emerald-50 via-white to-teal-50/40 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
+              : 'bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/50 shadow-2xs'
+          }`}
+        >
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border transition-all ${
+              activeTab === 'rates'
+                ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+            }`}>
+              <Landmark className="w-6 h-6" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm sm:text-base font-black text-gray-900 truncate">
+                  Configuración de Tasa (BCV)
+                </span>
+                {activeTab === 'rates' && (
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                )}
+              </div>
+              <p className="text-xs text-slate-500 font-medium mt-0.5 truncate">
+                Dólar/Euro oficial, sincronizador cron e histórico
+              </p>
+            </div>
+          </div>
+          <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border shrink-0 ${
+            activeTab === 'rates'
+              ? 'bg-emerald-600 text-white border-emerald-600'
+              : 'bg-slate-100 text-slate-600 border-slate-200'
+          }`}>
+            {activeTab === 'rates' ? 'Activo' : 'Seleccionar'}
+          </span>
+        </button>
+
+        {/* Pestaña: Cobros & Morosidad */}
+        <button
+          type="button"
+          onClick={() => handleTabChange('penalties')}
+          className={`p-4 sm:p-5 rounded-3xl border-2 text-left transition-all cursor-pointer flex items-center justify-between gap-4 ${
+            activeTab === 'penalties'
+              ? 'bg-gradient-to-br from-red-50 via-white to-amber-50/30 border-kasa-vinotinto shadow-md ring-2 ring-red-900/10'
+              : 'bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/50 shadow-2xs'
+          }`}
+        >
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border transition-all ${
+              activeTab === 'penalties'
+                ? 'bg-kasa-vinotinto text-white border-kasa-vinotinto shadow-sm'
+                : 'bg-red-50 text-kasa-vinotinto border-red-200'
+            }`}>
+              <Sliders className="w-6 h-6" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm sm:text-base font-black text-gray-900 truncate">
+                  Cobros & Morosidad
+                </span>
+                {activeTab === 'penalties' && (
+                  <span className="w-2.5 h-2.5 rounded-full bg-kasa-vinotinto animate-pulse shrink-0" />
+                )}
+              </div>
+              <p className="text-xs text-slate-500 font-medium mt-0.5 truncate">
+                Días de gracia y penalidades por disciplina
+              </p>
+            </div>
+          </div>
+          <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border shrink-0 ${
+            activeTab === 'penalties'
+              ? 'bg-kasa-vinotinto text-white border-kasa-vinotinto'
+              : 'bg-slate-100 text-slate-600 border-slate-200'
+          }`}>
+            {activeTab === 'penalties' ? 'Activo' : 'Seleccionar'}
+          </span>
+        </button>
+      </div>
+
+      {/* CABECERA PRINCIPAL DINÁMICA */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)]">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="px-3 py-1 rounded-full bg-red-50 text-kasa-vinotinto text-xs font-black uppercase tracking-wider border border-red-200/80 shadow-2xs flex items-center gap-1.5">
-              <SettingsIcon className="w-3.5 h-3.5" />
-              Parámetros & Políticas Financieras
-            </span>
+            {activeTab === 'rates' ? (
+              <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-black uppercase tracking-wider border border-emerald-200/80 shadow-2xs flex items-center gap-1.5">
+                <Landmark className="w-3.5 h-3.5" />
+                Banco Central de Venezuela • Divisas Oficiales & Automatización
+              </span>
+            ) : (
+              <span className="px-3 py-1 rounded-full bg-red-50 text-kasa-vinotinto text-xs font-black uppercase tracking-wider border border-red-200/80 shadow-2xs flex items-center gap-1.5">
+                <SettingsIcon className="w-3.5 h-3.5" />
+                Parámetros & Políticas Financieras
+              </span>
+            )}
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
-            Configuración de Cobros & Morosidad
+            {activeTab === 'rates' ? 'Configuración de Tasa Oficial (BCV)' : 'Configuración de Cobros & Morosidad'}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1 max-w-2xl">
-            Establece los días límite de gracia y los montos de penalidad por mora tanto a nivel general del club como de forma particular para cada disciplina deportiva.
+            {activeTab === 'rates' 
+              ? 'Supervisa la tasa oficial vigente para la conversión a Bolívares en pagos, ejecuta manualmente el cron job de sincronización con el BCV, carga contingencias y consulta el histórico diario.'
+              : 'Establece los días límite de gracia y los montos de penalidad por mora tanto a nivel general del club como de forma particular para cada disciplina deportiva.'}
           </p>
         </div>
-      </div>
-
-      {/* CONMUTADOR DE PESTAÑAS */}
-      <div className="flex items-center gap-2 p-1.5 bg-slate-100 rounded-2xl w-fit border border-slate-200/80 shadow-2xs">
-        <button
-          type="button"
-          onClick={() => setActiveTab('penalties')}
-          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer ${
-            activeTab === 'penalties'
-              ? 'bg-white text-kasa-vinotinto shadow-2xs'
-              : 'text-slate-500 hover:text-slate-900'
-          }`}
-        >
-          <Sliders className="w-4 h-4" />
-          <span>Cobros & Morosidad</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('rates')}
-          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer ${
-            activeTab === 'rates'
-              ? 'bg-white text-emerald-800 shadow-2xs'
-              : 'text-slate-500 hover:text-slate-900'
-          }`}
-        >
-          <Landmark className="w-4 h-4" />
-          <span>Configuración de Tasa</span>
-        </button>
       </div>
 
       {activeTab === 'rates' ? (

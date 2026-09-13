@@ -116,16 +116,16 @@ export default function ExchangeRateSettings({
             </div>
           </div>
 
-          {/* Botón Sincronizar Tasas Ahora */}
+          {/* Botón Sincronizar Tasas Ahora (Cron Manual Runner) */}
           <div className="flex items-center gap-2 self-start sm:self-auto">
             <button
               onClick={handleSyncNow}
               disabled={syncing}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 active:bg-black text-white text-xs sm:text-sm font-bold rounded-2xl shadow-sm hover:shadow transition-all disabled:opacity-50 cursor-pointer"
-              title="Ejecutar scrapping del BCV inmediatamente"
+              className="inline-flex items-center gap-2.5 px-5 py-3 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 active:scale-95 text-white text-xs sm:text-sm font-black rounded-2xl shadow-md hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer"
+              title="Ejecuta de inmediato el cron job de scrapping contra el Banco Central de Venezuela"
             >
-              <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin text-emerald-400' : ''}`} />
-              <span>{syncing ? 'Sincronizando BCV...' : 'Sincronizar Tasas Ahora'}</span>
+              <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin text-white' : ''}`} />
+              <span>{syncing ? 'Ejecutando Cron Job BCV...' : 'Ejecutar Cron Manual (Sincronizar BCV)'}</span>
             </button>
           </div>
         </div>

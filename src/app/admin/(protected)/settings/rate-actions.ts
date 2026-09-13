@@ -15,7 +15,9 @@ export async function syncRatesNow() {
     }
 
     revalidatePath('/admin/settings');
+    revalidatePath('/admin/rates');
     revalidatePath('/admin/payments');
+    revalidatePath('/admin/ledger');
     revalidatePath('/portal/dashboard/pagos');
 
     return { 
@@ -55,7 +57,9 @@ export async function saveManualRateAction(formData: FormData) {
     }
 
     revalidatePath('/admin/settings');
+    revalidatePath('/admin/rates');
     revalidatePath('/admin/payments');
+    revalidatePath('/admin/ledger');
     revalidatePath('/portal/dashboard/pagos');
 
     return { success: true };

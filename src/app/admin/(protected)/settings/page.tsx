@@ -5,8 +5,14 @@ import { getTodayRates, getExchangeRatesHistory } from '@/lib/exchangeRate'
 
 export const revalidate = 0
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ tab?: string }>;
+}) {
   await checkAdminPermission('manage_settings')
+  const resolvedParams = searchParams ? await searchParams : undefined;
+  const initialTab = resolvedParams?.tab === 'rates' ? 'rates' : 'penalties';
   const supabase = getServiceSupabase()
   
   // 1. Configuración global
@@ -65,6 +71,7 @@ export default async function SettingsPage() {
         categories={enrichedCategories}
         currentRates={currentRates}
         ratesHistory={ratesHistory}
+        initialTab={initialTab}
       />
     </div>
   )
