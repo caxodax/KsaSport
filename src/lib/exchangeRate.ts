@@ -20,8 +20,9 @@ export interface RateHistoryItem {
 
 /**
  * Capa 1: Scrapping directo de https://www.bcv.org.ve/
+ * Extrae tanto los montos USD/EUR como la "Fecha Valor" oficial publicada por el BCV.
  */
-export async function scrapeBcvRates(): Promise<{ usd: number; eur: number } | null> {
+export async function scrapeBcvRates(): Promise<{ usd: number; eur: number; date: string; dateLabel?: string } | null> {
   return new Promise((resolve) => {
     try {
       const req = https.get(
@@ -51,12 +52,20 @@ export async function scrapeBcvRates(): Promise<{ usd: number; eur: number } | n
               const dolarMatch = data.match(/id="dolar"[\s\S]*?<strong[^>]*>\s*([\d,\.]+)\s*<\/strong>/i);
               const euroMatch = data.match(/id="euro"[\s\S]*?<strong[^>]*>\s*([\d,\.]+)\s*<\/strong>/i);
 
+              // Extracción de la "Fecha Valor" oficial determinada por el BCV (ej: 2026-09-15)
+              const dateMatch = data.match(/class="date-display-single"[^>]*content="(\d{4}-\d{2}-\d{2})/i) ||
+                                data.match(/content="(\d{4}-\d{2}-\d{2})T[^"]*"[^>]*class="date-display-single"/i) ||
+                                data.match(/Fecha\s*Valor:[\s\S]*?content="(\d{4}-\d{2}-\d{2})/i);
+              const labelMatch = data.match(/class="date-display-single"[^>]*>([^<]+)<\/span>/i);
+
               if (dolarMatch && euroMatch) {
                 const usd = parseFloat(dolarMatch[1].replace(/\./g, '').replace(',', '.'));
                 const eur = parseFloat(euroMatch[1].replace(/\./g, '').replace(',', '.'));
+                const date = dateMatch ? dateMatch[1] : new Date().toISOString().split('T')[0];
+                const dateLabel = labelMatch ? labelMatch[1].replace(/\s+/g, ' ').trim() : undefined;
 
                 if (!isNaN(usd) && usd > 0 && !isNaN(eur) && eur > 0) {
-                  resolve({ usd, eur });
+                  resolve({ usd, eur, date, dateLabel });
                   return;
                 }
               }
@@ -85,7 +94,7 @@ export async function scrapeBcvRates(): Promise<{ usd: number; eur: number } | n
 /**
  * Capa 2: Fallback a API confiable (DolarApi Venezuela)
  */
-export async function fetchDolarApiRates(): Promise<{ usd: number; eur: number } | null> {
+export async function fetchDolarApiRates(): Promise<{ usd: number; eur: number; date: string } | null> {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 6000);
@@ -112,9 +121,12 @@ export async function fetchDolarApiRates(): Promise<{ usd: number; eur: number }
 
     const usd = Number(usdData?.promedio);
     const eur = Number(eurData?.promedio);
+    const date = usdData?.fechaActualizacion
+      ? String(usdData.fechaActualizacion).split('T')[0]
+      : new Date().toISOString().split('T')[0];
 
     if (!isNaN(usd) && usd > 0 && !isNaN(eur) && eur > 0) {
-      return { usd, eur };
+      return { usd, eur, date };
     }
     return null;
   } catch {
@@ -124,19 +136,20 @@ export async function fetchDolarApiRates(): Promise<{ usd: number; eur: number }
 
 /**
  * Sincroniza las tasas oficiales (BCV -> Fallback DolarApi)
- * y persiste en exchange_rate_history y club_settings.
+ * y persiste en exchange_rate_history con la Fecha Valor oficial del BCV.
  */
 export async function syncRates(): Promise<{ success: boolean; result?: ExchangeRateResult; error?: string }> {
-  const todayStr = new Date().toISOString().split('T')[0];
   let usd = 0;
   let eur = 0;
+  let date = new Date().toISOString().split('T')[0];
   let source: 'bcv' | 'dolarapi' = 'bcv';
 
-  // 1. Intentar Scrapping BCV
+  // 1. Intentar Scrapping BCV (obtiene USD, EUR y Fecha Valor oficial)
   const bcvResult = await scrapeBcvRates();
   if (bcvResult) {
     usd = bcvResult.usd;
     eur = bcvResult.eur;
+    date = bcvResult.date; // Fecha Valor oficial (ej: 2026-09-15)
     source = 'bcv';
   } else {
     // 2. Intentar Fallback DolarApi
@@ -144,6 +157,7 @@ export async function syncRates(): Promise<{ success: boolean; result?: Exchange
     if (apiResult) {
       usd = apiResult.usd;
       eur = apiResult.eur;
+      date = apiResult.date;
       source = 'dolarapi';
     } else {
       return { 
@@ -155,10 +169,10 @@ export async function syncRates(): Promise<{ success: boolean; result?: Exchange
 
   const supabase = getServiceSupabase();
 
-  // 3. Upsert en exchange_rate_history (USD y EUR)
+  // 3. Upsert en exchange_rate_history con la Fecha Valor oficial
   const rows = [
-    { date_rate: todayStr, currency: 'USD', rate: usd, source },
-    { date_rate: todayStr, currency: 'EUR', rate: eur, source }
+    { date_rate: date, currency: 'USD', rate: usd, source },
+    { date_rate: date, currency: 'EUR', rate: eur, source }
   ];
 
   const { error: upsertError } = await supabase
@@ -184,7 +198,7 @@ export async function syncRates(): Promise<{ success: boolean; result?: Exchange
     result: {
       usd,
       eur,
-      date: todayStr,
+      date,
       source,
       updated_at: new Date().toISOString()
     }
@@ -201,7 +215,6 @@ export async function saveManualRate(
 ): Promise<{ success: boolean; error?: string }> {
   if (!dateRate || !usdRate || !eurRate || usdRate <= 0 || eurRate <= 0) {
     return { success: false, error: 'Datos de tasa o fecha inválidos.' };
-   // return { error: 'Datos de tasa o fecha inválidos.' };
   }
 
   const supabase = getServiceSupabase();
@@ -210,17 +223,16 @@ export async function saveManualRate(
     { date_rate: dateRate, currency: 'EUR', rate: eurRate, source: 'manual' }
   ];
 
-  const { error } = await supabase
+  const { error: upsertError } = await supabase
     .from('exchange_rate_history')
     .upsert(rows, { onConflict: 'date_rate,currency' });
 
-  if (error) {
-    return { success: false, error: error.message };
-    //return { error: error.message };
+  if (upsertError) {
+    return { success: false, error: upsertError.message };
   }
 
   const todayStr = new Date().toISOString().split('T')[0];
-  if (dateRate === todayStr) {
+  if (dateRate >= todayStr) {
     await supabase
       .from('club_settings')
       .update({
@@ -235,39 +247,20 @@ export async function saveManualRate(
 }
 
 /**
- * Obtiene la tasa oficial vigente para el día de hoy (directo desde BD para 0 latencia).
+ * Obtiene la tasa oficial vigente (directo desde BD para 0 latencia).
+ * Consulta la tasa oficial más reciente según la Fecha Valor del BCV (date_rate).
  */
 export async function getTodayRates(): Promise<ExchangeRateResult> {
   const todayStr = new Date().toISOString().split('T')[0];
   const supabase = getServiceSupabase();
 
-  // 1. Consultar exchange_rate_history de hoy
-  const { data: todayRates } = await supabase
-    .from('exchange_rate_history')
-    .select('currency, rate, source, created_at')
-    .eq('date_rate', todayStr);
-
-  if (todayRates && todayRates.length >= 2) {
-    const usdRow = todayRates.find((r) => r.currency === 'USD');
-    const eurRow = todayRates.find((r) => r.currency === 'EUR');
-
-    if (usdRow && eurRow) {
-      return {
-        usd: Number(usdRow.rate),
-        eur: Number(eurRow.rate),
-        date: todayStr,
-        source: (usdRow.source as any) || 'bcv',
-        updated_at: usdRow.created_at
-      };
-    }
-  }
-
-  // 2. Si no hay registro de hoy, consultar el último registro histórico disponible
+  // 1. Consultar el registro más reciente en exchange_rate_history (ordenado por Fecha Valor)
   const { data: latestRates } = await supabase
     .from('exchange_rate_history')
     .select('date_rate, currency, rate, source, created_at')
     .order('date_rate', { ascending: false })
-    .limit(4);
+    .order('created_at', { ascending: false })
+    .limit(6);
 
   if (latestRates && latestRates.length > 0) {
     const latestDate = latestRates[0].date_rate;
@@ -279,13 +272,13 @@ export async function getTodayRates(): Promise<ExchangeRateResult> {
         usd: Number(usdRow.rate),
         eur: Number(eurRow.rate),
         date: latestDate,
-        source: (usdRow.source as any) || 'bcv',
+        source: (usdRow.source as ExchangeRateResult['source']) || 'bcv',
         updated_at: usdRow.created_at
       };
     }
   }
 
-  // 3. Respaldo en club_settings
+  // 2. Respaldo en club_settings
   const { data: settings } = await supabase
     .from('club_settings')
     .select('last_bcv_usd, last_bcv_eur, bcv_updated_at')

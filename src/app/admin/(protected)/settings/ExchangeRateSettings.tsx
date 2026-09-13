@@ -19,16 +19,33 @@ export default function ExchangeRateSettings({
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Formulario manual
+  // Formulario manual prellenado con la fecha de la tasa actual
   const [showManualForm, setShowManualForm] = useState(false);
-  const [manualDate, setManualDate] = useState(new Date().toISOString().split('T')[0]);
+  const [manualDate, setManualDate] = useState(currentRates.date || new Date().toISOString().split('T')[0]);
   const [manualUsd, setManualUsd] = useState(currentRates.usd ? String(currentRates.usd) : '');
   const [manualEur, setManualEur] = useState(currentRates.eur ? String(currentRates.eur) : '');
   const [savingManual, setSavingManual] = useState(false);
   const [manualMessage, setManualMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const todayStr = new Date().toISOString().split('T')[0];
-  const isUpToDate = currentRates.date === todayStr;
+  const isUpToDate = currentRates.date >= todayStr;
+
+  // Formateador amigable de Fecha Valor oficial (ej: Martes, 15 de Septiembre de 2026)
+  const formatFechaValor = (dateStr: string) => {
+    if (!dateStr) return '';
+    try {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const dateObj = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+      return dateObj.toLocaleDateString('es-ES', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+    } catch {
+      return dateStr;
+    }
+  };
 
   const handleSyncNow = async () => {
     setSyncing(true);
@@ -42,9 +59,12 @@ export default function ExchangeRateSettings({
     } else {
       setSyncMessage({ 
         type: 'success', 
-        text: `¡Tasas sincronizadas exitosamente! USD: ${res.result?.usd.toFixed(2)} Bs | EUR: ${res.result?.eur.toFixed(2)} Bs (Fuente: ${res.result?.source.toUpperCase()})` 
+        text: `¡Tasas sincronizadas con éxito del BCV! USD: ${res.result?.usd.toFixed(2)} Bs | EUR: ${res.result?.eur.toFixed(2)} Bs (Fecha Valor oficial: ${res.result?.date})` 
       });
-      setTimeout(() => setSyncMessage(null), 5000);
+      if (res.result?.date) {
+        setManualDate(res.result.date);
+      }
+      setTimeout(() => setSyncMessage(null), 6000);
     }
   };
 
@@ -99,15 +119,15 @@ export default function ExchangeRateSettings({
               <Landmark className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
-                <span>Tasa Oficial del Día</span>
-                <span className={`inline-flex items-center gap-1 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border shadow-2xs ${
+              <h2 className="text-xl font-black text-gray-900 flex flex-wrap items-center gap-2">
+                <span>Tasa Oficial Vigente</span>
+                <span className={`inline-flex items-center gap-1.5 text-[11px] font-black uppercase px-3 py-1 rounded-full border shadow-2xs ${
                   isUpToDate 
                     ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
                     : 'bg-amber-50 text-amber-800 border-amber-200'
                 }`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${isUpToDate ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                  {isUpToDate ? 'Actualizada Hoy' : `Fecha: ${currentRates.date}`}
+                  <span className={`w-2 h-2 rounded-full ${isUpToDate ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                  <span>Fecha Valor: {currentRates.date}</span>
                 </span>
               </h2>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -165,9 +185,9 @@ export default function ExchangeRateSettings({
               </span>
               <span className="text-sm font-bold text-slate-500 font-mono">Bs. / USD</span>
             </div>
-            <p className="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
-              <Clock className="w-3 h-3 text-slate-400" />
-              <span>Fecha oficial: {currentRates.date}</span>
+            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1.5 font-medium">
+              <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span>Fecha Valor oficial: <strong className="text-gray-800 font-bold capitalize">{formatFechaValor(currentRates.date)}</strong></span>
             </p>
           </div>
 
@@ -187,9 +207,9 @@ export default function ExchangeRateSettings({
               </span>
               <span className="text-sm font-bold text-slate-500 font-mono">Bs. / EUR</span>
             </div>
-            <p className="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
-              <Clock className="w-3 h-3 text-slate-400" />
-              <span>Fecha oficial: {currentRates.date}</span>
+            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1.5 font-medium">
+              <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span>Fecha Valor oficial: <strong className="text-gray-800 font-bold capitalize">{formatFechaValor(currentRates.date)}</strong></span>
             </p>
           </div>
 
@@ -200,7 +220,7 @@ export default function ExchangeRateSettings({
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>
-              <strong>Cron Automático Activo:</strong> Se ejecuta automáticamente a las 7:00 AM y 1:00 PM (hora Venezuela) de lunes a viernes.
+              <strong>Cron Automático Activo:</strong> Se ejecuta automáticamente cada día a las 7:00 AM (hora Venezuela) sincronizando la Fecha Valor del BCV.
             </span>
           </div>
 
