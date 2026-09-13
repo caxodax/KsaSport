@@ -191,6 +191,11 @@ export async function syncRates(): Promise<{ success: boolean; result?: Exchange
   };
 }
 
+export type SaveManualRateResult = {
+  success: boolean;
+  error?: string;
+};
+
 /**
  * Guarda manualmente una tasa oficial para una fecha determinada (contingencia administrativa).
  */
@@ -198,7 +203,7 @@ export async function saveManualRate(
   dateRate: string,
   usdRate: number,
   eurRate: number
-): Promise<{ success: boolean; error?: string }> {
+): Promise<SaveManualRateResult> {
   if (!dateRate || !usdRate || !eurRate || usdRate <= 0 || eurRate <= 0) {
     return { success: false, error: 'Datos de tasa o fecha inválidos.' };
   }
@@ -209,12 +214,12 @@ export async function saveManualRate(
     { date_rate: dateRate, currency: 'EUR', rate: eurRate, source: 'manual' }
   ];
 
-  const { error } = await supabase
+  const { error: upsertError } = await supabase
     .from('exchange_rate_history')
     .upsert(rows, { onConflict: 'date_rate,currency' });
 
-  if (error) {
-    return { success: false, error: error.message };
+  if (upsertError) {
+    return { success: false, error: upsertError.message };
   }
 
   const todayStr = new Date().toISOString().split('T')[0];
@@ -254,7 +259,7 @@ export async function getTodayRates(): Promise<ExchangeRateResult> {
         usd: Number(usdRow.rate),
         eur: Number(eurRow.rate),
         date: todayStr,
-        source: (usdRow.source as any) || 'bcv',
+        source: (usdRow.source as ExchangeRateResult['source']) || 'bcv',
         updated_at: usdRow.created_at
       };
     }
@@ -277,7 +282,7 @@ export async function getTodayRates(): Promise<ExchangeRateResult> {
         usd: Number(usdRow.rate),
         eur: Number(eurRow.rate),
         date: latestDate,
-        source: (usdRow.source as any) || 'bcv',
+        source: (usdRow.source as ExchangeRateResult['source']) || 'bcv',
         updated_at: usdRow.created_at
       };
     }
