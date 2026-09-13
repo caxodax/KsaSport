@@ -191,11 +191,6 @@ export async function syncRates(): Promise<{ success: boolean; result?: Exchange
   };
 }
 
-export type SaveManualRateResult = {
-  success: boolean;
-  error?: string;
-};
-
 /**
  * Guarda manualmente una tasa oficial para una fecha determinada (contingencia administrativa).
  */
@@ -203,9 +198,10 @@ export async function saveManualRate(
   dateRate: string,
   usdRate: number,
   eurRate: number
-): Promise<SaveManualRateResult> {
+): Promise<{ success: boolean; error?: string }> {
   if (!dateRate || !usdRate || !eurRate || usdRate <= 0 || eurRate <= 0) {
     return { success: false, error: 'Datos de tasa o fecha inválidos.' };
+   // return { error: 'Datos de tasa o fecha inválidos.' };
   }
 
   const supabase = getServiceSupabase();
@@ -214,12 +210,13 @@ export async function saveManualRate(
     { date_rate: dateRate, currency: 'EUR', rate: eurRate, source: 'manual' }
   ];
 
-  const { error: upsertError } = await supabase
+  const { error } = await supabase
     .from('exchange_rate_history')
     .upsert(rows, { onConflict: 'date_rate,currency' });
 
-  if (upsertError) {
-    return { success: false, error: upsertError.message };
+  if (error) {
+    return { success: false, error: error.message };
+    //return { error: error.message };
   }
 
   const todayStr = new Date().toISOString().split('T')[0];
@@ -259,7 +256,7 @@ export async function getTodayRates(): Promise<ExchangeRateResult> {
         usd: Number(usdRow.rate),
         eur: Number(eurRow.rate),
         date: todayStr,
-        source: (usdRow.source as ExchangeRateResult['source']) || 'bcv',
+        source: (usdRow.source as any) || 'bcv',
         updated_at: usdRow.created_at
       };
     }
@@ -282,7 +279,7 @@ export async function getTodayRates(): Promise<ExchangeRateResult> {
         usd: Number(usdRow.rate),
         eur: Number(eurRow.rate),
         date: latestDate,
-        source: (usdRow.source as ExchangeRateResult['source']) || 'bcv',
+        source: (usdRow.source as any) || 'bcv',
         updated_at: usdRow.created_at
       };
     }
@@ -318,3 +315,4 @@ export async function getExchangeRatesHistory(limit = 40): Promise<RateHistoryIt
 
   return (data as RateHistoryItem[]) || [];
 }
+

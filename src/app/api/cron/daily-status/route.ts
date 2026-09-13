@@ -1,5 +1,6 @@
 import { getServiceSupabase } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
+import { syncRates } from '@/lib/exchangeRate'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,9 +16,17 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // 2. Sincronizar tasas oficiales del Banco Central de Venezuela (BCV)
+    let rateSyncInfo: any = null
+    try {
+      rateSyncInfo = await syncRates()
+    } catch (rateErr) {
+      console.error('Error sincronizando tasas BCV en daily-status:', rateErr)
+    }
+
     const supabase = getServiceSupabase()
 
-    // 2. Obtener fecha de hoy a la medianoche (para comparar con paid_until)
+    // 3. Obtener fecha de hoy a la medianoche (para comparar con paid_until)
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     // Formato YYYY-MM-DD para consultar Supabase
@@ -37,7 +46,11 @@ export async function GET(request: Request) {
     }
 
     if (!expiredAthletes || expiredAthletes.length === 0) {
-      return NextResponse.json({ message: 'No athletes to update today.', updatedCount: 0 })
+      return NextResponse.json({ 
+        message: 'No athletes to update today.', 
+        updatedCount: 0,
+        rateSync: rateSyncInfo?.result || null
+      })
     }
 
     // 4. Actualizar el estatus de esas atletas a 'Moroso'
@@ -50,13 +63,14 @@ export async function GET(request: Request) {
 
     if (updateError) {
       console.error('Error updating athletes:', updateError)
-      return NextResponse.json({ error: 'Error updating athletes' }, { status: 500 })
+      return NextResponse.json({ error: 'Error updating athletes', rateSync: rateSyncInfo?.result || null }, { status: 500 })
     }
 
     return NextResponse.json({ 
       message: 'Athletes updated successfully', 
       updatedCount: expiredIds.length,
-      athletes: expiredAthletes.map(a => a.name)
+      athletes: expiredAthletes.map(a => a.name),
+      rateSync: rateSyncInfo?.result || null
     })
     
   } catch (error) {
