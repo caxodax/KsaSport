@@ -17,6 +17,7 @@ type Payment = {
   created_at: string
   rate_type?: string
   exchange_rate?: number
+  usdt_promedio?: number
   transferred_amount?: number
   payment_currency?: string
   date_rate?: string
@@ -53,6 +54,11 @@ function ReceiptModal({ url, payment, onClose }: { url: string | null, payment: 
             {payment.payment_currency === 'VES' && payment.exchange_rate && (
               <span className="text-emerald-400 text-xs">
                 (${Number(payment.amount).toFixed(2)} {payment.rate_type || 'USD'} @ {Number(payment.exchange_rate).toFixed(2)} Bs.)
+              </span>
+            )}
+            {payment.usdt_promedio && (
+              <span className="text-teal-300 text-xs font-mono">
+                [USDT Prom: Bs. {Number(payment.usdt_promedio).toFixed(2)}]
               </span>
             )}
           </div>
@@ -139,6 +145,11 @@ export default function PaymentRow({ payment }: { payment: Payment }) {
           {payment.exchange_rate && Number(payment.exchange_rate) > 1 ? (
             <div className="text-[10px] text-slate-400 font-mono mt-0.5">
               @ {Number(payment.exchange_rate).toFixed(2)} Bs. • {payment.date_rate || new Date(payment.created_at).toLocaleDateString()}
+            </div>
+          ) : null}
+          {payment.usdt_promedio ? (
+            <div className="text-[10px] text-teal-600 font-mono mt-0.5">
+              USDT P2P: Bs. {Number(payment.usdt_promedio).toFixed(2)}
             </div>
           ) : null}
         </td>
@@ -245,6 +256,12 @@ export function PaymentCard({ payment }: { payment: Payment }) {
               <span className="font-semibold text-gray-700">Tasa Aplicada:</span>{' '}
               Bs. {Number(payment.exchange_rate).toFixed(2)} / {payment.rate_type || 'USD'}
               <span className="text-[11px] text-slate-400 ml-1 font-mono">({payment.date_rate || 'Fecha de pago'})</span>
+            </p>
+          )}
+          {payment.usdt_promedio && (
+            <p className="text-slate-600 text-xs">
+              <span className="font-semibold text-teal-700">USDT Promedio (P2P):</span>{' '}
+              Bs. {Number(payment.usdt_promedio).toFixed(2)}
             </p>
           )}
           {payment.receipt_url && (

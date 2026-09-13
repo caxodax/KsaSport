@@ -33,6 +33,8 @@ export default function PaymentForm({
   rates?: {
     usd: number;
     eur: number;
+    usdt?: number;
+    usdt_promedio?: number;
     date: string;
     source: string;
   }
@@ -212,6 +214,7 @@ export default function PaymentForm({
       reference: s.reference_number,
       rate_type: s.rate_type || selectedProduct.rate_type || 'USD',
       exchange_rate: s.exchange_rate || '1.0000',
+      usdt_promedio: rates?.usdt_promedio || rates?.usdt || 960.00,
       transferred_amount: s.transferred_amount || s.amount,
       payment_currency: s.payment_currency || 'USD',
       date_rate: s.date_rate || rates?.date || new Date().toISOString().split('T')[0]

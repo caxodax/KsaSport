@@ -100,6 +100,7 @@ export default async function PaymentsPage({
       status: (p.status as any) || 'Pendiente',
       rateType: p.rate_type || 'USD',
       exchangeRate: p.exchange_rate ? Number(p.exchange_rate) : undefined,
+      usdtPromedio: p.usdt_promedio ? Number(p.usdt_promedio) : undefined,
       transferredAmount: p.transferred_amount ? Number(p.transferred_amount) : undefined,
       paymentCurrency: p.payment_currency || 'USD',
       dateRate: p.date_rate || undefined

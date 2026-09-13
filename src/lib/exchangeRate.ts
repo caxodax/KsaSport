@@ -4,16 +4,19 @@ import https from 'https';
 export interface ExchangeRateResult {
   usd: number;
   eur: number;
+  usdt?: number;
+  usdt_promedio?: number;
   date: string; // YYYY-MM-DD
-  source: 'bcv' | 'dolarapi' | 'manual' | 'settings';
+  source: 'bcv' | 'dolarapi' | 'manual' | 'settings' | 'binance';
   updated_at?: string;
 }
 
 export interface RateHistoryItem {
   id: string;
   date_rate: string;
-  currency: 'USD' | 'EUR';
+  currency: 'USD' | 'EUR' | 'USDT';
   rate: number;
+  usdt_promedio?: number | null;
   source: string;
   created_at: string;
 }
@@ -135,8 +138,38 @@ export async function fetchDolarApiRates(): Promise<{ usd: number; eur: number; 
 }
 
 /**
- * Sincroniza las tasas oficiales (BCV -> Fallback DolarApi)
- * y persiste en exchange_rate_history con la Fecha Valor oficial del BCV.
+ * Capa 3: Consulta el promedio ponderado de USDT / VES en Binance P2P vía API
+ */
+export async function fetchUsdtPromedio(): Promise<{ rate: number; source: string } | null> {
+  try {
+    const res = await fetch('https://criptoya.com/api/binancep2p/usdt/ves', { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      const ask = Number(data?.ask) || 0;
+      const bid = Number(data?.bid) || 0;
+      const avg = (ask + bid) / 2;
+      if (avg > 0) {
+        return { rate: Number(avg.toFixed(4)), source: 'binancep2p' };
+      }
+    }
+  } catch {}
+
+  try {
+    const res = await fetch('https://api.yadio.io/rate/VES/USD', { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.rate > 0) {
+        return { rate: Number(Number(data.rate).toFixed(4)), source: 'yadio' };
+      }
+    }
+  } catch {}
+
+  return null;
+}
+
+/**
+ * Sincroniza las tasas oficiales (BCV -> Fallback DolarApi) y USDT Promedio (Binance P2P)
+ * y persiste en exchange_rate_history y club_settings.
  */
 export async function syncRates(): Promise<{ success: boolean; result?: ExchangeRateResult; error?: string }> {
   let usd = 0;
@@ -167,12 +200,16 @@ export async function syncRates(): Promise<{ success: boolean; result?: Exchange
     }
   }
 
+  // 2. Obtener USDT Promedio (Binance P2P)
+  const usdtResult = await fetchUsdtPromedio();
+  const usdtVal = usdtResult?.rate || 960.00;
+
   const supabase = getServiceSupabase();
 
-  // 3. Upsert en exchange_rate_history con la Fecha Valor oficial
+  // 3. Upsert en exchange_rate_history con la Fecha Valor oficial y usdt_promedio
   const rows = [
-    { date_rate: date, currency: 'USD', rate: usd, source },
-    { date_rate: date, currency: 'EUR', rate: eur, source }
+    { date_rate: date, currency: 'USD', rate: usd, usdt_promedio: usdtVal, source },
+    { date_rate: date, currency: 'EUR', rate: eur, usdt_promedio: usdtVal, source }
   ];
 
   const { error: upsertError } = await supabase
@@ -189,6 +226,8 @@ export async function syncRates(): Promise<{ success: boolean; result?: Exchange
     .update({
       last_bcv_usd: usd,
       last_bcv_eur: eur,
+      usdt_promedio: usdtVal,
+      last_usdt_promedio: usdtVal,
       bcv_updated_at: new Date().toISOString()
     })
     .eq('id', 1);
@@ -198,6 +237,8 @@ export async function syncRates(): Promise<{ success: boolean; result?: Exchange
     result: {
       usd,
       eur,
+      usdt: usdtVal,
+      usdt_promedio: usdtVal,
       date,
       source,
       updated_at: new Date().toISOString()
@@ -211,16 +252,19 @@ export async function syncRates(): Promise<{ success: boolean; result?: Exchange
 export async function saveManualRate(
   dateRate: string,
   usdRate: number,
-  eurRate: number
+  eurRate: number,
+  usdtRate?: number
 ): Promise<{ success: boolean; error?: string }> {
   if (!dateRate || !usdRate || !eurRate || usdRate <= 0 || eurRate <= 0) {
     return { success: false, error: 'Datos de tasa o fecha inválidos.' };
   }
 
   const supabase = getServiceSupabase();
+  const usdtVal = usdtRate && usdtRate > 0 ? usdtRate : undefined;
+
   const rows = [
-    { date_rate: dateRate, currency: 'USD', rate: usdRate, source: 'manual' },
-    { date_rate: dateRate, currency: 'EUR', rate: eurRate, source: 'manual' }
+    { date_rate: dateRate, currency: 'USD', rate: usdRate, usdt_promedio: usdtVal, source: 'manual' },
+    { date_rate: dateRate, currency: 'EUR', rate: eurRate, usdt_promedio: usdtVal, source: 'manual' }
   ];
 
   const { error: upsertError } = await supabase
@@ -233,13 +277,18 @@ export async function saveManualRate(
 
   const todayStr = new Date().toISOString().split('T')[0];
   if (dateRate >= todayStr) {
+    const updateData: Record<string, any> = {
+      last_bcv_usd: usdRate,
+      last_bcv_eur: eurRate,
+      bcv_updated_at: new Date().toISOString()
+    };
+    if (usdtVal) {
+      updateData.usdt_promedio = usdtVal;
+      updateData.last_usdt_promedio = usdtVal;
+    }
     await supabase
       .from('club_settings')
-      .update({
-        last_bcv_usd: usdRate,
-        last_bcv_eur: eurRate,
-        bcv_updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', 1);
   }
 
@@ -257,20 +306,34 @@ export async function getTodayRates(): Promise<ExchangeRateResult> {
   // 1. Consultar el registro más reciente en exchange_rate_history (ordenado por Fecha Valor)
   const { data: latestRates } = await supabase
     .from('exchange_rate_history')
-    .select('date_rate, currency, rate, source, created_at')
+    .select('date_rate, currency, rate, usdt_promedio, source, created_at')
     .order('date_rate', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(6);
+
+  // 2. Respaldo en club_settings
+  const { data: settings } = await supabase
+    .from('club_settings')
+    .select('last_bcv_usd, last_bcv_eur, usdt_promedio, last_usdt_promedio, bcv_updated_at')
+    .eq('id', 1)
+    .single();
+
+  const fallbackUsdt = settings?.usdt_promedio 
+    ? Number(settings.usdt_promedio) 
+    : (settings?.last_usdt_promedio ? Number(settings.last_usdt_promedio) : 960.00);
 
   if (latestRates && latestRates.length > 0) {
     const latestDate = latestRates[0].date_rate;
     const usdRow = latestRates.find((r) => r.currency === 'USD' && r.date_rate === latestDate);
     const eurRow = latestRates.find((r) => r.currency === 'EUR' && r.date_rate === latestDate);
+    const usdtVal = latestRates[0].usdt_promedio ? Number(latestRates[0].usdt_promedio) : fallbackUsdt;
 
     if (usdRow && eurRow) {
       return {
         usd: Number(usdRow.rate),
         eur: Number(eurRow.rate),
+        usdt: usdtVal,
+        usdt_promedio: usdtVal,
         date: latestDate,
         source: (usdRow.source as ExchangeRateResult['source']) || 'bcv',
         updated_at: usdRow.created_at
@@ -278,16 +341,11 @@ export async function getTodayRates(): Promise<ExchangeRateResult> {
     }
   }
 
-  // 2. Respaldo en club_settings
-  const { data: settings } = await supabase
-    .from('club_settings')
-    .select('last_bcv_usd, last_bcv_eur, bcv_updated_at')
-    .eq('id', 1)
-    .single();
-
   return {
     usd: settings?.last_bcv_usd ? Number(settings.last_bcv_usd) : 842.2067,
     eur: settings?.last_bcv_eur ? Number(settings.last_bcv_eur) : 977.8778,
+    usdt: fallbackUsdt,
+    usdt_promedio: fallbackUsdt,
     date: settings?.bcv_updated_at ? settings.bcv_updated_at.split('T')[0] : todayStr,
     source: 'settings',
     updated_at: settings?.bcv_updated_at || undefined

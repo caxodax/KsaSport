@@ -36,6 +36,8 @@ export async function saveManualRateAction(formData: FormData) {
   const dateRate = formData.get('date_rate') as string;
   const usdRate = Number(formData.get('usd_rate'));
   const eurRate = Number(formData.get('eur_rate'));
+  const rawUsdt = formData.get('usdt_rate');
+  const usdtRate = rawUsdt ? Number(rawUsdt) : undefined;
 
   if (!dateRate) {
     return { error: 'Debes seleccionar la fecha correspondiente a la tasa.' };
@@ -49,8 +51,12 @@ export async function saveManualRateAction(formData: FormData) {
     return { error: 'La tasa de EUR debe ser un número válido mayor a 0.' };
   }
 
+  if (usdtRate !== undefined && (isNaN(usdtRate) || usdtRate <= 0)) {
+    return { error: 'La tasa de USDT debe ser un número válido mayor a 0.' };
+  }
+
   try {
-    const res = await saveManualRate(dateRate, usdRate, eurRate);
+    const res = await saveManualRate(dateRate, usdRate, eurRate, usdtRate);
 
     if (res?.error) {
       return { error: res.error };

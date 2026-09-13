@@ -171,6 +171,7 @@ export async function reportPayment(formData: FormData) {
     reference: string,
     rate_type?: string,
     exchange_rate?: number | string,
+    usdt_promedio?: number | string,
     transferred_amount?: number | string,
     payment_currency?: string,
     date_rate?: string
@@ -208,6 +209,7 @@ export async function reportPayment(formData: FormData) {
     currency: 'USD',
     rate_type: s.rate_type || 'USD',
     exchange_rate: Number(s.exchange_rate) || 1.0000,
+    usdt_promedio: s.usdt_promedio ? Number(s.usdt_promedio) : null,
     transferred_amount: s.transferred_amount !== undefined && s.transferred_amount !== null && s.transferred_amount !== '' 
       ? Number(s.transferred_amount) 
       : Number(s.amount),

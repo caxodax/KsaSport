@@ -19,7 +19,7 @@ export default async function LedgerPage({
   // Fetch ALL completed payments in the date range
   const { data: payments } = await supabase
     .from('payments')
-    .select('id, amount, method, reference, reference_number, rate_type, exchange_rate, transferred_amount, payment_currency, date_rate, created_at, products(name), athletes(name, cedula)')
+    .select('id, amount, method, reference, reference_number, rate_type, exchange_rate, usdt_promedio, transferred_amount, payment_currency, date_rate, created_at, products(name), athletes(name, cedula)')
     .eq('status', 'Completado')
     .gte('created_at', startDate.toISOString())
     .lte('created_at', endDate.toISOString())
@@ -162,6 +162,7 @@ export default async function LedgerPage({
         amount: Number(p.amount) || 0,
         rateType: p.rate_type || 'USD',
         exchangeRate: p.exchange_rate ? Number(p.exchange_rate) : undefined,
+        usdtPromedio: p.usdt_promedio ? Number(p.usdt_promedio) : undefined,
         transferredAmount: p.transferred_amount ? Number(p.transferred_amount) : undefined,
         paymentCurrency: p.payment_currency || 'USD',
         dateRate: p.date_rate || undefined

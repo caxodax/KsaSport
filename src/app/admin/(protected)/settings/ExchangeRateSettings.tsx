@@ -24,6 +24,9 @@ export default function ExchangeRateSettings({
   const [manualDate, setManualDate] = useState(currentRates.date || new Date().toISOString().split('T')[0]);
   const [manualUsd, setManualUsd] = useState(currentRates.usd ? String(currentRates.usd) : '');
   const [manualEur, setManualEur] = useState(currentRates.eur ? String(currentRates.eur) : '');
+  const [manualUsdt, setManualUsdt] = useState(
+    currentRates.usdt_promedio ? String(currentRates.usdt_promedio) : (currentRates.usdt ? String(currentRates.usdt) : '960.00')
+  );
   const [savingManual, setSavingManual] = useState(false);
   const [manualMessage, setManualMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -57,12 +60,16 @@ export default function ExchangeRateSettings({
     if (res?.error) {
       setSyncMessage({ type: 'error', text: res.error });
     } else {
+      const usdtVal = res.result?.usdt_promedio || res.result?.usdt;
       setSyncMessage({ 
         type: 'success', 
-        text: `¡Tasas sincronizadas con éxito del BCV! USD: ${res.result?.usd.toFixed(2)} Bs | EUR: ${res.result?.eur.toFixed(2)} Bs (Fecha Valor oficial: ${res.result?.date})` 
+        text: `¡Tasas sincronizadas con éxito! USD: ${res.result?.usd.toFixed(2)} Bs | EUR: ${res.result?.eur.toFixed(2)} Bs${usdtVal ? ` | USDT: ${Number(usdtVal).toFixed(2)} Bs` : ''} (Fecha Valor oficial: ${res.result?.date})` 
       });
       if (res.result?.date) {
         setManualDate(res.result.date);
+      }
+      if (usdtVal) {
+        setManualUsdt(String(usdtVal));
       }
       setTimeout(() => setSyncMessage(null), 6000);
     }
@@ -77,6 +84,7 @@ export default function ExchangeRateSettings({
     formData.append('date_rate', manualDate);
     formData.append('usd_rate', manualUsd);
     formData.append('eur_rate', manualEur);
+    formData.append('usdt_rate', manualUsdt);
 
     const res = await saveManualRateAction(formData);
     setSavingManual(false);
@@ -92,12 +100,13 @@ export default function ExchangeRateSettings({
     }
   };
 
-  // Agrupar histórico por fecha para mostrar USD y EUR juntos
-  const groupedHistoryMap = new Map<string, { date: string; usd?: number; eur?: number; source: string; created_at: string }>();
+  // Agrupar histórico por fecha para mostrar USD, EUR y USDT juntos
+  const groupedHistoryMap = new Map<string, { date: string; usd?: number; eur?: number; usdt_promedio?: number; source: string; created_at: string }>();
   history.forEach(item => {
     if (!groupedHistoryMap.has(item.date_rate)) {
       groupedHistoryMap.set(item.date_rate, {
         date: item.date_rate,
+        usdt_promedio: item.usdt_promedio ? Number(item.usdt_promedio) : undefined,
         source: item.source,
         created_at: item.created_at
       });
@@ -105,6 +114,7 @@ export default function ExchangeRateSettings({
     const entry = groupedHistoryMap.get(item.date_rate)!;
     if (item.currency === 'USD') entry.usd = Number(item.rate);
     if (item.currency === 'EUR') entry.eur = Number(item.rate);
+    if (item.usdt_promedio && !entry.usdt_promedio) entry.usdt_promedio = Number(item.usdt_promedio);
   });
   const groupedHistory = Array.from(groupedHistoryMap.values());
 
@@ -142,10 +152,10 @@ export default function ExchangeRateSettings({
               onClick={handleSyncNow}
               disabled={syncing}
               className="inline-flex items-center gap-2.5 px-5 py-3 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 active:scale-95 text-white text-xs sm:text-sm font-black rounded-2xl shadow-md hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer"
-              title="Ejecuta de inmediato el cron job de scrapping contra el Banco Central de Venezuela"
+              title="Ejecuta de inmediato el cron job de sincronización contra BCV y Binance P2P"
             >
               <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin text-white' : ''}`} />
-              <span>{syncing ? 'Ejecutando Cron Job BCV...' : 'Ejecutar Cron Manual (Sincronizar BCV)'}</span>
+              <span>{syncing ? 'Ejecutando Cron Job...' : 'Ejecutar Cron Manual (Sincronizar)'}</span>
             </button>
           </div>
         </div>
@@ -166,8 +176,8 @@ export default function ExchangeRateSettings({
           </div>
         )}
 
-        {/* Cajas de Tasas Vigentes */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {/* Cajas de Tasas Vigentes (USD, EUR, USDT) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           
           {/* Tarjeta Dólar BCV */}
           <div className="bg-slate-50/80 rounded-2xl p-5 border border-slate-200/90 shadow-2xs">
@@ -213,6 +223,28 @@ export default function ExchangeRateSettings({
             </p>
           </div>
 
+          {/* Tarjeta USDT Promedio */}
+          <div className="bg-slate-50/80 rounded-2xl p-5 border border-slate-200/90 shadow-2xs">
+            <div className="flex justify-between items-start mb-2">
+              <span className="text-xs font-black uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
+                <span className="text-base">🟢</span> USDT Promedio (P2P)
+              </span>
+              <span className="text-[10px] font-mono font-bold bg-white px-2 py-0.5 rounded-lg border border-slate-200 text-emerald-700 shadow-2xs">
+                BINANCE P2P
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl sm:text-4xl font-mono font-black text-gray-900 tracking-tight">
+                {Number(currentRates.usdt_promedio || currentRates.usdt || 960).toFixed(2)}
+              </span>
+              <span className="text-sm font-bold text-slate-500 font-mono">Bs. / USDT</span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1.5 font-medium">
+              <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span>Mercado Cripto / P2P de referencia</span>
+            </p>
+          </div>
+
         </div>
 
         {/* Automatización Cron & Fallback Info */}
@@ -220,7 +252,7 @@ export default function ExchangeRateSettings({
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>
-              <strong>Cron Automático Activo:</strong> Se ejecuta automáticamente cada día a las 7:00 AM (hora Venezuela) sincronizando la Fecha Valor del BCV.
+              <strong>Cron Automático Activo:</strong> Se ejecuta automáticamente cada día a las 7:00 AM (hora Venezuela) sincronizando la Fecha Valor del BCV y USDT Binance P2P.
             </span>
           </div>
 
@@ -238,7 +270,7 @@ export default function ExchangeRateSettings({
           <form onSubmit={handleSaveManual} className="mt-5 p-5 bg-amber-50/80 rounded-2xl border border-amber-200/90 space-y-4">
             <div className="flex items-center gap-2 text-amber-900 font-bold text-xs mb-1">
               <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
-              <span>Carga Manual de Tasa (Uso en caso de caída prolongada del portal del BCV)</span>
+              <span>Carga Manual de Tasa (Uso en caso de contingencia administrativa)</span>
             </div>
 
             {manualMessage && (
@@ -249,7 +281,7 @@ export default function ExchangeRateSettings({
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div>
                 <label className="block text-xs font-black uppercase text-slate-600 mb-1">Fecha de la Tasa *</label>
                 <input 
@@ -281,6 +313,17 @@ export default function ExchangeRateSettings({
                   onChange={(e) => setManualEur(e.target.value)}
                   placeholder="Ej: 977.8778"
                   required
+                  className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-kasa-vinotinto"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-black uppercase text-slate-600 mb-1">Tasa USDT (Bs/USDT)</label>
+                <input 
+                  type="number"
+                  step="0.0001"
+                  value={manualUsdt}
+                  onChange={(e) => setManualUsdt(e.target.value)}
+                  placeholder="Ej: 960.00"
                   className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-kasa-vinotinto"
                 />
               </div>
@@ -333,12 +376,13 @@ export default function ExchangeRateSettings({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[640px]">
+            <table className="w-full text-left border-collapse min-w-[720px]">
               <thead>
                 <tr className="bg-slate-50/90 border-b border-slate-200">
                   <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Fecha (date_rate)</th>
                   <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Dólar BCV (USD)</th>
                   <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Euro BCV (EUR)</th>
+                  <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">USDT Promedio</th>
                   <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider text-center">Fuente</th>
                   <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider text-right">Hora Registro</th>
                 </tr>
@@ -359,6 +403,9 @@ export default function ExchangeRateSettings({
                     </td>
                     <td className="py-4 px-6 whitespace-nowrap font-mono font-bold text-slate-800 text-sm">
                       {item.eur ? `Bs. ${item.eur.toFixed(2)}` : 'N/A'}
+                    </td>
+                    <td className="py-4 px-6 whitespace-nowrap font-mono font-bold text-emerald-800 text-sm">
+                      {item.usdt_promedio ? `Bs. ${item.usdt_promedio.toFixed(2)}` : '-'}
                     </td>
                     <td className="py-4 px-6 text-center whitespace-nowrap">
                       <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-2xs ${

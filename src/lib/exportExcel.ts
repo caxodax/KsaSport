@@ -226,6 +226,7 @@ export interface LedgerExportData {
     amount: number;
     rateType?: string;
     exchangeRate?: number;
+    usdtPromedio?: number;
     transferredAmount?: number;
     paymentCurrency?: string;
     dateRate?: string;
@@ -657,7 +658,7 @@ export async function exportLedgerToExcel(data: LedgerExportData) {
   });
 
   // Título Vinotinto
-  wsDetail.mergeCells('A1:M1');
+  wsDetail.mergeCells('A1:N1');
   const dTitle = wsDetail.getCell('A1');
   dTitle.value = 'KSA SPORTS - DETALLE INDIVIDUAL DE TRANSACCIONES VALIDADAS';
   dTitle.font = { name: 'Segoe UI', size: 13, bold: true, color: { argb: 'FFFFFFFF' } };
@@ -666,7 +667,7 @@ export async function exportLedgerToExcel(data: LedgerExportData) {
   wsDetail.getRow(1).height = 30;
 
   // Subtítulo
-  wsDetail.mergeCells('A2:M2');
+  wsDetail.mergeCells('A2:N2');
   const dSub = wsDetail.getCell('A2');
   dSub.value = `Filtro de Fechas: ${data.dateRangeStr}  |  Total Transacciones: ${data.transactions.length}  |  Monto Total: $${data.totalRevenue.toFixed(2)}`;
   dSub.font = { name: 'Segoe UI', size: 10, italic: true, color: { argb: 'FF334155' } };
@@ -689,6 +690,7 @@ export async function exportLedgerToExcel(data: LedgerExportData) {
     { header: 'Moneda Pago', key: 'paymentCurrency', width: 14 },
     { header: 'Monto Transferido', key: 'transferredAmount', width: 20 },
     { header: 'Tasa BCV', key: 'exchangeRate', width: 16 },
+    { header: 'USDT Promedio', key: 'usdtPromedio', width: 16 },
     { header: 'Fecha Tasa', key: 'dateRate', width: 16 },
     { header: 'Referencia', key: 'reference', width: 18 },
   ];
@@ -700,14 +702,14 @@ export async function exportLedgerToExcel(data: LedgerExportData) {
     cell.value = dh.header;
     cell.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF800020' } };
-    cell.alignment = { vertical: 'middle', horizontal: idx === 6 || idx === 9 || idx === 10 ? 'right' : (idx === 2 || idx === 4 ? 'left' : 'center') };
+    cell.alignment = { vertical: 'middle', horizontal: idx === 6 || idx === 9 || idx === 10 || idx === 11 ? 'right' : (idx === 2 || idx === 4 ? 'left' : 'center') };
     cell.border = thinBorder;
   });
 
   let detailRowIdx = 5;
 
   if (data.transactions.length === 0) {
-    wsDetail.mergeCells('A5:M5');
+    wsDetail.mergeCells('A5:N5');
     const emptyCell = wsDetail.getCell('A5');
     emptyCell.value = 'No se registraron transacciones completadas en este período de fechas.';
     emptyCell.font = { name: 'Segoe UI', size: 10, italic: true, color: { argb: 'FF94A3B8' } };
@@ -780,17 +782,25 @@ export async function exportLedgerToExcel(data: LedgerExportData) {
       c11.border = thinBorder;
 
       const c12 = row.getCell(12);
-      c12.value = tx.dateRate || 'N/A';
-      c12.alignment = { vertical: 'middle', horizontal: 'center' };
+      c12.value = tx.usdtPromedio ? tx.usdtPromedio : '-';
+      if (typeof c12.value === 'number') {
+        c12.numFmt = '#,##0.0000';
+      }
+      c12.alignment = { vertical: 'middle', horizontal: 'right' };
       c12.border = thinBorder;
 
       const c13 = row.getCell(13);
-      c13.value = tx.reference || 'N/A';
+      c13.value = tx.dateRate || 'N/A';
       c13.alignment = { vertical: 'middle', horizontal: 'center' };
       c13.border = thinBorder;
 
+      const c14 = row.getCell(14);
+      c14.value = tx.reference || 'N/A';
+      c14.alignment = { vertical: 'middle', horizontal: 'center' };
+      c14.border = thinBorder;
+
       if (i % 2 === 1) {
-        for (let col = 1; col <= 13; col++) {
+        for (let col = 1; col <= 14; col++) {
           row.getCell(col).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
         }
       }
@@ -815,7 +825,7 @@ export async function exportLedgerToExcel(data: LedgerExportData) {
     grandTotalCell.font = { name: 'Segoe UI', size: 12, bold: true, color: { argb: 'FF15803D' } };
     grandTotalCell.alignment = { vertical: 'middle', horizontal: 'right' };
 
-    for (let col = 1; col <= 13; col++) {
+    for (let col = 1; col <= 14; col++) {
       const c = detailTotalRow.getCell(col);
       c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
       c.border = totalBorder;
@@ -867,6 +877,7 @@ export interface PaymentsExportItem {
   status: 'Completado' | 'Pendiente' | 'Rechazado' | string;
   rateType?: string;
   exchangeRate?: number;
+  usdtPromedio?: number;
   transferredAmount?: number;
   paymentCurrency?: string;
   dateRate?: string;
@@ -926,7 +937,7 @@ export async function exportPaymentsToExcel(data: PaymentsExportData) {
   });
 
   // Título Vinotinto Corporativo
-  wsPayments.mergeCells('A1:N1');
+  wsPayments.mergeCells('A1:O1');
   const titleCell = wsPayments.getCell('A1');
   titleCell.value = 'KSA SPORTS - BANDEJA DE FINANZAS Y CONTROL DE PAGOS';
   titleCell.font = { name: 'Segoe UI', size: 13, bold: true, color: { argb: 'FFFFFFFF' } };
@@ -935,7 +946,7 @@ export async function exportPaymentsToExcel(data: PaymentsExportData) {
   wsPayments.getRow(1).height = 30;
 
   // Subtítulo con Período y Métricas
-  wsPayments.mergeCells('A2:N2');
+  wsPayments.mergeCells('A2:O2');
   const subCell = wsPayments.getCell('A2');
   subCell.value = `Filtro de Fechas: ${data.dateRangeStr}  |  Total Pagos: ${data.totalCount}  |  Aprobados: $${data.completedTotal.toFixed(2)}  |  Por Revisar: ${data.pendingCount}`;
   subCell.font = { name: 'Segoe UI', size: 10, italic: true, color: { argb: 'FF334155' } };
@@ -958,6 +969,7 @@ export async function exportPaymentsToExcel(data: PaymentsExportData) {
     { header: 'Moneda Pago', key: 'paymentCurrency', width: 14 },
     { header: 'Monto Transferido', key: 'transferredAmount', width: 20 },
     { header: 'Tasa BCV', key: 'exchangeRate', width: 16 },
+    { header: 'USDT Promedio (P2P)', key: 'usdtPromedio', width: 18 },
     { header: 'Fecha de Tasa', key: 'dateRate', width: 16 },
     { header: 'N° Referencia', key: 'reference', width: 18 },
     { header: 'Estado', key: 'status', width: 16 },
@@ -972,7 +984,7 @@ export async function exportPaymentsToExcel(data: PaymentsExportData) {
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF800020' } };
     cell.alignment = { 
       vertical: 'middle', 
-      horizontal: idx === 6 || idx === 9 || idx === 10 ? 'right' : (idx === 2 || idx === 4 ? 'left' : 'center') 
+      horizontal: idx === 6 || idx === 9 || idx === 10 || idx === 11 ? 'right' : (idx === 2 || idx === 4 ? 'left' : 'center') 
     };
     cell.border = thinBorder;
   });
@@ -980,7 +992,7 @@ export async function exportPaymentsToExcel(data: PaymentsExportData) {
   let curRowIdx = 5;
 
   if (data.payments.length === 0) {
-    wsPayments.mergeCells(`A5:N5`);
+    wsPayments.mergeCells(`A5:O5`);
     const emptyCell = wsPayments.getCell('A5');
     emptyCell.value = 'No hay pagos reportados en este período de fechas.';
     emptyCell.font = { name: 'Segoe UI', size: 10, italic: true, color: { argb: 'FF94A3B8' } };
@@ -1054,36 +1066,44 @@ export async function exportPaymentsToExcel(data: PaymentsExportData) {
       c11.border = thinBorder;
 
       const c12 = row.getCell(12);
-      c12.value = p.dateRate || 'N/A';
-      c12.alignment = { vertical: 'middle', horizontal: 'center' };
+      c12.value = p.usdtPromedio ? p.usdtPromedio : '-';
+      if (typeof c12.value === 'number') {
+        c12.numFmt = '#,##0.0000';
+      }
+      c12.alignment = { vertical: 'middle', horizontal: 'right' };
       c12.border = thinBorder;
 
       const c13 = row.getCell(13);
-      c13.value = p.reference || 'N/A';
+      c13.value = p.dateRate || 'N/A';
       c13.alignment = { vertical: 'middle', horizontal: 'center' };
       c13.border = thinBorder;
 
       const c14 = row.getCell(14);
-      c14.value = p.status;
+      c14.value = p.reference || 'N/A';
       c14.alignment = { vertical: 'middle', horizontal: 'center' };
       c14.border = thinBorder;
 
+      const c15 = row.getCell(15);
+      c15.value = p.status;
+      c15.alignment = { vertical: 'middle', horizontal: 'center' };
+      c15.border = thinBorder;
+
       // Resaltado de Estado (Semáforo contable)
       if (p.status === 'Completado') {
-        c14.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF15803D' } };
-        c14.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCFCE7' } };
+        c15.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF15803D' } };
+        c15.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCFCE7' } };
       } else if (p.status === 'Pendiente') {
-        c14.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FFB45309' } };
-        c14.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF3C7' } };
+        c15.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FFB45309' } };
+        c15.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF3C7' } };
       } else if (p.status === 'Rechazado') {
-        c14.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FFB91C1C' } };
-        c14.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } };
+        c15.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FFB91C1C' } };
+        c15.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } };
       } else {
-        c14.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF475569' } };
+        c15.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF475569' } };
       }
 
       if (i % 2 === 1) {
-        for (let col = 1; col <= 14; col++) {
+        for (let col = 1; col <= 15; col++) {
           row.getCell(col).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
         }
       }
@@ -1122,7 +1142,7 @@ export async function exportPaymentsToExcel(data: PaymentsExportData) {
       amtCell.font = { name: 'Segoe UI', size: 11, bold: true, color: { argb: item.color } };
       amtCell.alignment = { vertical: 'middle', horizontal: 'right' };
 
-      for (let col = 1; col <= 14; col++) {
+      for (let col = 1; col <= 15; col++) {
         const c = totRow.getCell(col);
         c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
         c.border = item.isGrandTotal ? doubleBottomBorder : totalBorder;
