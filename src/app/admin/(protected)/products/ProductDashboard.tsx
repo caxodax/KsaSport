@@ -247,7 +247,7 @@ export default function ProductDashboard({
         </div>
       ) : viewMode === 'grid' ? (
         /* VISTA DE TARJETAS (Grid First-Mobile) */
-        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {filteredProducts.map((p) => {
             const expired = isProductExpired(p);
             const ribbonBorder = p.is_active 
@@ -257,25 +257,28 @@ export default function ProductDashboard({
             return (
               <div
                 key={p.id}
-                className={`bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 ${ribbonBorder} shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-slate-300 transition-all flex flex-col justify-between relative group`}
+                className={`bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 ${ribbonBorder} shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-slate-300 transition-all flex flex-col justify-between relative group overflow-hidden`}
               >
                 {/* Cabecera de la Tarjeta */}
                 <div>
                   <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 border shadow-2xs ${
+                    <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+                      <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center shrink-0 border shadow-2xs mt-0.5 sm:mt-0 ${
                         p.is_active 
                           ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80' 
                           : 'bg-slate-100 text-slate-400 border-slate-200'
                       }`}>
                         <ShoppingBag className="w-5 h-5" />
                       </div>
-                      <div className="min-w-0">
-                        <h3 className="font-black text-gray-900 text-base leading-snug truncate group-hover:text-kasa-vinotinto transition-colors">
+                      <div className="min-w-0 flex-1">
+                        <h3 
+                          className="font-black text-gray-900 text-sm sm:text-base leading-snug line-clamp-2 break-words group-hover:text-kasa-vinotinto transition-colors"
+                          title={p.name}
+                        >
                           {p.name}
                         </h3>
                         {/* Indicador de Vigencia */}
-                        <div className="flex items-center gap-1.5 mt-0.5">
+                        <div className="flex items-center gap-1.5 mt-1">
                           <span className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border shadow-2xs ${
                             expired 
                               ? 'bg-rose-50 text-rose-700 border-rose-200' 
@@ -283,7 +286,7 @@ export default function ProductDashboard({
                               ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
                               : 'bg-slate-100 text-slate-600 border-slate-200'
                           }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                               expired ? 'bg-rose-500' : p.is_active ? 'bg-emerald-500' : 'bg-slate-400'
                             }`} />
                             {expired ? 'Vencido' : p.is_active ? 'Vigente' : 'Inactivo'}
@@ -293,8 +296,8 @@ export default function ProductDashboard({
                     </div>
 
                     {/* Precio de Alto Contraste */}
-                    <div className="text-right shrink-0">
-                      <span className="inline-block px-3 py-1.5 bg-slate-900 text-white font-mono font-black text-base sm:text-lg rounded-2xl shadow-xs border border-slate-800">
+                    <div className="text-right shrink-0 self-start">
+                      <span className="inline-flex items-center px-3 py-1.5 bg-slate-900 text-white font-mono font-black text-sm sm:text-base rounded-2xl shadow-xs border border-slate-800 whitespace-nowrap">
                         ${Number(p.price).toFixed(2)}
                       </span>
                     </div>
@@ -395,7 +398,7 @@ export default function ProductDashboard({
         /* VISTA DE TABLA (Linear / Stripe style) */
         <div className="bg-white rounded-3xl border border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[720px]">
               <thead>
                 <tr className="bg-slate-50/90 border-b border-slate-200">
                   <th className="py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">
@@ -423,7 +426,7 @@ export default function ProductDashboard({
                     <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
                       {/* Producto */}
                       <td className="py-4 px-6">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
                           <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border shadow-2xs ${
                             p.is_active 
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
@@ -431,22 +434,22 @@ export default function ProductDashboard({
                           }`}>
                             <ShoppingBag className="w-5 h-5" />
                           </div>
-                          <div>
+                          <div className="min-w-0 max-w-xs sm:max-w-sm">
                             <div className="font-black text-gray-900 text-sm flex items-center gap-2">
-                              <span>{p.name}</span>
+                              <span className="truncate" title={p.name}>{p.name}</span>
                               {expired && (
-                                <span className="bg-rose-50 text-rose-700 text-[10px] font-black uppercase px-2 py-0.5 rounded-md border border-rose-200">
+                                <span className="bg-rose-50 text-rose-700 text-[10px] font-black uppercase px-2 py-0.5 rounded-md border border-rose-200 shrink-0">
                                   Vencido
                                 </span>
                               )}
                             </div>
-                            <div className="text-xs text-slate-500 font-medium truncate max-w-xs mt-0.5">
+                            <div className="text-xs text-slate-500 font-medium truncate mt-0.5" title={p.description || ''}>
                               {p.description || 'Sin descripción'}
                             </div>
                             {p.start_date && p.end_date && (
                               <div className="text-[11px] font-mono text-slate-400 mt-1 flex items-center gap-1">
-                                <Calendar className="w-3 h-3 text-slate-400" />
-                                <span>
+                                <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
+                                <span className="whitespace-nowrap">
                                   {new Date(p.start_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })} — {new Date(p.end_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
                                 </span>
                               </div>
@@ -457,7 +460,7 @@ export default function ProductDashboard({
 
                       {/* Precio */}
                       <td className="py-4 px-6 whitespace-nowrap">
-                        <span className="font-mono font-black text-base text-gray-900 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs inline-block">
+                        <span className="font-mono font-black text-sm sm:text-base text-gray-900 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs inline-block">
                           ${Number(p.price).toFixed(2)}
                         </span>
                       </td>
