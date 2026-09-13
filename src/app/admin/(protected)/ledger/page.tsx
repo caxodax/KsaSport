@@ -2,6 +2,8 @@ import { getServiceSupabase } from '@/lib/supabase';
 import { CircleDollarSign, TrendingUp, CreditCard, ShoppingCart, BarChart3, Receipt, ChevronUp, Users, Calendar } from 'lucide-react';
 import DateRangeFilter from '../DateRangeFilter';
 import { parseDateRange } from '@/lib/dateRange';
+import ExportLedgerButton from './ExportLedgerButton';
+import { LedgerExportData } from '@/lib/exportExcel';
 
 export const revalidate = 0;
 
@@ -17,10 +19,11 @@ export default async function LedgerPage({
   // Fetch ALL completed payments in the date range
   const { data: payments } = await supabase
     .from('payments')
-    .select('id, amount, method, created_at, products(name), athletes(name, cedula)')
+    .select('id, amount, method, reference, created_at, products(name), athletes(name, cedula)')
     .eq('status', 'Completado')
     .gte('created_at', startDate.toISOString())
-    .lte('created_at', endDate.toISOString());
+    .lte('created_at', endDate.toISOString())
+    .order('created_at', { ascending: false });
 
   // Fetch all active installment products (to show debt)
   const { data: installmentProducts } = await supabase
@@ -118,6 +121,49 @@ export default async function LedgerPage({
     };
   }).filter(p => p.athleteCount > 0);
 
+  // Preparar payload para exportación a Excel
+  const exportPayload: LedgerExportData = {
+    dateRangeStr: formattedRange,
+    totalRevenue,
+    transactionCount,
+    averageTicket,
+    productsSold: sortedProducts.length,
+    methods: sortedMethods.map(([method, data]) => ({
+      name: method,
+      count: data.count,
+      total: data.total,
+      percentage: totalRevenue > 0 ? (data.total / totalRevenue) * 100 : 0,
+    })),
+    products: sortedProducts.map(([prodName, data]) => ({
+      name: prodName,
+      count: data.count,
+      total: data.total,
+      percentage: totalRevenue > 0 ? (data.total / totalRevenue) * 100 : 0,
+    })),
+    installments: installmentSummary.map(inst => ({
+      name: inst.name,
+      athleteCount: inst.athleteCount,
+      totalFacturado: inst.totalFacturado,
+      totalAbonado: inst.totalAbonado,
+      saldoPendiente: inst.saldoPendiente,
+      percent: inst.totalFacturado > 0 ? Math.min(100, (inst.totalAbonado / inst.totalFacturado) * 100) : 0,
+    })),
+    transactions: (payments || []).map(p => {
+      const athleteObj = Array.isArray(p.athletes) ? p.athletes[0] : p.athletes;
+      const prodObj = Array.isArray(p.products) ? p.products[0] : p.products;
+      return {
+        id: p.id,
+        date: p.created_at,
+        athleteName: athleteObj?.name || 'Público General',
+        athleteCedula: athleteObj?.cedula || '',
+        productName: prodObj?.name || 'Sin Concepto',
+        method: p.method || 'No especificado',
+        reference: p.reference || '',
+        amount: Number(p.amount) || 0,
+      };
+    }),
+  };
+
   return (
     <div className="p-4 sm:p-8 bg-gray-50/50 min-h-screen">
       {/* Encabezado Analítico */}
@@ -139,8 +185,9 @@ export default async function LedgerPage({
             </span>
           </div>
         </div>
-        <div className="w-full lg:w-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
           <DateRangeFilter />
+          <ExportLedgerButton data={exportPayload} />
         </div>
       </div>
 
