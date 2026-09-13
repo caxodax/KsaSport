@@ -165,34 +165,49 @@ export default async function LedgerPage({
   };
 
   return (
-    <div className="p-4 sm:p-8 bg-gray-50/50 min-h-screen">
-      {/* Encabezado Analítico */}
-      <div className="mb-8 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <div className="p-4 sm:p-8 bg-gray-50/50 min-h-screen space-y-6">
+      {/* 1. Encabezado Analítico y Acción Principal */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-2xl border border-gray-200/80 shadow-xs">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-gray-900 flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <div className="p-2.5 bg-green-100 rounded-xl shrink-0">
               <BarChart3 className="w-7 h-7 sm:w-8 sm:h-8 text-green-700" />
             </div>
-            <span>Reportes Financieros (Libro Mayor)</span>
-          </h2>
-          <div className="flex flex-wrap items-center gap-2 mt-2">
-            <p className="text-gray-500 text-sm sm:text-base">
-              Análisis de ingresos reales validados en la plataforma.
-            </p>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-green-50 text-green-700 border border-green-200 rounded-full text-xs font-bold shadow-2xs">
-              <Calendar className="w-3.5 h-3.5 text-green-600" />
-              {formattedRange}
-            </span>
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+                Reportes Financieros (Libro Mayor)
+              </h2>
+              <div className="flex flex-wrap items-center gap-2 mt-1">
+                <p className="text-gray-500 text-xs sm:text-sm">
+                  Análisis de ingresos reales validados en la plataforma.
+                </p>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-green-50 text-green-700 border border-green-200 rounded-full text-xs font-bold shadow-2xs">
+                  <Calendar className="w-3.5 h-3.5 text-green-600" />
+                  {formattedRange}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
-          <DateRangeFilter />
+
+        <div className="shrink-0 w-full sm:w-auto">
           <ExportLedgerButton data={exportPayload} />
         </div>
       </div>
 
+      {/* 2. Barra de Filtro de Fechas */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-200/80 shadow-2xs">
+        <div className="text-xs sm:text-sm font-bold text-gray-700 flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-green-600" />
+          <span>Filtrar período de ingresos:</span>
+        </div>
+        <div className="w-full lg:w-auto">
+          <DateRangeFilter />
+        </div>
+      </div>
+
       {/* Tarjetas KPI Premium */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         
         {/* KPI: Ingreso Total */}
         <div className="bg-gradient-to-br from-green-600 to-emerald-800 rounded-3xl p-6 shadow-xl shadow-green-900/20 text-white relative overflow-hidden">

@@ -40,3 +40,4 @@ export default function ExportPaymentsButton({ data }: { data: PaymentsExportDat
     </button>
   );
 }
+

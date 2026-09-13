@@ -1,5 +1,5 @@
 import { getServiceSupabase } from '@/lib/supabase'
-import { Wallet, Clock, Check, Calendar } from 'lucide-react'
+import { Wallet, Clock, Check, Calendar, CheckCircle2, XCircle } from 'lucide-react'
 import PaymentRow, { PaymentCard } from './PaymentRow'
 import { checkAdminPermission } from '@/lib/auth-admin'
 import DateRangeFilter from '../DateRangeFilter'
@@ -116,38 +116,82 @@ export default async function PaymentsPage({
   };
 
   return (
-    <div className="p-4 sm:p-8">
-      <div className="mb-8 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <div className="p-4 sm:p-8 space-y-6">
+      {/* 1. Cabecera Principal con Título y Botón de Acción */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-2xl border border-gray-200/80 shadow-xs">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Finanzas y Pagos</h2>
+          <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Finanzas y Pagos</h2>
           <div className="flex flex-wrap items-center gap-2 mt-1">
-            <p className="text-gray-500 text-sm sm:text-base">Bandeja de entrada para revisión y aprobación de pagos reportados.</p>
+            <p className="text-gray-500 text-xs sm:text-sm">Bandeja de entrada para revisión y aprobación de pagos reportados.</p>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-vinotinto-light/20 text-kasa-vinotinto border border-vinotinto-light/30 rounded-full text-xs font-bold shadow-2xs">
               <Calendar className="w-3.5 h-3.5 text-kasa-vinotinto" />
               {formattedRange}
             </span>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
-          <DateRangeFilter />
+        <div className="shrink-0 w-full sm:w-auto">
           <ExportPaymentsButton data={exportPayload} />
         </div>
       </div>
 
-      <div className="flex flex-col gap-8">
-        
-        {/* Resumen Superior */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-yellow-50 rounded-lg">
-              <Clock className="w-6 h-6 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Por Revisar</p>
-              <h3 className="text-2xl font-bold text-gray-900">{pendingCount}</h3>
+      {/* 2. Barra de Filtros por Rango de Fechas */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-200/80 shadow-2xs">
+        <div className="text-xs sm:text-sm font-bold text-gray-700 flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-kasa-dorado" />
+          <span>Filtrar período de reportes:</span>
+        </div>
+        <div className="w-full lg:w-auto">
+          <DateRangeFilter />
+        </div>
+      </div>
+
+      {/* 3. Resumen Superior (Tarjetas KPI Equilibradas) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs flex items-center gap-4">
+          <div className="p-3 bg-yellow-50 rounded-xl shrink-0">
+            <Clock className="w-6 h-6 text-yellow-600" />
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Por Revisar</p>
+            <div className="flex items-baseline gap-2 mt-0.5">
+              <h3 className="text-2xl font-black text-gray-900">{pendingCount}</h3>
+              <span className="text-xs font-bold text-yellow-700 bg-yellow-50 px-2 py-0.5 rounded-md border border-yellow-200">
+                ${pendingTotal.toFixed(2)}
+              </span>
             </div>
           </div>
         </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs flex items-center gap-4">
+          <div className="p-3 bg-green-50 rounded-xl shrink-0">
+            <CheckCircle2 className="w-6 h-6 text-green-600" />
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Validados</p>
+            <div className="flex items-baseline gap-2 mt-0.5">
+              <h3 className="text-2xl font-black text-gray-900">{completedCount}</h3>
+              <span className="text-xs font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded-md border border-green-200">
+                ${completedTotal.toFixed(2)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs flex items-center gap-4">
+          <div className="p-3 bg-red-50 rounded-xl shrink-0">
+            <XCircle className="w-6 h-6 text-red-600" />
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Rechazados</p>
+            <div className="flex items-baseline gap-2 mt-0.5">
+              <h3 className="text-2xl font-black text-gray-900">{rejectedCount}</h3>
+              <span className="text-xs font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded-md border border-red-200">
+                ${rejectedTotal.toFixed(2)}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
 
         {/* Lista de Pagos */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 w-full overflow-hidden">
@@ -209,8 +253,6 @@ export default async function PaymentsPage({
             </table>
           </div>
         </div>
-
-      </div>
     </div>
   )
 }
