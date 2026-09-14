@@ -59,8 +59,8 @@ export default function PaymentForm({
   const [splits, setSplits] = useState<PaymentSplit[]>([])
 
   const getRateForProduct = (rateType?: string) => {
-    if (rateType === 'EUR') return Number(rates?.eur) || 977.8778;
-    return Number(rates?.usd) || 842.2067;
+    if (rateType === 'EUR') return Number(rates?.eur) || 968.0673;
+    return Number(rates?.usd) || 832.4883;
   };
 
   const handleSelect = (product: Product) => {
@@ -127,8 +127,9 @@ export default function PaymentForm({
       if (s.id !== id) return s
 
       if (field === 'method') {
-        const isBs = value === 'Pago Móvil' || value === 'Transferencia Bancaria'
+        const isBs = value === 'Pago Móvil' || value === 'Transferencia Bancaria' || value === 'Efectivo en Bolívares'
         const isUsdt = value === 'USDT'
+        const isEurCash = value === 'Efectivo en Euros'
         const numAmount = Number(s.amount) || 0
 
         let currency = 'USD'
@@ -143,8 +144,12 @@ export default function PaymentForm({
           currency = 'USDT'
           rate = '1.0000'
           transferred = numAmount.toFixed(2)
+        } else if (isEurCash) {
+          currency = 'EUR'
+          rate = (Number(rates?.eur) || 968.0673).toFixed(4)
+          transferred = numAmount.toFixed(2)
         } else {
-          currency = 'USD'
+          currency = selectedProduct?.rate_type || 'USD'
           rate = '1.0000'
           transferred = numAmount.toFixed(2)
         }
@@ -349,6 +354,56 @@ export default function PaymentForm({
             </div>
           </div>
 
+          {/* BANNER DESTACADO DE TASA OFICIAL BCV Y TOTAL EN BOLÍVARES */}
+          <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50/50 to-white border border-emerald-200 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-200/80 pb-3 mb-3">
+              <div className="flex items-center gap-2.5">
+                <span className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-base shadow-xs shrink-0">
+                  🏦
+                </span>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-black text-emerald-950 uppercase tracking-wide flex flex-wrap items-center gap-2">
+                    <span>Tasa Oficial BCV</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      Fecha Valor: {rates?.date || new Date().toISOString().split('T')[0]}
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-emerald-800 font-medium">
+                    Calculada automáticamente con la cotización oficial del Banco Central de Venezuela.
+                  </p>
+                </div>
+              </div>
+              <div className="text-left sm:text-right shrink-0 bg-white sm:bg-transparent p-2 sm:p-0 rounded-xl border sm:border-0 border-emerald-200">
+                <div className="text-[10px] sm:text-xs text-emerald-700 font-bold uppercase">Cotización Oficial:</div>
+                <div className="text-lg font-mono font-black text-emerald-900">
+                  Bs. {getRateForProduct(selectedProduct.rate_type).toFixed(2)} <span className="text-xs font-bold text-slate-500">/ {selectedProduct.rate_type || 'USD'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Total equivalente a pagar en Bolívares */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
+              <span className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                <span>🇻🇪</span> Total a Pagar en Bolívares (Bs.):
+              </span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-2xl sm:text-3xl font-mono font-black text-emerald-700">
+                  Bs. {((Number(amountToPay) || (selectedProduct.amount_pending ?? selectedProduct.price)) * getRateForProduct(selectedProduct.rate_type)).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
+
+            {/* Referencia USDT */}
+            <div className="mt-3 pt-2.5 border-t border-emerald-100 flex items-center justify-between text-[11px] text-slate-600 font-medium">
+              <span className="flex items-center gap-1">
+                <span>🟢</span> Tasa USDT de Referencia (Binance P2P):
+              </span>
+              <span className="font-mono font-bold text-slate-800">
+                Bs. {Number(rates?.usdt_promedio || rates?.usdt || 959.68).toFixed(2)} / USDT
+              </span>
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Monto Total a Reportar ($)</label>
@@ -423,18 +478,32 @@ export default function PaymentForm({
                         required
                         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto font-bold text-gray-800"
                       >
-                        <option value="">Selecciona...</option>
-                        <option value="Pago Móvil">Pago Móvil (Bs)</option>
-                        <option value="Transferencia Bancaria">Transferencia Bancaria (Bs)</option>
-                        <option value="Zelle">Zelle (USD)</option>
-                        <option value="Efectivo">Efectivo ($ / €)</option>
-                        <option value="USDT">USDT / Binance</option>
+                        <option value="">Selecciona el método...</option>
+                        <option value="Pago Móvil">📱 Pago Móvil (Bs)</option>
+                        <option value="Transferencia Bancaria">🏦 Transferencia Bancaria (Bs)</option>
+                        <option value="Efectivo en Bolívares">💵 Efectivo en Bolívares (Bs)</option>
+                        <option value="Zelle">🇺🇸 Zelle (USD)</option>
+                        <option value="Efectivo">💵 Efectivo en Dólares ($ USD)</option>
+                        <option value="Efectivo en Euros">💶 Efectivo en Euros (€ EUR)</option>
+                        <option value="USDT">🟢 USDT / Binance Cripto</option>
                       </select>
                     </div>
                   </div>
 
+                  {/* Vista previa informativa antes de seleccionar método */}
+                  {!split.method && (
+                    <div className="mb-4 p-3 bg-slate-100/80 rounded-xl border border-slate-200 text-xs text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <span>💡</span> Tasa oficial BCV ({rates?.date || 'Hoy'}): <strong className="text-gray-900 font-mono">Bs. {getRateForProduct(selectedProduct.rate_type).toFixed(2)}</strong>
+                      </span>
+                      <span className="font-bold text-slate-800">
+                        Total en Bs: <strong className="text-emerald-700 font-mono text-sm">Bs. {(Number(split.amount || 0) * getRateForProduct(selectedProduct.rate_type)).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                      </span>
+                    </div>
+                  )}
+
                   {/* Bloque de Conversión Automática de Tasa BCV (Bolívares) */}
-                  {(split.method === 'Pago Móvil' || split.method === 'Transferencia Bancaria') && (
+                  {(split.method === 'Pago Móvil' || split.method === 'Transferencia Bancaria' || split.method === 'Efectivo en Bolívares') && (
                     <div className="mb-4 p-3.5 bg-sky-50/90 rounded-xl border border-sky-200 text-xs">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2.5 border-b border-sky-200/80">
                         <span className="font-bold text-sky-950 flex items-center gap-1.5">
@@ -447,7 +516,7 @@ export default function PaymentForm({
 
                       <div className="mt-2.5">
                         <label className="block text-[11px] font-black uppercase text-sky-900 tracking-wider mb-1">
-                          Monto Transferido en Bolívares (Bs.) *
+                          Monto a Transferir / Pagado en Bolívares (Bs.) *
                         </label>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-sky-700 font-bold text-xs">
@@ -464,7 +533,44 @@ export default function PaymentForm({
                           />
                         </div>
                         <p className="text-[10px] text-sky-700 mt-1">
-                          Monto total en Bolívares reflejado en tu comprobante de transferencia bancaria o Pago Móvil.
+                          Monto total en Bolívares reflejado en tu comprobante de Pago Móvil o transferencia bancaria.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Bloque para USDT / Binance */}
+                  {split.method === 'USDT' && (
+                    <div className="mb-4 p-3.5 bg-emerald-50/90 rounded-xl border border-emerald-200 text-xs">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2.5 border-b border-emerald-200/80">
+                        <span className="font-bold text-emerald-950 flex items-center gap-1.5">
+                          <span>🟢</span> Tasa USDT de Referencia (Binance P2P):
+                        </span>
+                        <span className="font-mono font-black text-emerald-900 bg-white px-2.5 py-0.5 rounded-md border border-emerald-200 shadow-2xs">
+                          Bs. {Number(rates?.usdt_promedio || rates?.usdt || 959.68).toFixed(2)} / USDT
+                        </span>
+                      </div>
+
+                      <div className="mt-2.5">
+                        <label className="block text-[11px] font-black uppercase text-emerald-900 tracking-wider mb-1">
+                          Monto a Transferir en USDT *
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-emerald-700 font-bold text-xs">
+                            ₮
+                          </div>
+                          <input 
+                            type="number"
+                            step="0.01"
+                            value={split.transferred_amount || split.amount || ''}
+                            onChange={(e) => updateSplit(split.id, 'transferred_amount', e.target.value)}
+                            required
+                            placeholder="Monto en USDT"
+                            className="w-full pl-10 pr-3 py-2 bg-white rounded-lg border border-emerald-300 text-sm font-mono font-black text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                          />
+                        </div>
+                        <p className="text-[10px] text-emerald-700 mt-1">
+                          Monto exacto en USDT enviado a través de Binance Pay o transferencia de billetera.
                         </p>
                       </div>
                     </div>
