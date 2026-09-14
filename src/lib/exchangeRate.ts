@@ -126,15 +126,17 @@ export async function fetchAlCambioRates(): Promise<{ usd: number; eur: number; 
       }
     }
 
-    // 1. Tasa USD oficial (con baseValue > 1 y official === true)
+    // 1. Tasa USD oficial (AlCambio usa type: "OTHER" && official: true para la tasa BCV activa)
     const usdOfficial = rates.find(
+      (r: any) => r?.type === 'OTHER' && r?.official === true && r?.rateCurrency?.code === 'USD' && Number(r?.baseValue) > 1
+    ) || rates.filter(
       (r: any) => r?.rateCurrency?.code === 'USD' && r?.official === true && Number(r?.baseValue) > 1
-    ) || rates.filter((r: any) => r?.rateCurrency?.code === 'USD' && Number(r?.baseValue) > 1).pop();
+    ).pop() || rates.filter((r: any) => r?.rateCurrency?.code === 'USD' && Number(r?.baseValue) > 1).pop();
     const usd = usdOfficial ? Number(usdOfficial.baseValue) : null;
 
-    // 2. Tasa EUR oficial
+    // 2. Tasa EUR oficial (type: "OTHER" && official: true)
     const eurOfficial = rates.find(
-      (r: any) => r?.rateCurrency?.code === 'EUR' && r?.official === true && Number(r?.baseValue) > 1
+      (r: any) => r?.type === 'OTHER' && r?.official === true && r?.rateCurrency?.code === 'EUR' && Number(r?.baseValue) > 1
     ) || rates.find((r: any) => r?.rateCurrency?.code === 'EUR' && Number(r?.baseValue) > 1);
     const eur = eurOfficial ? Number(eurOfficial.baseValue) : null;
 

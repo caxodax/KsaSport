@@ -101,9 +101,10 @@ async function fetchFromAlCambio() {
       query {
         getCountryConversions(payload: { countryCode: "VE" }) {
           conversionRates {
-            rateCurrency { code }
-            baseValue
+            type
             official
+            baseValue
+            rateCurrency { code }
           }
         }
       }
@@ -119,15 +120,17 @@ async function fetchFromAlCambio() {
     }
   }
 
-  // 1. Extraer Tasa Oficial USD BCV (con baseValue > 1 y official === true)
+  // 1. Extraer Tasa Oficial USD BCV (AlCambio usa type: "OTHER" && official: true para la tasa BCV activa)
   const usdOfficial = rates.find(
+    r => r?.type === 'OTHER' && r?.official === true && r?.rateCurrency?.code === 'USD' && Number(r?.baseValue) > 1
+  ) || rates.filter(
     r => r?.rateCurrency?.code === 'USD' && r?.official === true && Number(r?.baseValue) > 1
-  ) || rates.filter(r => r?.rateCurrency?.code === 'USD' && Number(r?.baseValue) > 1).pop();
+  ).pop() || rates.filter(r => r?.rateCurrency?.code === 'USD' && Number(r?.baseValue) > 1).pop();
   const usdRate = usdOfficial ? Number(usdOfficial.baseValue) : null;
 
-  // 2. Extraer Tasa Oficial EUR BCV
+  // 2. Extraer Tasa Oficial EUR BCV (type: "OTHER" && official: true)
   const eurOfficial = rates.find(
-    r => r?.rateCurrency?.code === 'EUR' && r?.official === true && Number(r?.baseValue) > 1
+    r => r?.type === 'OTHER' && r?.official === true && r?.rateCurrency?.code === 'EUR' && Number(r?.baseValue) > 1
   ) || rates.find(r => r?.rateCurrency?.code === 'EUR' && Number(r?.baseValue) > 1);
   const eurRate = eurOfficial ? Number(eurOfficial.baseValue) : null;
 
