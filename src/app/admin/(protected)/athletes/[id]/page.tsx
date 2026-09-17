@@ -1,7 +1,7 @@
 import { getServiceSupabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, User, Calendar, CreditCard, ShieldCheck, Activity, Trophy, MessageCircle, ExternalLink, Receipt } from 'lucide-react'
+import { ArrowLeft, User, Calendar, CreditCard, ShieldCheck, Activity, Trophy, MessageCircle, ExternalLink, Receipt, UtensilsCrossed } from 'lucide-react'
 import ExemptionManager from './ExemptionManager'
 import { formatCedula } from '@/lib/cedula'
 
@@ -56,6 +56,13 @@ export default async function AthleteProfilePage({
     .select('*, products(name)')
     .eq('athlete_id', athlete.id)
     .order('created_at', { ascending: false })
+
+  // 5.1 Fetch Cantina Credit Account
+  const { data: foodCredit } = await supabase
+    .from('food_credit_accounts')
+    .select('balance, credit_limit')
+    .eq('athlete_id', athlete.id)
+    .maybeSingle()
 
   // 6. Calcular Estado de Cuenta Financiero
   const statement = []
@@ -247,6 +254,21 @@ export default async function AthleteProfilePage({
                       Sin teléfono registrado
                     </span>
                   )}
+
+                  {/* Badge y acceso rápido a Cantina */}
+                  <Link
+                    href="/admin/cantina"
+                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 transition-colors shadow-2xs"
+                    title="Ver en Cantina KsaSports"
+                  >
+                    <UtensilsCrossed className="w-4 h-4 text-amber-700" />
+                    <div>
+                      <p className="text-[9px] uppercase font-black text-amber-800 tracking-wider leading-none">Cantina</p>
+                      <p className="font-black text-xs text-amber-900 mt-0.5">
+                        {Number(foodCredit?.balance || 0) > 0 ? `Deuda: $${Number(foodCredit?.balance || 0).toFixed(2)}` : 'Al día ($0.00)'}
+                      </p>
+                    </div>
+                  </Link>
                 </div>
               </div>
             </div>

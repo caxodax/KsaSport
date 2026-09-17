@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Medal, LayoutDashboard, Users, Shield, Trophy, Menu, Tags, X, ShoppingBag, Wallet, Settings, LogOut, BarChart3, UserCog, Landmark } from 'lucide-react';
+import { Medal, LayoutDashboard, Users, Shield, Trophy, Menu, Tags, X, ShoppingBag, Wallet, Settings, LogOut, BarChart3, UserCog, Landmark, UtensilsCrossed } from 'lucide-react';
 import { logoutAdmin } from '../login/actions';
 
 export default function Sidebar({ permissions, roleName, email }: { permissions: string[], roleName: string, email: string }) {
@@ -17,12 +17,19 @@ export default function Sidebar({ permissions, roleName, email }: { permissions:
     { href: '/admin/athletes', label: 'Roster / Atletas', icon: Users, permission: 'view_roster' },
     { href: '/admin/staff', label: 'Staff Técnico', icon: Shield, permission: 'manage_catalog' },
     { href: '/admin/products', label: 'Catálogo de Tienda', icon: ShoppingBag, permission: 'manage_catalog' },
+    { href: '/admin/cantina', label: 'Cantina', icon: UtensilsCrossed, permission: ['manage_catalog', 'view_finances'] },
     { href: '/admin/payments', label: 'Finanzas y Pagos', icon: Wallet, permission: 'view_finances' },
     { href: '/admin/ledger', label: 'Reportes Financieros', icon: BarChart3, permission: 'view_finances' },
     { href: '/admin/rates', label: 'Tasa de Cambio (BCV)', icon: Landmark, permission: 'manage_settings' },
     { href: '/admin/settings', label: 'Cobros & Morosidad', icon: Settings, permission: 'manage_settings' },
     { href: '/admin/users', label: 'Usuarios y Roles', icon: UserCog, permission: 'manage_roles' },
-  ].filter(link => !link.permission || permissions.includes(link.permission));
+  ].filter(link => {
+    if (!link.permission) return true;
+    if (Array.isArray(link.permission)) {
+      return link.permission.some(p => permissions.includes(p));
+    }
+    return permissions.includes(link.permission as string);
+  });
 
   const closeMenu = () => setIsOpen(false);
 

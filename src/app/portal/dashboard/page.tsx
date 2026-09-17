@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getServiceSupabase } from '@/lib/supabase'
-import { CheckCircle2, AlertCircle, ShoppingCart, Activity, ShieldCheck, User, Calendar, LogOut, Lock, PhoneCall, Trophy } from 'lucide-react'
+import { CheckCircle2, AlertCircle, ShoppingCart, Activity, ShieldCheck, User, Calendar, LogOut, Lock, PhoneCall, Trophy, UtensilsCrossed } from 'lucide-react'
 import Link from 'next/link'
 import { logout } from '../actions'
 import QRModal from '@/components/portal/QRModal'
@@ -215,6 +215,13 @@ export default async function PortalDashboard() {
   const optedInIds = new Set(athleteOptIns?.map(o => o.product_id) || [])
   const pendingInvitations = optInProducts?.filter(p => !optedInIds.has(p.id)) || []
 
+  // Consultar cuenta de crédito de cantina
+  const { data: foodCredit } = await adminSupabase
+    .from('food_credit_accounts')
+    .select('balance, credit_limit')
+    .eq('athlete_id', athlete.id)
+    .maybeSingle()
+
   return (
     <div className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
       
@@ -405,6 +412,39 @@ export default async function PortalDashboard() {
               ))}
             </div>
           )}
+
+          {/* Tarjeta Cantina KsaSports */}
+          <div className="bg-gradient-to-r from-slate-900 to-zinc-900 rounded-3xl p-5 sm:p-6 text-white shadow-sm border border-zinc-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative overflow-hidden">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-white/10 text-kasa-dorado flex items-center justify-center shrink-0 border border-white/10">
+                <UtensilsCrossed className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-black text-base text-white">Cantina KsaSports</h3>
+                  {Number(foodCredit?.balance || 0) > 0 ? (
+                    <span className="bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] font-black px-2.5 py-0.5 rounded-full">
+                      Deuda: ${Number(foodCredit?.balance || 0).toFixed(2)}
+                    </span>
+                  ) : (
+                    <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-black px-2.5 py-0.5 rounded-full">
+                      Al día
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Línea de crédito para consumos y alimentos en la sede deportiva.
+                </p>
+              </div>
+            </div>
+
+            <Link
+              href="/portal/dashboard/cantina"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-kasa-dorado hover:bg-yellow-400 text-kasa-vinotinto font-black text-xs transition-colors shadow-md text-center flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+            >
+              Ver Cantina & Pagar ➜
+            </Link>
+          </div>
 
           {activeDebts.length > 0 && (
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden relative">

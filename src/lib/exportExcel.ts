@@ -1452,4 +1452,129 @@ export async function exportPaymentsToExcel(data: PaymentsExportData) {
   window.URL.revokeObjectURL(url);
 }
 
+export interface CantinaExportData {
+  dateRangeStr: string;
+  totalVentas: number;
+  totalCobrado: number;
+  totalDeuda: number;
+  orders: {
+    id: string;
+    date: string;
+    athleteName: string;
+    cedula: string;
+    teamName: string;
+    itemsSummary: string;
+    total: number;
+    notes?: string | null;
+  }[];
+  payments: {
+    id: string;
+    date: string;
+    athleteName: string;
+    cedula: string;
+    method: string;
+    amount: number;
+    transferredAmount?: number | null;
+    exchangeRate?: number | null;
+    reference?: string | null;
+    status: string;
+  }[];
+}
+
+export async function exportCantinaLedgerToExcel(data: CantinaExportData) {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'KsaSports Cantina';
+  workbook.created = new Date();
+
+  // Pestaña 1: Ventas y Consumos
+  const wsOrders = workbook.addWorksheet('Ventas Cantina', { views: [{ showGridLines: true }] });
+  wsOrders.columns = [
+    { header: '#', key: 'index', width: 6 },
+    { header: 'Fecha y Hora', key: 'date', width: 20 },
+    { header: 'Atleta', key: 'athlete', width: 26 },
+    { header: 'Cédula', key: 'cedula', width: 16 },
+    { header: 'Equipo', key: 'team', width: 22 },
+    { header: 'Detalle de Productos', key: 'items', width: 35 },
+    { header: 'Total ($)', key: 'total', width: 14 },
+    { header: 'Observaciones', key: 'notes', width: 25 },
+  ];
+
+  const headerRow1 = wsOrders.getRow(1);
+  headerRow1.height = 26;
+  headerRow1.eachCell(cell => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '800020' } };
+    cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFF' } };
+    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+  });
+
+  data.orders.forEach((o, i) => {
+    const row = wsOrders.addRow({
+      index: i + 1,
+      date: o.date,
+      athlete: o.athleteName,
+      cedula: formatCedula(o.cedula),
+      team: o.teamName || 'Sin Equipo',
+      items: o.itemsSummary,
+      total: Number(o.total),
+      notes: o.notes || '-'
+    });
+    row.getCell('total').numFmt = '"$"#,##0.00';
+  });
+
+  // Pestaña 2: Pagos y Abonos
+  const wsPayments = workbook.addWorksheet('Pagos Cantina', { views: [{ showGridLines: true }] });
+  wsPayments.columns = [
+    { header: '#', key: 'index', width: 6 },
+    { header: 'Fecha', key: 'date', width: 20 },
+    { header: 'Atleta', key: 'athlete', width: 26 },
+    { header: 'Cédula', key: 'cedula', width: 16 },
+    { header: 'Método de Pago', key: 'method', width: 22 },
+    { header: 'Monto ($)', key: 'amount', width: 14 },
+    { header: 'Monto en Bs', key: 'amountBs', width: 18 },
+    { header: 'Tasa BCV', key: 'rate', width: 14 },
+    { header: 'Referencia', key: 'ref', width: 18 },
+    { header: 'Estatus', key: 'status', width: 15 },
+  ];
+
+  const headerRow2 = wsPayments.getRow(1);
+  headerRow2.height = 26;
+  headerRow2.eachCell(cell => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '800020' } };
+    cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFF' } };
+    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+  });
+
+  data.payments.forEach((p, i) => {
+    const row = wsPayments.addRow({
+      index: i + 1,
+      date: p.date,
+      athlete: p.athleteName,
+      cedula: formatCedula(p.cedula),
+      method: p.method,
+      amount: Number(p.amount),
+      amountBs: p.transferredAmount ? Number(p.transferredAmount) : null,
+      rate: p.exchangeRate ? Number(p.exchangeRate) : null,
+      ref: p.reference || '-',
+      status: p.status
+    });
+    row.getCell('amount').numFmt = '"$"#,##0.00';
+    if (p.transferredAmount) row.getCell('amountBs').numFmt = '"Bs."#,##0.00';
+    if (p.exchangeRate) row.getCell('rate').numFmt = '#,##0.00';
+  });
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const cleanRange = data.dateRangeStr.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const fileName = `KsaSports_Cantina_Finanzas_${cleanRange}.xlsx`;
+
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+}
+
 
