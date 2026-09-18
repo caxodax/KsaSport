@@ -15,15 +15,9 @@ import {
   Clock,
   X,
   FileText,
-  Filter,
   Check,
-  ChevronDown,
-  ChevronUp,
-  DollarSign,
   Download,
   AlertTriangle,
-  RotateCcw,
-  Sparkles,
   ShoppingBag
 } from "lucide-react"
 import { formatCedula } from "@/lib/cedula"

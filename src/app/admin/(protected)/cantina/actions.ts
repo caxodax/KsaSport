@@ -109,33 +109,18 @@ export async function updateFoodCreditLimit(athleteId: string, newLimit: number)
     return { error: 'El límite no puede ser negativo.' }
   }
 
-  const { data: existing } = await supabase
+  const { error } = await supabase
     .from('food_credit_accounts')
-    .select('id')
-    .eq('athlete_id', athleteId)
-    .single()
-
-  if (existing) {
-    const { error } = await supabase
-      .from('food_credit_accounts')
-      .update({ 
-        credit_limit: newLimit,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', existing.id)
-
-    if (error) return { error: error.message }
-  } else {
-    const { error } = await supabase
-      .from('food_credit_accounts')
-      .insert([{
+    .upsert(
+      {
         athlete_id: athleteId,
         credit_limit: newLimit,
-        balance: 0.00
-      }])
+        updated_at: new Date().toISOString()
+      },
+      { onConflict: 'athlete_id' }
+    )
 
-    if (error) return { error: error.message }
-  }
+  if (error) return { error: error.message }
 
   revalidatePath('/admin/cantina')
   return { success: true }
