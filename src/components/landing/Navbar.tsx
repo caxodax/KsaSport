@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Medal, Menu, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
@@ -21,34 +20,30 @@ export default function Navbar() {
   return (
     <>
       <nav
-        className={cn(
-          "fixed top-0 inset-x-0 z-50 transition-all duration-300 border-b border-transparent",
+        className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 border-b ${
           isScrolled 
             ? "bg-white/80 backdrop-blur-md border-gray-200/50 shadow-sm py-3" 
-            : "bg-kasa-vinotinto py-4 sm:py-5"
-        )}
+            : "border-transparent bg-kasa-vinotinto py-4 sm:py-5"
+        }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group relative z-50">
-            <Medal className={cn(
-              "w-8 h-8 transition-colors", 
+            <Medal className={`w-8 h-8 transition-colors ${
               isScrolled ? "text-kasa-vinotinto" : "text-kasa-dorado"
-            )} />
-            <span className={cn(
-              "text-xl font-extrabold tracking-wider transition-colors",
+            }`} />
+            <span className={`text-xl font-extrabold tracking-wider transition-colors ${
               isScrolled ? "text-gray-900" : "text-white"
-            )}>
+            }`}>
               KASA SPORTS
             </span>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <div className={cn(
-              "flex gap-6 font-semibold text-sm transition-colors",
+            <div className={`flex gap-6 font-semibold text-sm transition-colors ${
               isScrolled ? "text-gray-600" : "text-white/90"
-            )}>
+            }`}>
               <a href="#eventos" className="hover:text-kasa-dorado transition-colors">Ligas Activas</a>
               <a href="#tryouts" className="hover:text-kasa-dorado transition-colors">Scouting</a>
               <a href="#tecnologia" className="hover:text-kasa-dorado transition-colors">Plataforma</a>
@@ -57,12 +52,11 @@ export default function Navbar() {
             <div className="flex items-center gap-3">
               <Link 
                 href="/portal" 
-                className={cn(
-                  "text-sm font-bold px-5 py-2.5 rounded-full transition-all border",
+                className={`text-sm font-bold px-5 py-2.5 rounded-full transition-all border ${
                   isScrolled 
                     ? "bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300"
                     : "bg-white/10 text-white border-white/20 hover:bg-white/20"
-                )}
+                }`}
               >
                 Soy Atleta
               </Link>
@@ -81,9 +75,9 @@ export default function Navbar() {
             className="md:hidden relative z-50 p-2 -mr-2"
           >
             {mobileMenuOpen ? (
-              <X className={cn("w-6 h-6", isScrolled || mobileMenuOpen ? "text-gray-900" : "text-white")} />
+              <X className={`w-6 h-6 ${isScrolled || mobileMenuOpen ? "text-gray-900" : "text-white"}`} />
             ) : (
-              <Menu className={cn("w-6 h-6", isScrolled ? "text-gray-900" : "text-white")} />
+              <Menu className={`w-6 h-6 ${isScrolled ? "text-gray-900" : "text-white"}`} />
             )}
           </button>
         </div>

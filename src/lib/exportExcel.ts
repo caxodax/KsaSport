@@ -1,6 +1,46 @@
 import ExcelJS from 'exceljs';
 import { formatCedula } from './cedula';
 
+function createKsaWorkbook(): ExcelJS.Workbook {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'KsaSports Management';
+  wb.lastModifiedBy = 'KsaSports Admin';
+  wb.created = new Date();
+  wb.modified = new Date();
+  return wb;
+}
+
+function styleKsaHeaderRow(row: ExcelJS.Row, height = 28) {
+  row.height = height;
+  row.font = { name: 'Segoe UI', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+  row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF800020' } };
+  row.alignment = { vertical: 'middle', horizontal: 'center', wrapText: false };
+}
+
+function formatDateStr(dateStr?: string | null): string {
+  if (!dateStr) return 'N/A';
+  try {
+    const parts = dateStr.split('T')[0].split('-');
+    if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  } catch {}
+  return dateStr;
+}
+
+async function downloadWorkbook(workbook: ExcelJS.Workbook, fileName: string) {
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { 
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+  });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+}
+
 export interface AthleteExportItem {
   id: string;
   name: string;
@@ -31,11 +71,7 @@ export async function exportAthletesToExcel(
   athletes: AthleteExportItem[],
   customSubtitle?: string
 ) {
-  const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'KsaSports Management';
-  workbook.lastModifiedBy = 'KsaSports Admin';
-  workbook.created = new Date();
-  workbook.modified = new Date();
+  const workbook = createKsaWorkbook();
 
   const worksheet = workbook.addWorksheet('Roster de Atletas', {
     views: [{ showGridLines: true }]
@@ -58,50 +94,12 @@ export async function exportAthletesToExcel(
   ];
 
   // 2. Estilizar Fila de Encabezados (Fila 1)
-  const headerRow = worksheet.getRow(1);
-  headerRow.height = 28;
-  headerRow.font = { 
-    name: 'Segoe UI', 
-    size: 11, 
-    bold: true, 
-    color: { argb: 'FFFFFFFF' } 
-  };
-  headerRow.fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FF800020' } // Vinotinto KsaSports
-  };
-  headerRow.alignment = { 
-    vertical: 'middle', 
-    horizontal: 'center',
-    wrapText: false
-  };
+  styleKsaHeaderRow(worksheet.getRow(1));
 
   // 3. Añadir Datos
   athletes.forEach((athlete, i) => {
-    let formattedPaidUntil = 'N/A';
-    if (athlete.paid_until) {
-      try {
-        const parts = athlete.paid_until.split('T')[0].split('-');
-        if (parts.length === 3) {
-          formattedPaidUntil = `${parts[2]}/${parts[1]}/${parts[0]}`;
-        }
-      } catch (e) {
-        formattedPaidUntil = athlete.paid_until;
-      }
-    }
-
-    let formattedCreatedAt = 'N/A';
-    if (athlete.created_at) {
-      try {
-        const parts = athlete.created_at.split('T')[0].split('-');
-        if (parts.length === 3) {
-          formattedCreatedAt = `${parts[2]}/${parts[1]}/${parts[0]}`;
-        }
-      } catch (e) {
-        formattedCreatedAt = athlete.created_at;
-      }
-    }
+    const formattedPaidUntil = formatDateStr(athlete.paid_until);
+    const formattedCreatedAt = formatDateStr(athlete.created_at);
 
     const teamObj = Array.isArray(athlete.teams) ? athlete.teams[0] : athlete.teams;
 
@@ -178,25 +176,10 @@ export async function exportAthletesToExcel(
     column.width = Math.max(maxLength + 4, column.width || 12);
   });
 
-  // 5. Generar Buffer y Disparar Descarga en el Navegador
-  const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { 
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-  });
-  
-  const now = new Date();
-  const dateStr = now.toISOString().split('T')[0];
+  // 5. Descarga en el Navegador
+  const dateStr = new Date().toISOString().split('T')[0];
   const cleanSubtitle = customSubtitle ? `_${customSubtitle.replace(/[^a-zA-Z0-9_-]/g, '')}` : '';
-  const fileName = `KsaSports_Atletas${cleanSubtitle}_${dateStr}.xlsx`;
-
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
+  await downloadWorkbook(workbook, `KsaSports_Atletas${cleanSubtitle}_${dateStr}.xlsx`);
 }
 
 export interface LedgerExportData {
@@ -254,11 +237,7 @@ function formatDateTime(dateStr?: string | null): string {
  * con el Libro Mayor Financiero y el detalle de transacciones respetando filtros.
  */
 export async function exportLedgerToExcel(data: LedgerExportData) {
-  const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'KsaSports Management';
-  workbook.lastModifiedBy = 'KsaSports Admin';
-  workbook.created = new Date();
-  workbook.modified = new Date();
+  const workbook = createKsaWorkbook();
 
   const thinBorder = {
     top: { style: 'thin' as const, color: { argb: 'FFE2E8F0' } },
@@ -847,22 +826,8 @@ export async function exportLedgerToExcel(data: LedgerExportData) {
   // ==========================================
   // DISPARAR DESCARGA EN EL NAVEGADOR
   // ==========================================
-  const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { 
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-  });
-  
   const cleanRange = data.dateRangeStr.replace(/[^a-zA-Z0-9_-]/g, '_');
-  const fileName = `KsaSports_LibroMayor_${cleanRange}.xlsx`;
-
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
+  await downloadWorkbook(workbook, `KsaSports_LibroMayor_${cleanRange}.xlsx`);
 }
 
 export interface PaymentsExportItem {
@@ -902,11 +867,7 @@ export interface PaymentsExportData {
  * con el reporte de Finanzas y Pagos respetando el rango de fechas activo.
  */
 export async function exportPaymentsToExcel(data: PaymentsExportData) {
-  const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'KsaSports Management';
-  workbook.lastModifiedBy = 'KsaSports Admin';
-  workbook.created = new Date();
-  workbook.modified = new Date();
+  const workbook = createKsaWorkbook();
 
   const thinBorder = {
     top: { style: 'thin' as const, color: { argb: 'FFE2E8F0' } },
@@ -1434,22 +1395,8 @@ export async function exportPaymentsToExcel(data: PaymentsExportData) {
   // ==========================================
   // DISPARAR DESCARGA EN EL NAVEGADOR
   // ==========================================
-  const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { 
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-  });
-  
   const cleanRange = data.dateRangeStr.replace(/[^a-zA-Z0-9_-]/g, '_');
-  const fileName = `KsaSports_Finanzas_Pagos_${cleanRange}.xlsx`;
-
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
+  await downloadWorkbook(workbook, `KsaSports_Finanzas_Pagos_${cleanRange}.xlsx`);
 }
 
 export interface CantinaExportData {
@@ -1482,9 +1429,7 @@ export interface CantinaExportData {
 }
 
 export async function exportCantinaLedgerToExcel(data: CantinaExportData) {
-  const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'KsaSports Cantina';
-  workbook.created = new Date();
+  const workbook = createKsaWorkbook();
 
   // Pestaña 1: Ventas y Consumos
   const wsOrders = workbook.addWorksheet('Ventas Cantina', { views: [{ showGridLines: true }] });
@@ -1499,13 +1444,7 @@ export async function exportCantinaLedgerToExcel(data: CantinaExportData) {
     { header: 'Observaciones', key: 'notes', width: 25 },
   ];
 
-  const headerRow1 = wsOrders.getRow(1);
-  headerRow1.height = 26;
-  headerRow1.eachCell(cell => {
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '800020' } };
-    cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFF' } };
-    cell.alignment = { vertical: 'middle', horizontal: 'center' };
-  });
+  styleKsaHeaderRow(wsOrders.getRow(1), 26);
 
   data.orders.forEach((o, i) => {
     const row = wsOrders.addRow({
@@ -1536,13 +1475,7 @@ export async function exportCantinaLedgerToExcel(data: CantinaExportData) {
     { header: 'Estatus', key: 'status', width: 15 },
   ];
 
-  const headerRow2 = wsPayments.getRow(1);
-  headerRow2.height = 26;
-  headerRow2.eachCell(cell => {
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '800020' } };
-    cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFF' } };
-    cell.alignment = { vertical: 'middle', horizontal: 'center' };
-  });
+  styleKsaHeaderRow(wsPayments.getRow(1), 26);
 
   data.payments.forEach((p, i) => {
     const row = wsPayments.addRow({
@@ -1562,19 +1495,8 @@ export async function exportCantinaLedgerToExcel(data: CantinaExportData) {
     if (p.exchangeRate) row.getCell('rate').numFmt = '#,##0.00';
   });
 
-  const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   const cleanRange = data.dateRangeStr.replace(/[^a-zA-Z0-9_-]/g, '_');
-  const fileName = `KsaSports_Cantina_Finanzas_${cleanRange}.xlsx`;
-
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
+  await downloadWorkbook(workbook, `KsaSports_Cantina_Finanzas_${cleanRange}.xlsx`);
 }
 
 
