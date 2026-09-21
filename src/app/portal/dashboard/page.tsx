@@ -281,7 +281,7 @@ export default async function PortalDashboard() {
           </div>
 
           <div className="flex-1 text-center md:text-left">
-            <h1 className="text-2xl md:text-5xl font-black text-white leading-tight tracking-tight drop-shadow-md mb-2">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-display uppercase text-white leading-tight tracking-wide drop-shadow-md mb-2">
               {athlete.name}
             </h1>
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5 mt-1">
@@ -348,7 +348,7 @@ export default async function PortalDashboard() {
                 <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <CheckCircle2 className="w-8 h-8 text-green-500" />
                 </div>
-                <h3 className="text-xl font-black text-gray-900 uppercase tracking-widest mb-1">Solvente</h3>
+                <h3 className="text-3xl font-display uppercase tracking-wider text-gray-900 mb-0.5">Solvente</h3>
                 <p className="text-sm text-green-600 font-medium">Luz verde para jugar.</p>
                 {athlete.paid_until && (
                   <div className="mt-4 bg-gray-50 border border-gray-100 px-4 py-2 rounded-xl text-xs font-bold text-gray-600 flex items-center gap-2">
@@ -362,7 +362,7 @@ export default async function PortalDashboard() {
                 <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <AlertCircle className="w-8 h-8 text-red-500" />
                 </div>
-                <h3 className="text-xl font-black text-gray-900 uppercase tracking-widest mb-1">Morosidad</h3>
+                <h3 className="text-3xl font-display uppercase tracking-wider text-red-600 mb-0.5">Morosidad</h3>
                 <p className="text-sm text-red-600 font-medium">Participación restringida.</p>
                 {athlete.paid_until && (
                   <div className="mt-4 bg-gray-50 border border-gray-100 px-4 py-2 rounded-xl text-xs font-bold text-gray-600 flex items-center gap-2">
@@ -374,7 +374,7 @@ export default async function PortalDashboard() {
             )}
           </div>
 
-          {/* Tarjeta de Estadísticas Dinámica */}
+          {/* Tarjeta de Estadísticas Dinámica (Athletic Stat Box) */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
             <h3 className="font-black text-gray-900 flex items-center gap-2 mb-4">
               <Activity className="w-5 h-5 text-kasa-dorado" />
@@ -383,20 +383,20 @@ export default async function PortalDashboard() {
             
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-2xl border border-gray-100 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] hover:shadow-md transition-shadow">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Promedio</p>
-                <p className="text-3xl font-black text-amber-700">{athlete.stats_avg ? Number(athlete.stats_avg).toFixed(3).replace('0.', '.') : '.000'}</p>
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Promedio</p>
+                <p className="text-4xl sm:text-5xl font-display tracking-wider text-amber-700">{athlete.stats_avg ? Number(athlete.stats_avg).toFixed(3).replace('0.', '.') : '.000'}</p>
               </div>
               <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-2xl border border-gray-100 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] hover:shadow-md transition-shadow">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Hits</p>
-                <p className="text-3xl font-black text-gray-900">{athlete.stats_hits || 0}</p>
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Hits</p>
+                <p className="text-4xl sm:text-5xl font-display tracking-wider text-gray-900">{athlete.stats_hits || 0}</p>
               </div>
               <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-2xl border border-gray-100 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] hover:shadow-md transition-shadow">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Impulsadas</p>
-                <p className="text-3xl font-black text-gray-900">{athlete.stats_rbi || 0}</p>
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Impulsadas</p>
+                <p className="text-4xl sm:text-5xl font-display tracking-wider text-gray-900">{athlete.stats_rbi || 0}</p>
               </div>
               <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-2xl border border-gray-100 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] hover:shadow-md transition-shadow">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Anotadas</p>
-                <p className="text-3xl font-black text-gray-900">{athlete.stats_runs || 0}</p>
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Anotadas</p>
+                <p className="text-4xl sm:text-5xl font-display tracking-wider text-gray-900">{athlete.stats_runs || 0}</p>
               </div>
             </div>
           </div>

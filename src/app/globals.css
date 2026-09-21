@@ -6,6 +6,7 @@
   --kasa-vinotinto: #5A0F1D;
   --kasa-dorado: #D4AF37;
   --kasa-gris: #2D3748;
+  --font-display: var(--font-bebas-neue);
 }
 
 @theme inline {
@@ -16,6 +17,11 @@
   --color-kasa-gris: var(--kasa-gris);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-bebas-neue);
+}
+
+.font-display {
+  font-family: var(--font-bebas-neue), sans-serif;
 }
 
 /* Forzar modo claro siempre (Eliminar pre-fers-color-scheme dark) */

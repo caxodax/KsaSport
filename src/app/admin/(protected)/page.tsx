@@ -210,9 +210,9 @@ export default async function DashboardPage({
       {/* Title */}
       <div className="mb-8 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Panel de Control</h2>
+          <h1 className="text-3xl sm:text-4xl font-display uppercase tracking-wide text-gray-900">Panel de Control</h1>
           <div className="flex flex-wrap items-center gap-2 mt-1">
-            <p className="text-gray-500 text-sm sm:text-base">Resumen financiero y estatus de atletas en tiempo real.</p>
+            <p className="text-gray-500 text-sm">Resumen financiero y estatus de atletas en tiempo real.</p>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-vinotinto-light/20 text-kasa-vinotinto border border-vinotinto-light/30 rounded-full text-xs font-bold shadow-2xs">
               <Calendar className="w-3.5 h-3.5 text-kasa-vinotinto" />
               {formattedRange}
@@ -224,96 +224,103 @@ export default async function DashboardPage({
         </div>
       </div>
 
-        {/* KPIs de Atletas */}
+        {/* KPIs de Atletas (Big number / Small label) */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6">
-          <div className="bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow rounded-xl border border-gray-100 relative">
-            <div className="absolute top-0 left-0 w-1 h-full bg-green-500"></div>
-            <div className="p-4">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 p-2 bg-green-100 rounded-lg">
-                  <CircleDollarSign className="h-5 w-5 text-green-600" />
-                </div>
-                <div className="ml-4 w-0 flex-1">
-                  <dt className="text-sm font-medium text-gray-500 truncate">Solventes</dt>
-                  <dd className="text-2xl font-bold text-gray-900">{totalSolventesMes}</dd>
-                </div>
+          <div className="bg-white overflow-hidden shadow-xs hover:shadow-md transition-all rounded-2xl border border-gray-100 relative p-5">
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500 rounded-l-2xl"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <dt className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Solventes</dt>
+                <dd className="text-4xl sm:text-5xl font-display tracking-wide text-gray-900 mt-1">{totalSolventesMes}</dd>
+                <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md inline-block mt-2">
+                  Al día con su cuota
+                </span>
+              </div>
+              <div className="p-3 bg-emerald-50 rounded-2xl text-emerald-600">
+                <CircleDollarSign className="h-6 w-6" />
               </div>
             </div>
           </div>
-          <div className="bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow rounded-xl border border-gray-100 relative">
-            <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
-            <div className="p-4">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 p-2 bg-red-100 rounded-lg">
-                  <AlertCircle className="h-5 w-5 text-red-600" />
-                </div>
-                <div className="ml-4 w-0 flex-1">
-                  <dt className="text-sm font-medium text-gray-500 truncate">Morosidad Activa</dt>
-                  <dd className="text-2xl font-bold text-gray-900">{totalMorososMes}</dd>
-                </div>
+
+          <div className="bg-white overflow-hidden shadow-xs hover:shadow-md transition-all rounded-2xl border border-gray-100 relative p-5">
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-red-500 rounded-l-2xl"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <dt className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Morosidad Activa</dt>
+                <dd className="text-4xl sm:text-5xl font-display tracking-wide text-gray-900 mt-1">{totalMorososMes}</dd>
+                <span className="text-[11px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-md inline-block mt-2">
+                  Cuotas pendientes
+                </span>
+              </div>
+              <div className="p-3 bg-red-50 rounded-2xl text-red-600">
+                <AlertCircle className="h-6 w-6" />
               </div>
             </div>
           </div>
-          <div className="bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow rounded-xl border border-gray-100 relative">
-            <div className="absolute top-0 left-0 w-1 h-full bg-gray-400"></div>
-            <div className="p-4">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 p-2 bg-gray-100 rounded-lg">
-                  <Users className="h-5 w-5 text-gray-600" />
-                </div>
-                <div className="ml-4 w-0 flex-1">
-                  <dt className="text-sm font-medium text-gray-500 truncate">Total en Roster</dt>
-                  <dd className="text-2xl font-bold text-gray-900">{count || 0}</dd>
-                </div>
+
+          <div className="bg-white overflow-hidden shadow-xs hover:shadow-md transition-all rounded-2xl border border-gray-100 relative p-5">
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-slate-400 rounded-l-2xl"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <dt className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Total en Roster</dt>
+                <dd className="text-4xl sm:text-5xl font-display tracking-wide text-gray-900 mt-1">{count || 0}</dd>
+                <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md inline-block mt-2">
+                  Atletas registrados
+                </span>
+              </div>
+              <div className="p-3 bg-slate-100 rounded-2xl text-slate-600">
+                <Users className="h-6 w-6" />
               </div>
             </div>
           </div>
         </div>
 
-        {/* KPIs Financieros */}
+        {/* KPIs Financieros (Big number / Small label) */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-8">
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 overflow-hidden shadow-sm hover:shadow-md transition-shadow rounded-xl border border-green-200 relative">
-            <div className="absolute top-0 left-0 w-1 h-full bg-green-600"></div>
-            <div className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-green-600 uppercase tracking-wider">Ingreso Recibido</p>
-                  <p className="text-3xl font-black text-green-800 mt-1">${montoSolvente.toFixed(2)}</p>
-                  <p className="text-[11px] text-green-600 mt-1">{totalSolventesMes} atletas al día</p>
-                </div>
-                <div className="p-3 bg-green-100 rounded-xl">
-                  <CircleDollarSign className="h-7 w-7 text-green-600" />
-                </div>
+          <div className="bg-gradient-to-br from-emerald-50/70 to-white overflow-hidden shadow-xs hover:shadow-md transition-all rounded-2xl border border-emerald-200/80 relative p-5">
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-600 rounded-l-2xl"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[11px] font-bold text-emerald-700 uppercase tracking-widest">Ingreso Recibido</p>
+                <p className="text-4xl sm:text-5xl font-display tracking-wide text-emerald-900 mt-1">
+                  ${montoSolvente.toFixed(2)}
+                </p>
+                <p className="text-xs font-semibold text-emerald-700 mt-1.5">{totalSolventesMes} atletas solventes</p>
+              </div>
+              <div className="p-3 bg-emerald-100/80 rounded-2xl text-emerald-700">
+                <CircleDollarSign className="h-7 w-7" />
               </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-red-50 to-orange-50 overflow-hidden shadow-sm hover:shadow-md transition-shadow rounded-xl border border-red-200 relative">
-            <div className="absolute top-0 left-0 w-1 h-full bg-red-600"></div>
-            <div className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-red-600 uppercase tracking-wider">Morosidad Pendiente</p>
-                  <p className="text-3xl font-black text-red-800 mt-1">${montoMorosidad.toFixed(2)}</p>
-                  <p className="text-[11px] text-red-600 mt-1">{totalMorososMes} atletas en mora</p>
-                </div>
-                <div className="p-3 bg-red-100 rounded-xl">
-                  <AlertCircle className="h-7 w-7 text-red-600" />
-                </div>
+
+          <div className="bg-gradient-to-br from-red-50/70 to-white overflow-hidden shadow-xs hover:shadow-md transition-all rounded-2xl border border-red-200/80 relative p-5">
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-red-600 rounded-l-2xl"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[11px] font-bold text-red-700 uppercase tracking-widest">Morosidad Pendiente</p>
+                <p className="text-4xl sm:text-5xl font-display tracking-wide text-red-900 mt-1">
+                  ${montoMorosidad.toFixed(2)}
+                </p>
+                <p className="text-xs font-semibold text-red-700 mt-1.5">{totalMorososMes} atletas en mora</p>
+              </div>
+              <div className="p-3 bg-red-100/80 rounded-2xl text-red-700">
+                <AlertCircle className="h-7 w-7" />
               </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 overflow-hidden shadow-sm hover:shadow-md transition-shadow rounded-xl border border-indigo-200 relative">
-            <div className="absolute top-0 left-0 w-1 h-full bg-indigo-600"></div>
-            <div className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Ingreso Esperado</p>
-                  <p className="text-3xl font-black text-indigo-800 mt-1">${ingresoEsperado.toFixed(2)}</p>
-                  <p className="text-[11px] text-indigo-600 mt-1">Solvente + Morosidad</p>
-                </div>
-                <div className="p-3 bg-indigo-100 rounded-xl">
-                  <TrendingUp className="h-7 w-7 text-indigo-600" />
-                </div>
+
+          <div className="bg-gradient-to-br from-indigo-50/70 to-white overflow-hidden shadow-xs hover:shadow-md transition-all rounded-2xl border border-indigo-200/80 relative p-5">
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-600 rounded-l-2xl"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[11px] font-bold text-indigo-700 uppercase tracking-widest">Ingreso Esperado</p>
+                <p className="text-4xl sm:text-5xl font-display tracking-wide text-indigo-900 mt-1">
+                  ${ingresoEsperado.toFixed(2)}
+                </p>
+                <p className="text-xs font-semibold text-indigo-700 mt-1.5">Solvente + Morosidad</p>
+              </div>
+              <div className="p-3 bg-indigo-100/80 rounded-2xl text-indigo-700">
+                <TrendingUp className="h-7 w-7" />
               </div>
             </div>
           </div>

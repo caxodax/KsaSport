@@ -337,7 +337,7 @@ export default function CantinaHub({
               <div className="p-2 bg-white/10 rounded-xl">
                 <UtensilsCrossed className="w-6 h-6 text-kasa-dorado" />
               </div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Cantina KsaSports</h1>
+              <h1 className="text-3xl sm:text-4xl font-display uppercase tracking-wide">Cantina KsaSports</h1>
             </div>
             <p className="text-white/80 text-xs sm:text-sm font-medium">
               Punto de Venta, asignación de consumo a atletas, cobranzas y reportes 100% independientes.
@@ -347,7 +347,7 @@ export default function CantinaHub({
           <div className="flex items-center gap-3 bg-black/30 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10">
             <div className="text-right">
               <p className="text-[10px] text-gray-300 uppercase font-black tracking-widest">Tasa Euro BCV (Oficial)</p>
-              <p className="text-base sm:text-lg font-black text-amber-300">
+              <p className="text-xl sm:text-2xl font-display tracking-wider text-amber-300">
                 Bs. {Number(rates?.eur || 0).toLocaleString("es-VE", { minimumFractionDigits: 2 })}
               </p>
               <p className="text-[9px] text-white/50 font-medium">USD: Bs. {Number(rates?.usd || 0).toFixed(2)}</p>
@@ -801,7 +801,7 @@ export default function CantinaHub({
                       ≈ Bs. {cartTotalBs.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
-                  <span className="text-2xl font-black text-kasa-vinotinto">
+                  <span className="text-3xl font-display tracking-wide text-kasa-vinotinto">
                     €{cartTotalEUR.toFixed(2)}
                   </span>
                 </div>
@@ -835,7 +835,7 @@ export default function CantinaHub({
               </div>
               <div>
                 <span className="text-[10px] text-slate-400 uppercase font-bold block">Total Comanda</span>
-                <span className="text-base font-black text-white">€{cartTotalEUR.toFixed(2)} EUR</span>
+                <span className="text-xl font-display tracking-wide text-white">€{cartTotalEUR.toFixed(2)} EUR</span>
               </div>
             </div>
 
@@ -901,7 +901,7 @@ export default function CantinaHub({
                       ≈ Bs. {cartTotalBs.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
-                  <span className="text-2xl font-black text-kasa-vinotinto">€{cartTotalEUR.toFixed(2)}</span>
+                  <span className="text-3xl font-display tracking-wide text-kasa-vinotinto">€{cartTotalEUR.toFixed(2)}</span>
                 </div>
 
                 <button
@@ -2082,44 +2082,44 @@ export default function CantinaHub({
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-gray-100 shadow-xs">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
+            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-gray-100 shadow-xs hover:shadow-md transition-all">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">
                 Total Ventas
               </span>
-              <p className="text-2xl sm:text-3xl font-black text-gray-900">
+              <p className="text-3xl sm:text-4xl font-display tracking-wide text-gray-900">
                 €{reportTotals.totalVentas.toFixed(2)}
               </p>
-              <span className="text-[10px] text-gray-400">{foodOrders.length} despachos realizados</span>
+              <span className="text-[10px] text-gray-400 font-medium">{foodOrders.length} despachos realizados</span>
             </div>
 
-            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-gray-100 shadow-xs">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
+            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-gray-100 shadow-xs hover:shadow-md transition-all">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">
                 Total Recaudado
               </span>
-              <p className="text-2xl sm:text-3xl font-black text-emerald-600">
+              <p className="text-3xl sm:text-4xl font-display tracking-wide text-emerald-600">
                 €{reportTotals.totalCobrado.toFixed(2)}
               </p>
               <span className="text-[10px] text-emerald-600 font-bold">Cobrado y verificado</span>
             </div>
 
-            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-gray-100 shadow-xs">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
+            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-gray-100 shadow-xs hover:shadow-md transition-all">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">
                 Cuentas por Cobrar
               </span>
-              <p className="text-2xl sm:text-3xl font-black text-red-600">
+              <p className="text-3xl sm:text-4xl font-display tracking-wide text-red-600">
                 €{reportTotals.totalDeuda.toFixed(2)}
               </p>
               <span className="text-[10px] text-red-600 font-bold">{athletesWithDebtCount} atletas con deuda</span>
             </div>
 
-            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-gray-100 shadow-xs">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
+            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-gray-100 shadow-xs hover:shadow-md transition-all">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">
                 Ticket Promedio
               </span>
-              <p className="text-2xl sm:text-3xl font-black text-amber-700">
+              <p className="text-3xl sm:text-4xl font-display tracking-wide text-amber-700">
                 €{reportTotals.ticketPromedio.toFixed(2)}
               </p>
-              <span className="text-[10px] text-gray-400">Por comanda asignada</span>
+              <span className="text-[10px] text-gray-400 font-medium">Por comanda asignada</span>
             </div>
           </div>
 

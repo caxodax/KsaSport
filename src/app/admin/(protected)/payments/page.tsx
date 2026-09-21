@@ -126,7 +126,7 @@ export default async function PaymentsPage({
       {/* 1. Cabecera Principal con Título y Botón de Acción */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-2xl border border-gray-200/80 shadow-xs">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Finanzas y Pagos</h2>
+          <h1 className="text-3xl sm:text-4xl font-display uppercase tracking-wide text-gray-900">Finanzas y Pagos</h1>
           <div className="flex flex-wrap items-center gap-2 mt-1">
             <p className="text-gray-500 text-xs sm:text-sm">Bandeja de entrada para revisión y aprobación de pagos reportados.</p>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-vinotinto-light/20 text-kasa-vinotinto border border-vinotinto-light/30 rounded-full text-xs font-bold shadow-2xs">
@@ -151,49 +151,61 @@ export default async function PaymentsPage({
         </div>
       </div>
 
-      {/* 3. Resumen Superior (Tarjetas KPI Equilibradas) */}
+      {/* 3. Resumen Superior (Tarjetas KPI Big number / Small label) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs flex items-center gap-4">
-          <div className="p-3 bg-yellow-50 rounded-xl shrink-0">
-            <Clock className="w-6 h-6 text-yellow-600" />
-          </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Por Revisar</p>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <h3 className="text-2xl font-black text-gray-900">{pendingCount}</h3>
-              <span className="text-xs font-bold text-yellow-700 bg-yellow-50 px-2 py-0.5 rounded-md border border-yellow-200">
-                ${pendingTotal.toFixed(2)}
-              </span>
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs hover:shadow-md transition-all relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1.5 h-full bg-amber-500 rounded-l-2xl"></div>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Por Revisar</p>
+              <div className="flex items-baseline gap-2 mt-1">
+                <h3 className="text-4xl sm:text-5xl font-display tracking-wide text-gray-900">{pendingCount}</h3>
+                <span className="text-sm font-display tracking-wider text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200">
+                  ${pendingTotal.toFixed(2)}
+                </span>
+              </div>
+              <p className="text-[11px] font-medium text-amber-700 mt-1.5">Pagos en espera de verificación</p>
+            </div>
+            <div className="p-3 bg-amber-50 rounded-2xl text-amber-600 shrink-0">
+              <Clock className="w-6 h-6" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs flex items-center gap-4">
-          <div className="p-3 bg-green-50 rounded-xl shrink-0">
-            <CheckCircle2 className="w-6 h-6 text-green-600" />
-          </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Validados</p>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <h3 className="text-2xl font-black text-gray-900">{completedCount}</h3>
-              <span className="text-xs font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded-md border border-green-200">
-                ${completedTotal.toFixed(2)}
-              </span>
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs hover:shadow-md transition-all relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500 rounded-l-2xl"></div>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Validados</p>
+              <div className="flex items-baseline gap-2 mt-1">
+                <h3 className="text-4xl sm:text-5xl font-display tracking-wide text-gray-900">{completedCount}</h3>
+                <span className="text-sm font-display tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
+                  ${completedTotal.toFixed(2)}
+                </span>
+              </div>
+              <p className="text-[11px] font-medium text-emerald-700 mt-1.5">Aprobados y conciliados</p>
+            </div>
+            <div className="p-3 bg-emerald-50 rounded-2xl text-emerald-600 shrink-0">
+              <CheckCircle2 className="w-6 h-6" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-xs flex items-center gap-4">
-          <div className="p-3 bg-red-50 rounded-xl shrink-0">
-            <XCircle className="w-6 h-6 text-red-600" />
-          </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Rechazados</p>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <h3 className="text-2xl font-black text-gray-900">{rejectedCount}</h3>
-              <span className="text-xs font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded-md border border-red-200">
-                ${rejectedTotal.toFixed(2)}
-              </span>
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs hover:shadow-md transition-all relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1.5 h-full bg-red-500 rounded-l-2xl"></div>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Rechazados</p>
+              <div className="flex items-baseline gap-2 mt-1">
+                <h3 className="text-4xl sm:text-5xl font-display tracking-wide text-gray-900">{rejectedCount}</h3>
+                <span className="text-sm font-display tracking-wider text-red-800 bg-red-50 px-2.5 py-0.5 rounded-lg border border-red-200">
+                  ${rejectedTotal.toFixed(2)}
+                </span>
+              </div>
+              <p className="text-[11px] font-medium text-red-700 mt-1.5">No coinciden o inválidos</p>
+            </div>
+            <div className="p-3 bg-red-50 rounded-2xl text-red-600 shrink-0">
+              <XCircle className="w-6 h-6" />
             </div>
           </div>
         </div>
