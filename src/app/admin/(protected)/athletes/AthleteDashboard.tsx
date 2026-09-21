@@ -558,10 +558,10 @@ export default function AthleteDashboard({
 
                   <Link
                     href={`/admin/athletes/${athlete.id}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-black text-kasa-vinotinto hover:text-red-950 bg-red-50 hover:bg-red-100/90 px-3 py-1.5 rounded-xl border border-red-200/80 transition-all shadow-2xs group-hover:border-red-300"
+                    className="inline-flex items-center gap-1.5 text-xs font-black text-kasa-vinotinto hover:text-red-950 bg-red-50 hover:bg-red-100/90 min-h-[44px] px-3.5 py-2.5 rounded-xl border border-red-200/80 transition-all shadow-2xs group-hover:border-red-300 active:scale-95"
                   >
                     <span>Ver Expediente</span>
-                    <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                    <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                   </Link>
                 </div>
               </div>
@@ -571,9 +571,106 @@ export default function AthleteDashboard({
 
       ) : (
 
-        /* === VISTA TABLA EJECUTIVA (STYLE STRIPE/LINEAR CON ALTO CONTRASTE) === */
+        /* === VISTA TABLA EJECUTIVA (DESKTOP) / TARJETAS COMPACTAS (MÓVIL) === */
         <div className="bg-white rounded-3xl border border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] overflow-hidden">
-          <div className="overflow-x-auto">
+          
+          {/* VISTA MÓVIL (Tarjetas táctiles sin scroll horizontal) */}
+          <div className="md:hidden divide-y divide-slate-100 p-3 space-y-3">
+            {initialAthletes.map((athlete) => {
+              const isSolvente = athlete.status === 'Solvente';
+              const isMoroso = athlete.status === 'Moroso';
+
+              return (
+                <div key={athlete.id} className="p-3.5 bg-slate-50/60 rounded-2xl border border-slate-100 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <Link 
+                        href={`/admin/athletes/${athlete.id}`}
+                        className="relative w-11 h-11 rounded-xl overflow-hidden bg-gradient-to-br from-rose-50 to-amber-50 border border-slate-200 flex items-center justify-center shrink-0 shadow-sm ring-1 ring-white"
+                      >
+                        {athlete.avatar_url ? (
+                          <img src={athlete.avatar_url} alt={athlete.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="font-black text-xs text-kasa-vinotinto">
+                            {getInitials(athlete.name)}
+                          </span>
+                        )}
+                        <span 
+                          className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border border-white ${
+                            isSolvente ? 'bg-emerald-500' : isMoroso ? 'bg-rose-500 animate-pulse' : 'bg-slate-400'
+                          }`}
+                        />
+                      </Link>
+                      <div>
+                        <Link 
+                          href={`/admin/athletes/${athlete.id}`}
+                          className="text-sm font-black text-gray-900 hover:text-kasa-vinotinto transition-colors block leading-tight"
+                        >
+                          {athlete.name}
+                        </Link>
+                        <span className="text-[11px] font-bold text-slate-400">
+                          C.I. {formatCedula(athlete.cedula)} {athlete.has_alliance && '• 🤝 Alianza'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black border shadow-2xs ${
+                      isSolvente 
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
+                        : isMoroso
+                        ? 'bg-rose-50 text-rose-800 border-rose-300'
+                        : 'bg-slate-100 text-slate-700 border-slate-300'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        isSolvente ? 'bg-emerald-500' : isMoroso ? 'bg-rose-500 animate-pulse' : 'bg-slate-400'
+                      }`} />
+                      {athlete.status}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-slate-600 bg-white p-2.5 rounded-xl border border-slate-100">
+                    <div>
+                      <span className="font-black text-gray-900 block">{athlete.teams?.name || 'Sin equipo'}</span>
+                      <span className="text-[10px] text-slate-400 font-bold">{athlete.teams?.category || 'General'}</span>
+                    </div>
+                    {athlete.position && (
+                      <span className="font-mono text-xs font-black text-white bg-gray-950 px-2.5 py-1 rounded-lg">
+                        {athlete.position}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Acciones táctiles ergonómicas (mínimo 44px) */}
+                  <div className="flex items-center gap-2 pt-0.5">
+                    <Link
+                      href={`/admin/athletes/${athlete.id}`}
+                      className="flex-1 min-h-[44px] px-3.5 py-2.5 bg-white hover:bg-slate-50 text-kasa-vinotinto font-bold text-xs rounded-xl border border-slate-200 shadow-2xs flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                    >
+                      <UserSearch className="w-4 h-4" />
+                      <span>Expediente</span>
+                    </Link>
+                    <button
+                      onClick={() => handleOpenEdit(athlete)}
+                      className="min-h-[44px] min-w-[44px] px-3 py-2.5 bg-white hover:bg-slate-50 text-blue-700 font-bold text-xs rounded-xl border border-slate-200 shadow-2xs flex items-center justify-center active:scale-95 transition-all cursor-pointer"
+                      aria-label="Editar atleta"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(athlete)}
+                      className="min-h-[44px] min-w-[44px] px-3 py-2.5 bg-white hover:bg-rose-50 text-rose-700 font-bold text-xs rounded-xl border border-slate-200 shadow-2xs flex items-center justify-center active:scale-95 transition-all cursor-pointer"
+                      aria-label="Eliminar atleta"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* VISTA DESKTOP (Tabla con alta densidad) */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200">
               <thead>
                 <tr className="bg-slate-50/90 border-b border-slate-200">
@@ -678,11 +775,11 @@ export default function AthleteDashboard({
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                        <div className="flex items-center justify-end gap-1">
+                        <div className="flex items-center justify-end gap-1.5">
                           {isSuperAdmin && (
                             <Link
                               href={`/admin/athletes/${athlete.id}`}
-                              className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                              className="min-h-[36px] min-w-[36px] flex items-center justify-center text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-colors"
                               title="Ver Perfil 360"
                             >
                               <UserSearch className="w-4 h-4" />
@@ -690,14 +787,14 @@ export default function AthleteDashboard({
                           )}
                           <button
                             onClick={() => handleOpenEdit(athlete)}
-                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="min-h-[36px] min-w-[36px] flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors cursor-pointer"
                             title="Editar ficha"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(athlete)}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                            className="min-h-[36px] min-w-[36px] flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
                             title="Eliminar atleta"
                           >
                             <Trash2 className="w-4 h-4" />

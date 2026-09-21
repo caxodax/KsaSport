@@ -19,7 +19,8 @@ import {
   Download,
   AlertTriangle,
   ShoppingBag,
-  Landmark
+  Landmark,
+  Edit
 } from "lucide-react"
 import { formatCedula } from "@/lib/cedula"
 import { exportCantinaLedgerToExcel } from "@/lib/exportExcel"
@@ -948,7 +949,103 @@ export default function CantinaHub({
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-gray-100">
+          {/* VISTA MÓVIL (Tarjetas de Producto Táctiles) */}
+          <div className="md:hidden space-y-3">
+            {foodProducts.length === 0 ? (
+              <div className="bg-white rounded-2xl p-8 text-center border border-gray-100 shadow-xs">
+                <ShoppingBag className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                <p className="font-semibold text-gray-600 text-sm">Catálogo vacío</p>
+                <p className="text-xs text-gray-400 mt-1">No hay productos registrados en el catálogo de cantina.</p>
+              </div>
+            ) : (
+              foodProducts.map(p => {
+                const isAvail = p.is_available !== false
+                const pCurr = p.currency || 'EUR'
+                const pRate = getEffectiveRate(pCurr)
+                const bsAmount = Number(p.price) * pRate
+
+                return (
+                  <div key={p.id} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs space-y-3">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-black text-gray-900 text-sm">{p.name}</h4>
+                          <span className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 text-[10px] font-bold">
+                            {p.food_categories?.name || "General"}
+                          </span>
+                        </div>
+                        {p.description && (
+                          <p className="text-xs text-gray-400 mt-0.5">{p.description}</p>
+                        )}
+                      </div>
+                      <button
+                        onClick={async () => {
+                          await toggleFoodProduct(p.id, isAvail)
+                          showToast(`Disponibilidad de "${p.name}" actualizada.`)
+                        }}
+                        className={`min-h-[40px] px-3.5 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-colors shrink-0 flex items-center gap-1 active:scale-95 ${
+                          isAvail ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200" : "bg-red-100 text-red-800 hover:bg-red-200"
+                        }`}
+                      >
+                        {isAvail ? "✓ Activo" : "✕ Pausa"}
+                      </button>
+                    </div>
+
+                    <div className="bg-gray-50/80 p-3 rounded-xl flex items-center justify-between border border-gray-100">
+                      <div>
+                        <span className="text-[10px] text-gray-400 uppercase font-bold block">Precio</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-black text-kasa-vinotinto text-base">
+                            {pCurr === 'USD' ? '$' : pCurr === 'USDT' ? 'USDT ' : '€'}{Number(p.price).toFixed(2)}
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-white border border-gray-200 text-gray-700">
+                            {pCurr}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] text-gray-400 uppercase font-bold block">Equivalente Bs.</span>
+                        <span className="font-black text-emerald-700 text-xs font-mono">
+                          Bs. {bsAmount.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                        <span className="block text-[9px] text-gray-400">@ Bs. {pRate.toLocaleString('es-VE', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1 border-t border-gray-50">
+                      <button
+                        onClick={() => {
+                          setEditingProduct(p)
+                          setProductModalCurrency(p.currency || "EUR")
+                          setProductModalPrice(p.price ? String(p.price) : "")
+                          setIsProductModalOpen(true)
+                        }}
+                        className="flex-1 min-h-[44px] px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-800 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-95 border border-gray-200/60"
+                      >
+                        <Edit className="w-3.5 h-3.5 text-gray-500" />
+                        <span>Editar</span>
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (confirm(`¿Seguro que deseas eliminar "${p.name}"?`)) {
+                            await deleteFoodProduct(p.id)
+                            showToast("Producto eliminado.")
+                          }
+                        }}
+                        className="min-h-[44px] min-w-[44px] px-3.5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-xl flex items-center justify-center transition-all active:scale-95 border border-red-200/60"
+                        aria-label="Eliminar producto"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+
+          {/* VISTA DESKTOP (Tabla con alta densidad) */}
+          <div className="hidden md:block overflow-x-auto rounded-2xl border border-gray-100">
             <table className="w-full text-left text-xs">
               <thead className="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px] border-b border-gray-100">
                 <tr>
@@ -1050,15 +1147,24 @@ export default function CantinaHub({
             </table>
           </div>
 
-          {/* MODAL NUEVO / EDITAR PRODUCTO */}
+          {/* MODAL NUEVO / EDITAR PRODUCTO (BOTTOM SHEET EN MÓVIL) */}
           {isProductModalOpen && (
-            <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+              <div className="bg-white rounded-t-[28px] sm:rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0">
+                {/* Tirador móvil */}
+                <div className="pt-1 pb-1 flex justify-center sm:hidden shrink-0">
+                  <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+                </div>
+
                 <div className="flex justify-between items-center border-b pb-3">
                   <h3 className="font-black text-gray-900 text-lg">
                     {editingProduct ? "Editar Producto" : "Nuevo Producto de Cantina"}
                   </h3>
-                  <button onClick={() => setIsProductModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                  <button 
+                    onClick={() => setIsProductModalOpen(false)} 
+                    className="min-h-[44px] min-w-[44px] -mr-2 text-gray-400 hover:text-gray-600 flex items-center justify-center rounded-xl transition-colors cursor-pointer"
+                    aria-label="Cerrar modal"
+                  >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
@@ -1171,15 +1277,15 @@ export default function CantinaHub({
                     <button
                       type="button"
                       onClick={() => setIsProductModalOpen(false)}
-                      className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold text-xs"
+                      className="flex-1 min-h-[44px] py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold text-xs active:scale-95 transition-all cursor-pointer"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 py-2.5 rounded-xl bg-kasa-vinotinto text-white font-bold text-xs shadow-md"
+                      className="flex-1 min-h-[44px] py-2.5 rounded-xl bg-kasa-vinotinto text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
                     >
-                      Guardar
+                      {editingProduct ? "Guardar Cambios" : "Crear Producto"}
                     </button>
                   </div>
                 </form>
@@ -1187,13 +1293,22 @@ export default function CantinaHub({
             </div>
           )}
 
-          {/* MODAL NUEVA CATEGORÍA */}
+          {/* MODAL NUEVA CATEGORÍA (BOTTOM SHEET EN MÓVIL) */}
           {isCategoryModalOpen && (
-            <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+            <div className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+              <div className="bg-white rounded-t-[28px] sm:rounded-3xl p-5 sm:p-6 max-w-sm w-full shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0">
+                {/* Tirador móvil */}
+                <div className="pt-1 pb-1 flex justify-center sm:hidden shrink-0">
+                  <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+                </div>
+
                 <div className="flex justify-between items-center border-b pb-3">
                   <h3 className="font-black text-gray-900 text-lg">Nueva Categoría</h3>
-                  <button onClick={() => setIsCategoryModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                  <button 
+                    onClick={() => setIsCategoryModalOpen(false)} 
+                    className="min-h-[44px] min-w-[44px] -mr-2 text-gray-400 hover:text-gray-600 flex items-center justify-center rounded-xl transition-colors cursor-pointer"
+                    aria-label="Cerrar modal"
+                  >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
@@ -1209,7 +1324,7 @@ export default function CantinaHub({
                   <div className="flex gap-2">
                     <button
                       onClick={() => setIsCategoryModalOpen(false)}
-                      className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold text-xs"
+                      className="flex-1 min-h-[44px] py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold text-xs active:scale-95 transition-all cursor-pointer"
                     >
                       Cancelar
                     </button>
@@ -1223,7 +1338,7 @@ export default function CantinaHub({
                           setIsCategoryModalOpen(false)
                         }
                       }}
-                      className="flex-1 py-2.5 rounded-xl bg-kasa-vinotinto text-white font-bold text-xs"
+                      className="flex-1 min-h-[44px] py-2.5 rounded-xl bg-kasa-vinotinto text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
                     >
                       Crear
                     </button>
@@ -1269,7 +1384,113 @@ export default function CantinaHub({
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-gray-100">
+          {/* VISTA MÓVIL (Tarjetas de Deuda & Crédito Táctiles) */}
+          <div className="md:hidden space-y-3">
+            {athletes
+              .filter(a => {
+                const acc = creditMap.get(a.id) || { balance: 0, credit_limit: 50 }
+                if (creditFilterDebtOnly && acc.balance <= 0) return false
+                if (creditSearchQuery.trim()) {
+                  const q = creditSearchQuery.toLowerCase()
+                  return a.name.toLowerCase().includes(q) || a.cedula.toLowerCase().includes(q)
+                }
+                return true
+              }).length === 0 ? (
+              <div className="bg-white rounded-2xl p-8 text-center border border-gray-100 shadow-xs">
+                <Users className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                <p className="font-semibold text-gray-600 text-sm">Sin resultados</p>
+                <p className="text-xs text-gray-400 mt-1">No hay atletas que coincidan con la búsqueda o filtro.</p>
+              </div>
+            ) : (
+              athletes
+                .filter(a => {
+                  const acc = creditMap.get(a.id) || { balance: 0, credit_limit: 50 }
+                  if (creditFilterDebtOnly && acc.balance <= 0) return false
+                  if (creditSearchQuery.trim()) {
+                    const q = creditSearchQuery.toLowerCase()
+                    return a.name.toLowerCase().includes(q) || a.cedula.toLowerCase().includes(q)
+                  }
+                  return true
+                })
+                .map(athlete => {
+                  const acc = creditMap.get(athlete.id) || { balance: 0, credit_limit: 50 }
+                  const available = Math.max(0, acc.credit_limit - acc.balance)
+                  const team = athlete.teams ? (Array.isArray(athlete.teams) ? athlete.teams[0] : athlete.teams) : null
+                  const bsDebt = acc.balance * Number(rates?.eur || 0)
+
+                  return (
+                    <div key={athlete.id} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-black text-gray-900 text-sm">{athlete.name}</h4>
+                          <p className="text-xs text-gray-500">
+                            C.I: {formatCedula(athlete.cedula)} • {team ? team.name : "Sin Equipo"}
+                          </p>
+                        </div>
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${
+                          acc.balance > 0 ? "bg-red-100 text-red-800" : "bg-emerald-100 text-emerald-800"
+                        }`}>
+                          {acc.balance > 0 ? "Con Deuda" : "Solvente"}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 bg-gray-50/80 p-3 rounded-xl text-center border border-gray-100">
+                        <div>
+                          <span className="text-[9px] text-gray-400 uppercase font-bold block">Deuda</span>
+                          <span className={`text-sm font-black ${acc.balance > 0 ? "text-red-600" : "text-emerald-600"}`}>
+                            €{acc.balance.toFixed(2)}
+                          </span>
+                          {acc.balance > 0 && (
+                            <span className="block text-[9px] text-gray-500 font-medium">
+                              ≈ Bs. {bsDebt.toLocaleString("es-VE", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                            </span>
+                          )}
+                        </div>
+                        <div className="border-x border-gray-200">
+                          <span className="text-[9px] text-gray-400 uppercase font-bold block">Límite</span>
+                          <span className="text-sm font-black text-gray-800">
+                            €{acc.credit_limit.toFixed(2)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-gray-400 uppercase font-bold block">Disponible</span>
+                          <span className="text-sm font-black text-emerald-700">
+                            €{available.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-1 border-t border-gray-50">
+                        {acc.balance > 0 && (
+                          <button
+                            onClick={() => {
+                              setManualPayAthlete(athlete)
+                              setManualPayAmount(acc.balance.toString())
+                            }}
+                            className="flex-1 min-h-[44px] px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-sm cursor-pointer"
+                          >
+                            <CreditCard className="w-4 h-4" />
+                            <span>Cobrar en Mano</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            setAdjustLimitAthlete(athlete)
+                            setNewLimitValue(acc.credit_limit.toString())
+                          }}
+                          className={`min-h-[44px] px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer ${acc.balance > 0 ? "" : "flex-1"}`}
+                        >
+                          <span>Ajustar Límite</span>
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })
+            )}
+          </div>
+
+          {/* VISTA DESKTOP (Tabla con alta densidad) */}
+          <div className="hidden md:block overflow-x-auto rounded-2xl border border-gray-100">
             <table className="w-full text-left text-xs">
               <thead className="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px] border-b border-gray-100">
                 <tr>
@@ -1332,7 +1553,7 @@ export default function CantinaHub({
                                   setManualPayAthlete(athlete)
                                   setManualPayAmount(acc.balance.toString())
                                 }}
-                                className="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors"
+                                className="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors cursor-pointer"
                               >
                                 Cobrar en Mano
                               </button>
@@ -1342,7 +1563,7 @@ export default function CantinaHub({
                                 setAdjustLimitAthlete(athlete)
                                 setNewLimitValue(acc.credit_limit.toString())
                               }}
-                              className="text-xs font-bold px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+                              className="text-xs font-bold px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors cursor-pointer"
                             >
                               Límite
                             </button>
@@ -1355,12 +1576,22 @@ export default function CantinaHub({
             </table>
           </div>
 
+          {/* MODAL AJUSTAR LÍMITE (BOTTOM SHEET EN MÓVIL) */}
           {adjustLimitAthlete && (
-            <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+            <div className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+              <div className="bg-white rounded-t-[28px] sm:rounded-3xl p-5 sm:p-6 max-w-sm w-full shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0">
+                {/* Tirador móvil */}
+                <div className="pt-1 pb-1 flex justify-center sm:hidden shrink-0">
+                  <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+                </div>
+
                 <div className="flex justify-between items-center border-b pb-3">
                   <h3 className="font-black text-gray-900 text-base">Ajustar Límite de Crédito</h3>
-                  <button onClick={() => setAdjustLimitAthlete(null)} className="text-gray-400 hover:text-gray-600">
+                  <button 
+                    onClick={() => setAdjustLimitAthlete(null)} 
+                    className="min-h-[44px] min-w-[44px] -mr-2 text-gray-400 hover:text-gray-600 flex items-center justify-center rounded-xl transition-colors cursor-pointer"
+                    aria-label="Cerrar modal"
+                  >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
@@ -1381,10 +1612,10 @@ export default function CantinaHub({
                     </p>
                   )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 pt-2">
                   <button
                     onClick={() => setAdjustLimitAthlete(null)}
-                    className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold text-xs"
+                    className="flex-1 min-h-[44px] py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold text-xs active:scale-95 transition-all cursor-pointer"
                   >
                     Cancelar
                   </button>
@@ -1397,7 +1628,7 @@ export default function CantinaHub({
                         setAdjustLimitAthlete(null)
                       }
                     }}
-                    className="flex-1 py-2.5 rounded-xl bg-kasa-vinotinto text-white font-bold text-xs"
+                    className="flex-1 min-h-[44px] py-2.5 rounded-xl bg-kasa-vinotinto text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
                   >
                     Guardar
                   </button>
@@ -1406,12 +1637,22 @@ export default function CantinaHub({
             </div>
           )}
 
+          {/* MODAL REGISTRAR COBRO EN MANO (BOTTOM SHEET EN MÓVIL) */}
           {manualPayAthlete && (
-            <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+            <div className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+              <div className="bg-white rounded-t-[28px] sm:rounded-3xl p-5 sm:p-6 max-w-sm w-full shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0">
+                {/* Tirador móvil */}
+                <div className="pt-1 pb-1 flex justify-center sm:hidden shrink-0">
+                  <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+                </div>
+
                 <div className="flex justify-between items-center border-b pb-3">
                   <h3 className="font-black text-gray-900 text-base">Registrar Cobro en Mano</h3>
-                  <button onClick={() => setManualPayAthlete(null)} className="text-gray-400 hover:text-gray-600">
+                  <button 
+                    onClick={() => setManualPayAthlete(null)} 
+                    className="min-h-[44px] min-w-[44px] -mr-2 text-gray-400 hover:text-gray-600 flex items-center justify-center rounded-xl transition-colors cursor-pointer"
+                    aria-label="Cerrar modal"
+                  >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
@@ -1463,7 +1704,7 @@ export default function CantinaHub({
                   <div className="flex gap-2 pt-2">
                     <button
                       onClick={() => setManualPayAthlete(null)}
-                      className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold text-xs"
+                      className="flex-1 min-h-[44px] py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold text-xs active:scale-95 transition-all cursor-pointer"
                     >
                       Cancelar
                     </button>
@@ -1481,7 +1722,7 @@ export default function CantinaHub({
                           setManualPayAthlete(null)
                         }
                       }}
-                      className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-xs"
+                      className="flex-1 min-h-[44px] py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
                     >
                       Confirmar Pago
                     </button>
@@ -1519,7 +1760,99 @@ export default function CantinaHub({
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-gray-100">
+          {/* Mobile Cards View */}
+          <div className="md:hidden space-y-3">
+            {foodPayments
+              .filter(p => {
+                if (verificationStatusFilter === "Todos") return true
+                return p.status === verificationStatusFilter
+              })
+              .map(payment => {
+                const isPending = payment.status === "Pendiente"
+                return (
+                  <div key={payment.id} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h4 className="font-bold text-gray-900 text-sm leading-tight">{payment.athletes?.name || "Atleta"}</h4>
+                        <p className="text-[11px] text-gray-400 mt-0.5">C.I: {formatCedula(payment.athletes?.cedula || "")}</p>
+                      </div>
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold shrink-0 ${
+                        payment.status === "Completado"
+                          ? "bg-emerald-100 text-emerald-800"
+                          : payment.status === "Pendiente"
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-red-100 text-red-800"
+                      }`}>
+                        {payment.status}
+                      </span>
+                    </div>
+
+                    <div className="bg-gray-50/80 rounded-xl p-3 grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-gray-400 block">Monto</span>
+                        <span className="font-black text-base text-gray-900">
+                          €{Number(payment.amount).toFixed(2)}
+                        </span>
+                        {payment.transferred_amount && (
+                          <span className="block text-[10px] text-gray-500 font-medium">
+                            Bs. {Number(payment.transferred_amount).toLocaleString("es-VE", { minimumFractionDigits: 2 })}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-gray-400 block">Método / Ref</span>
+                        <span className="font-bold text-gray-800 block text-xs truncate">{payment.method}</span>
+                        <span className="text-[10px] text-amber-600 font-mono block truncate">
+                          Ref: {payment.reference_number || "S/R"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-gray-500 pt-1">
+                      <span>{new Date(payment.created_at).toLocaleDateString("es-VE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                      {payment.receipt_url && (
+                        <button
+                          onClick={() => setViewingReceiptPayment(payment)}
+                          className="min-h-[36px] px-3 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-xs flex items-center gap-1.5 transition-colors active:scale-[0.98]"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          Ver Voucher
+                        </button>
+                      )}
+                    </div>
+
+                    {isPending && (
+                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
+                        <button
+                          onClick={async () => {
+                            const res = await approveFoodPayment(payment.id)
+                            if (res?.error) showToast(res.error, "error")
+                            else showToast("Pago aprobado y descontado de la deuda.")
+                          }}
+                          className="min-h-[44px] bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all"
+                        >
+                          <Check className="w-4 h-4" />
+                          Aprobar
+                        </button>
+                        <button
+                          onClick={() => {
+                            setRejectModalPayment(payment)
+                            setRejectReason("")
+                          }}
+                          className="min-h-[44px] bg-red-600 hover:bg-red-700 active:scale-[0.98] text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all"
+                        >
+                          <X className="w-4 h-4" />
+                          Rechazar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto rounded-2xl border border-gray-100">
             <table className="w-full text-left text-xs">
               <thead className="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px] border-b border-gray-100">
                 <tr>
@@ -1625,16 +1958,19 @@ export default function CantinaHub({
 
           {viewingReceiptPayment && (
             <div
-              className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3 sm:p-4"
+              className="fixed inset-0 z-50 bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4"
               onClick={() => setViewingReceiptPayment(null)}
             >
               <div
-                className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl"
+                className="bg-white rounded-t-[28px] sm:rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-200"
                 onClick={(e) => e.stopPropagation()}
               >
+                <div className="sm:hidden flex justify-center pt-3 pb-1">
+                  <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+                </div>
                 <div className="flex justify-between items-center p-4 border-b">
-                  <h3 className="font-bold text-gray-900">Comprobante de Pago Cantina</h3>
-                  <button onClick={() => setViewingReceiptPayment(null)} className="p-1 text-gray-400 hover:text-gray-600">
+                  <h3 className="font-bold text-gray-900 text-sm sm:text-base">Comprobante de Pago Cantina</h3>
+                  <button onClick={() => setViewingReceiptPayment(null)} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-gray-600">
                     <X className="w-6 h-6" />
                   </button>
                 </div>
@@ -1669,11 +2005,14 @@ export default function CantinaHub({
           )}
 
           {rejectModalPayment && (
-            <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+            <div className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4">
+              <div className="bg-white rounded-t-[28px] sm:rounded-3xl p-5 sm:p-6 max-w-sm w-full shadow-2xl space-y-4 animate-in slide-in-from-bottom duration-200">
+                <div className="sm:hidden flex justify-center pb-2">
+                  <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+                </div>
                 <div className="flex justify-between items-center border-b pb-3">
                   <h3 className="font-black text-gray-900 text-base">Rechazar Pago</h3>
-                  <button onClick={() => setRejectModalPayment(null)} className="text-gray-400 hover:text-gray-600">
+                  <button onClick={() => setRejectModalPayment(null)} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-gray-600">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
@@ -1685,14 +2024,14 @@ export default function CantinaHub({
                     placeholder="Ej: La referencia no coincide en el banco o el monto está incompleto."
                     value={rejectReason}
                     onChange={(e) => setRejectReason(e.target.value)}
-                    className="w-full text-xs p-3 rounded-xl border border-gray-200"
+                    className="w-full text-xs p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-kasa-vinotinto/20"
                   />
                 </div>
 
                 <div className="flex gap-2">
                   <button
                     onClick={() => setRejectModalPayment(null)}
-                    className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-bold text-xs"
+                    className="flex-1 min-h-[44px] rounded-xl bg-gray-100 hover:bg-gray-200 active:scale-[0.98] text-gray-700 font-bold text-xs transition-all"
                   >
                     Cancelar
                   </button>
@@ -1710,7 +2049,7 @@ export default function CantinaHub({
                         setRejectReason("")
                       }
                     }}
-                    className="flex-1 py-2.5 rounded-xl bg-red-600 text-white font-bold text-xs"
+                    className="flex-1 min-h-[44px] rounded-xl bg-red-600 hover:bg-red-700 active:scale-[0.98] text-white font-bold text-xs transition-all"
                   >
                     Confirmar Rechazo
                   </button>

@@ -30,12 +30,24 @@ type Payment = {
 function ReceiptModal({ url, payment, onClose }: { url: string | null, payment: Payment, onClose: () => void }) {
   if (!url) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80" onClick={onClose}>
-      <div className="relative max-w-4xl w-full max-h-[90vh] flex flex-col bg-white rounded-xl overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="flex justify-between items-center p-4 border-b">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 animate-in fade-in duration-200" onClick={onClose}>
+      <div 
+        className="relative max-w-4xl w-full max-h-[92vh] flex flex-col bg-white rounded-t-[28px] sm:rounded-2xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0" 
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Barra tirador móvil */}
+        <div className="pt-3 pb-1 flex justify-center sm:hidden shrink-0">
+          <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+        </div>
+
+        <div className="flex justify-between items-center px-4 py-3 sm:py-4 border-b">
           <h3 className="font-bold text-gray-900">Comprobante de Pago</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
-            <X className="w-6 h-6 text-gray-500" />
+          <button 
+            onClick={onClose} 
+            className="min-h-[44px] min-w-[44px] -mr-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-xl flex items-center justify-center transition-colors cursor-pointer"
+            aria-label="Cerrar comprobante"
+          >
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -270,9 +282,10 @@ export function PaymentCard({ payment }: { payment: Payment }) {
                 <button 
                   key={idx} 
                   onClick={() => setPreviewUrl(url.trim())}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline bg-blue-50 px-2 py-1 rounded"
+                  className="min-h-[44px] inline-flex items-center gap-2 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200/70 hover:bg-blue-100 px-3.5 py-2.5 rounded-xl transition-all active:scale-[0.98] cursor-pointer"
                 >
-                  <FileText className="w-3 h-3" /> Comprobante {payment.receipt_url!.split(',').length > 1 ? idx + 1 : ''}
+                  <FileText className="w-4 h-4 text-blue-600" />
+                  <span>Comprobante {payment.receipt_url!.split(',').length > 1 ? idx + 1 : ''}</span>
                 </button>
               ))}
             </div>
@@ -283,19 +296,21 @@ export function PaymentCard({ payment }: { payment: Payment }) {
         </div>
         
         {payment.status === 'Pendiente' && (
-          <div className="flex gap-2 mt-2">
+          <div className="flex gap-2.5 mt-2">
             <button 
               onClick={handleReject}
               disabled={loading}
-              className="flex-1 py-2 bg-red-50 text-red-600 hover:bg-red-100 font-bold rounded-lg transition-colors text-sm disabled:opacity-50 cursor-pointer"
+              className="flex-1 min-h-[44px] py-2.5 px-4 bg-red-50 text-red-700 hover:bg-red-100 font-bold rounded-xl transition-all text-sm disabled:opacity-50 cursor-pointer active:scale-[0.98] flex items-center justify-center gap-1.5 border border-red-200/60"
             >
+              <X className="w-4 h-4" />
               Rechazar
             </button>
             <button 
               onClick={handleApprove}
               disabled={loading}
-              className="flex-1 py-2 bg-green-50 text-green-600 hover:bg-green-100 font-bold rounded-lg transition-colors text-sm disabled:opacity-50 cursor-pointer"
+              className="flex-1 min-h-[44px] py-2.5 px-4 bg-emerald-600 text-white hover:bg-emerald-700 font-bold rounded-xl transition-all text-sm disabled:opacity-50 cursor-pointer active:scale-[0.98] shadow-sm flex items-center justify-center gap-1.5"
             >
+              <Check className="w-4 h-4" />
               Aprobar
             </button>
           </div>
