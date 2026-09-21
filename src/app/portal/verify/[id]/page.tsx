@@ -117,7 +117,7 @@ export default async function VerifyAthletePage(props: { params: Promise<{ id: s
             <div className="grid grid-cols-2 gap-3 mb-6">
               <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 flex flex-col items-center">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">AVG</span>
-                <span className="text-2xl font-black text-kasa-dorado">
+                <span className="text-2xl font-black text-amber-700">
                   {athlete.stats_avg ? Number(athlete.stats_avg).toFixed(3).replace('0.', '.') : '.000'}
                 </span>
               </div>

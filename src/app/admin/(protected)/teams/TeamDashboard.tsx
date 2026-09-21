@@ -261,7 +261,7 @@ export default function TeamDashboard({
                   {/* Detalle deportivo: Nómina de atletas */}
                   <div className="mt-5 p-3.5 rounded-2xl bg-gray-50/70 border border-gray-100 flex items-center justify-between">
                     <div className="flex items-center gap-2 text-gray-600">
-                      <Users className="w-4 h-4 text-kasa-dorado" />
+                      <Users className="w-4 h-4 text-amber-600" />
                       <span className="text-xs font-bold">Atletas en Nómina</span>
                     </div>
                     <span className="text-sm font-black text-gray-900 bg-white px-3 py-1 rounded-xl border border-gray-200/80 shadow-sm">

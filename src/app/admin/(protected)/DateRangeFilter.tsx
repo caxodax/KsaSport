@@ -134,7 +134,7 @@ export default function DateRangeFilter() {
     >
       {/* Selector de Atajos Rápidos */}
       <div className="flex items-center gap-1.5 min-w-0">
-        <Calendar className="w-4 h-4 text-kasa-dorado shrink-0 hidden sm:block" />
+        <Calendar className="w-4 h-4 text-amber-600 shrink-0 hidden sm:block" />
         <select
           value={selectedPreset}
           onChange={(e) => handlePresetChange(e.target.value)}

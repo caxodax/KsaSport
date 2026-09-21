@@ -517,8 +517,10 @@ export default function CantinaHub({
 
                   <div className="max-h-56 overflow-y-auto divide-y divide-gray-100 border border-gray-100 rounded-2xl bg-gray-50/50">
                     {filteredAthletes.length === 0 ? (
-                      <div className="p-4 text-center text-xs text-gray-400">
-                        No se encontraron atletas con los filtros aplicados.
+                      <div className="p-6 text-center text-xs text-gray-400">
+                        <Users className="w-8 h-8 text-gray-300 mx-auto mb-1.5" />
+                        <p className="font-semibold text-gray-600">No se encontraron atletas</p>
+                        <p className="text-[11px] text-gray-400 mt-0.5">Intenta con otro nombre, cédula o equipo.</p>
                       </div>
                     ) : (
                       filteredAthletes.slice(0, 30).map(athlete => {
@@ -594,7 +596,9 @@ export default function CantinaHub({
 
               {filteredFoodProducts.length === 0 ? (
                 <div className="text-center py-10 text-gray-400 text-xs">
-                  No hay productos registrados en esta categoría. Puedes agregarlos en la pestaña <b>Catálogo</b>.
+                  <ShoppingCart className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                  <p className="font-semibold text-gray-600 text-sm">Sin productos en esta categoría</p>
+                  <p className="text-xs text-gray-400 mt-1">Puedes agregarlos en la pestaña <b>Catálogo</b>.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -698,7 +702,9 @@ export default function CantinaHub({
               <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
                 {cartItemsArray.length === 0 ? (
                   <div className="text-center py-8 text-xs text-gray-400">
-                    No has agregado productos a la comanda.
+                    <ShoppingCart className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="font-semibold text-gray-600">Comanda vacía</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">Selecciona productos del menú para añadirlos.</p>
                   </div>
                 ) : (
                   cartItemsArray.map(item => (
@@ -915,8 +921,10 @@ export default function CantinaHub({
               <tbody className="divide-y divide-gray-100">
                 {foodProducts.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center text-gray-400">
-                      No hay productos registrados en el catálogo de cantina.
+                    <td colSpan={5} className="p-8 text-center">
+                      <ShoppingBag className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                      <p className="font-semibold text-gray-600 text-sm">Catálogo vacío</p>
+                      <p className="text-xs text-gray-400 mt-1">No hay productos registrados en el catálogo de cantina.</p>
                     </td>
                   </tr>
                 ) : (
@@ -1648,7 +1656,7 @@ export default function CantinaHub({
               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">
                 Ticket Promedio
               </span>
-              <p className="text-2xl sm:text-3xl font-black text-kasa-dorado">
+              <p className="text-2xl sm:text-3xl font-black text-amber-700">
                 ${reportTotals.ticketPromedio.toFixed(2)}
               </p>
               <span className="text-[10px] text-gray-400">Por comanda asignada</span>
@@ -1662,7 +1670,10 @@ export default function CantinaHub({
               </h3>
               <div className="space-y-3">
                 {reportTotals.methods.length === 0 ? (
-                  <p className="text-xs text-gray-400">No hay pagos registrados en este período.</p>
+                  <div className="text-center py-6">
+                    <CreditCard className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-xs text-gray-400">No hay pagos registrados en este período.</p>
+                  </div>
                 ) : (
                   reportTotals.methods.map(m => {
                     const pct = reportTotals.totalCobrado > 0 ? (m.total / reportTotals.totalCobrado) * 100 : 0
@@ -1688,7 +1699,10 @@ export default function CantinaHub({
               </h3>
               <div className="divide-y divide-gray-100 max-h-60 overflow-y-auto">
                 {reportTotals.topProducts.length === 0 ? (
-                  <p className="text-xs text-gray-400">No hay ventas registradas en este período.</p>
+                  <div className="text-center py-6">
+                    <ShoppingBag className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-xs text-gray-400">No hay ventas registradas en este período.</p>
+                  </div>
                 ) : (
                   reportTotals.topProducts.map((prod, idx) => (
                     <div key={prod.name} className="py-2 flex justify-between items-center text-xs">

@@ -401,7 +401,7 @@ export default function StaffDashboard({
                           className="w-5 h-5 rounded-full object-cover shrink-0 ring-1 ring-slate-300"
                         />
                       ) : (
-                        <Trophy className="w-3.5 h-3.5 text-kasa-dorado shrink-0" />
+                        <Trophy className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                       )}
                       <span className="text-xs font-black text-gray-800 truncate">
                         {staff.teams.name}
@@ -510,7 +510,7 @@ export default function StaffDashboard({
                                 className="w-4 h-4 rounded-full object-cover shrink-0" 
                               />
                             ) : (
-                              <Trophy className="w-3.5 h-3.5 text-kasa-dorado shrink-0" />
+                              <Trophy className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                             )}
                             <span className="text-xs font-bold text-gray-800">{staff.teams.name}</span>
                             {staff.teams.category && (

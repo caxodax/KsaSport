@@ -101,7 +101,7 @@ export default function UsersDashboard({
       case 'superadmin':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-kasa-vinotinto/10 text-kasa-vinotinto border border-kasa-vinotinto/20">
-            <Crown className="w-3.5 h-3.5 text-kasa-dorado" />
+            <Crown className="w-3.5 h-3.5 text-amber-600" />
             {label}
           </span>
         );

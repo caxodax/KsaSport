@@ -384,7 +384,7 @@ export default async function PortalDashboard() {
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-2xl border border-gray-100 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] hover:shadow-md transition-shadow">
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Promedio</p>
-                <p className="text-3xl font-black text-kasa-dorado">{athlete.stats_avg ? Number(athlete.stats_avg).toFixed(3).replace('0.', '.') : '.000'}</p>
+                <p className="text-3xl font-black text-amber-700">{athlete.stats_avg ? Number(athlete.stats_avg).toFixed(3).replace('0.', '.') : '.000'}</p>
               </div>
               <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-2xl border border-gray-100 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] hover:shadow-md transition-shadow">
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Hits</p>

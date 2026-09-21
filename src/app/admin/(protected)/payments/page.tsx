@@ -143,7 +143,7 @@ export default async function PaymentsPage({
       {/* 2. Barra de Filtros por Rango de Fechas */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-200/80 shadow-2xs">
         <div className="text-xs sm:text-sm font-bold text-gray-700 flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-kasa-dorado" />
+          <Calendar className="w-4 h-4 text-amber-600" />
           <span>Filtrar período de reportes:</span>
         </div>
         <div className="w-full lg:w-auto">
@@ -203,7 +203,7 @@ export default async function PaymentsPage({
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 w-full overflow-hidden">
           <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
             <h3 className="text-xl font-bold text-kasa-gris flex items-center gap-2">
-              <Wallet className="w-6 h-6 text-kasa-dorado" />
+              <Wallet className="w-6 h-6 text-amber-600" />
               Historial de Reportes
             </h3>
             <span className="bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm">

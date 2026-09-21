@@ -300,7 +300,11 @@ export default async function LedgerPage({
               );
             })}
             {sortedMethods.length === 0 && (
-              <p className="text-center text-gray-400 py-8">No hay transacciones.</p>
+              <div className="text-center py-10">
+                <CreditCard className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                <p className="font-semibold text-gray-600 text-sm">Sin transacciones</p>
+                <p className="text-xs text-gray-400 mt-0.5">No hay pagos registrados en este período de fechas.</p>
+              </div>
             )}
           </div>
         </div>
@@ -341,8 +345,10 @@ export default async function LedgerPage({
                 ))}
                 {sortedProducts.length === 0 && (
                   <tr>
-                    <td colSpan={3} className="px-6 py-12 text-center text-gray-400">
-                      No hay ingresos registrados aún.
+                    <td colSpan={3} className="px-6 py-12 text-center">
+                      <ShoppingCart className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                      <p className="font-semibold text-gray-600 text-sm">Sin ingresos por producto</p>
+                      <p className="text-xs text-gray-400 mt-0.5">No se registraron ventas en el período seleccionado.</p>
                     </td>
                   </tr>
                 )}

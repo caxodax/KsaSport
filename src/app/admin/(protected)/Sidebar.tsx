@@ -9,20 +9,20 @@ import { logoutAdmin } from '../login/actions';
 export default function Sidebar({ permissions, roleName, email }: { permissions: string[], roleName: string, email: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
-  const navLinks = [
-    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, permission: 'view_finances' },
-    { href: '/admin/lineup', label: 'Alineación', icon: Users, permission: 'view_roster' },
-    { href: '/admin/teams', label: 'Equipos', icon: Trophy, permission: 'manage_catalog' },
-    { href: '/admin/categories', label: 'Categorías', icon: Tags, permission: 'manage_catalog' },
-    { href: '/admin/athletes', label: 'Roster / Atletas', icon: Users, permission: 'view_roster' },
-    { href: '/admin/staff', label: 'Staff Técnico', icon: Shield, permission: 'manage_catalog' },
-    { href: '/admin/products', label: 'Catálogo de Tienda', icon: ShoppingBag, permission: 'manage_catalog' },
-    { href: '/admin/cantina', label: 'Cantina', icon: UtensilsCrossed, permission: ['manage_catalog', 'view_finances'] },
-    { href: '/admin/payments', label: 'Finanzas y Pagos', icon: Wallet, permission: 'view_finances' },
-    { href: '/admin/ledger', label: 'Reportes Financieros', icon: BarChart3, permission: 'view_finances' },
-    { href: '/admin/rates', label: 'Tasa de Cambio (BCV)', icon: Landmark, permission: 'manage_settings' },
-    { href: '/admin/settings', label: 'Cobros & Morosidad', icon: Settings, permission: 'manage_settings' },
-    { href: '/admin/users', label: 'Usuarios y Roles', icon: UserCog, permission: 'manage_roles' },
+  const allLinks = [
+    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, permission: 'view_finances', group: 'overview' },
+    { href: '/admin/athletes', label: 'Roster / Atletas', icon: Users, permission: 'view_roster', group: 'sport' },
+    { href: '/admin/teams', label: 'Equipos', icon: Trophy, permission: 'manage_catalog', group: 'sport' },
+    { href: '/admin/categories', label: 'Categorías', icon: Tags, permission: 'manage_catalog', group: 'sport' },
+    { href: '/admin/lineup', label: 'Alineación', icon: Users, permission: 'view_roster', group: 'sport' },
+    { href: '/admin/payments', label: 'Finanzas y Pagos', icon: Wallet, permission: 'view_finances', group: 'finance' },
+    { href: '/admin/ledger', label: 'Reportes Financieros', icon: BarChart3, permission: 'view_finances', group: 'finance' },
+    { href: '/admin/cantina', label: 'Cantina', icon: UtensilsCrossed, permission: ['manage_catalog', 'view_finances'], group: 'finance' },
+    { href: '/admin/rates', label: 'Tasa de Cambio (BCV)', icon: Landmark, permission: 'manage_settings', group: 'finance' },
+    { href: '/admin/products', label: 'Catálogo de Tienda', icon: ShoppingBag, permission: 'manage_catalog', group: 'config' },
+    { href: '/admin/staff', label: 'Staff Técnico', icon: Shield, permission: 'manage_catalog', group: 'config' },
+    { href: '/admin/users', label: 'Usuarios y Roles', icon: UserCog, permission: 'manage_roles', group: 'config' },
+    { href: '/admin/settings', label: 'Cobros & Morosidad', icon: Settings, permission: 'manage_settings', group: 'config' },
   ].filter(link => {
     if (!link.permission) return true;
     if (Array.isArray(link.permission)) {
@@ -31,7 +31,32 @@ export default function Sidebar({ permissions, roleName, email }: { permissions:
     return permissions.includes(link.permission as string);
   });
 
+  const sections = [
+    { key: 'overview', label: '' },
+    { key: 'sport', label: 'Gestión Deportiva' },
+    { key: 'finance', label: 'Finanzas & Crédito' },
+    { key: 'config', label: 'Configuración & Club' },
+  ] as const;
+
   const closeMenu = () => setIsOpen(false);
+
+  const renderLink = (link: typeof allLinks[number]) => {
+    const Icon = link.icon;
+    const isActive = pathname === link.href;
+    return (
+      <Link
+        key={link.href}
+        href={link.href}
+        onClick={closeMenu}
+        className={`flex items-center gap-3 px-3 py-3 rounded-lg font-medium transition-colors ${
+          isActive ? 'bg-white/15 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'
+        }`}
+      >
+        <Icon className={`w-5 h-5 ${isActive ? 'text-kasa-dorado' : 'text-gray-400 group-hover:text-white'}`} />
+        {link.label}
+      </Link>
+    );
+  };
 
   return (
     <>
@@ -72,26 +97,22 @@ export default function Sidebar({ permissions, roleName, email }: { permissions:
         </div>
         
         <div className="p-4 flex-1 overflow-y-auto mt-4 md:mt-0">
-          <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-4 px-3">Gestión</p>
-          <nav className="space-y-2">
-            {navLinks.map((link) => {
-              const Icon = link.icon;
-              const isActive = pathname === link.href;
-              return (
-                <Link 
-                  key={link.href} 
-                  href={link.href} 
-                  onClick={closeMenu}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-lg font-medium transition-colors ${
-                    isActive ? 'bg-white/15 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-kasa-dorado' : 'text-gray-400 group-hover:text-white'}`} />
-                  {link.label}
-                </Link>
-              );
-            })}
-          </nav>
+          {sections.map(section => {
+            const links = allLinks.filter(l => l.group === section.key);
+            if (links.length === 0) return null;
+            return (
+              <div key={section.key} className={section.label ? 'mt-5' : ''}>
+                {section.label && (
+                  <p className="text-[10px] font-semibold text-white/40 uppercase tracking-widest mb-2 px-3">
+                    {section.label}
+                  </p>
+                )}
+                <nav className="space-y-1">
+                  {links.map(renderLink)}
+                </nav>
+              </div>
+            );
+          })}
         </div>
         
         <div className="p-4 border-t border-white/10 mt-auto flex justify-between items-center">
