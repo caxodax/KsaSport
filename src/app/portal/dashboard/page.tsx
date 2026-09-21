@@ -424,7 +424,7 @@ export default async function PortalDashboard() {
                   <h3 className="font-black text-base text-white">Cantina KsaSports</h3>
                   {Number(foodCredit?.balance || 0) > 0 ? (
                     <span className="bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] font-black px-2.5 py-0.5 rounded-full">
-                      Deuda: ${Number(foodCredit?.balance || 0).toFixed(2)}
+                      Deuda: €{Number(foodCredit?.balance || 0).toFixed(2)}
                     </span>
                   ) : (
                     <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-black px-2.5 py-0.5 rounded-full">

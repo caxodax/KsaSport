@@ -56,19 +56,19 @@ export default function CantinaPortalClient({
     setTimeout(() => setToast(null), 4000)
   }
 
-  const bcvRate = Number(rates?.usd || 0)
-  const balanceUSD = Number(creditAccount.balance || 0)
-  const balanceBs = balanceUSD * bcvRate
-  const creditLimitUSD = Number(creditAccount.credit_limit || 50)
-  const availableCreditUSD = Math.max(0, creditLimitUSD - balanceUSD)
+  const bcvEuroRate = Number(rates?.eur || rates?.usd || 0)
+  const balanceEUR = Number(creditAccount.balance || 0)
+  const balanceBs = balanceEUR * bcvEuroRate
+  const creditLimitEUR = Number(creditAccount.credit_limit || 50)
+  const availableCreditEUR = Math.max(0, creditLimitEUR - balanceEUR)
 
   // Desglose de bolívares en el formulario de pago
-  const inputAmountUSD = Number(payAmount) || 0
-  const inputAmountBs = inputAmountUSD * bcvRate
+  const inputAmountEUR = Number(payAmount) || 0
+  const inputAmountBs = inputAmountEUR * bcvEuroRate
 
   const handleSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (inputAmountUSD <= 0) {
+    if (inputAmountEUR <= 0) {
       showToast("Ingresa un monto válido a pagar.", "error")
       return
     }
@@ -76,11 +76,11 @@ export default function CantinaPortalClient({
     setIsSubmittingPay(true)
     try {
       const formData = new FormData()
-      formData.append("amount", inputAmountUSD.toString())
+      formData.append("amount", inputAmountEUR.toString())
       formData.append("method", payMethod)
       formData.append("reference", payReference)
       formData.append("transferred_amount", inputAmountBs.toFixed(2))
-      formData.append("exchange_rate", bcvRate.toString())
+      formData.append("exchange_rate", bcvEuroRate.toString())
       if (receiptFile) {
         formData.append("receipt", receiptFile)
       }
@@ -150,31 +150,31 @@ export default function CantinaPortalClient({
           <div className="flex flex-col items-start md:items-end gap-1 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/15">
             <span className="text-[10px] uppercase font-bold text-gray-300">Saldo Deudor Actual</span>
             <div className="text-3xl font-black text-white">
-              ${balanceUSD.toFixed(2)}{" "}
-              <span className="text-xs font-normal text-kasa-dorado">USD</span>
+              €{balanceEUR.toFixed(2)}{" "}
+              <span className="text-xs font-normal text-kasa-dorado">EUR</span>
             </div>
-            {bcvRate > 0 && balanceUSD > 0 && (
+            {bcvEuroRate > 0 && balanceEUR > 0 && (
               <span className="text-xs font-bold text-amber-200">
-                ≈ Bs. {balanceBs.toLocaleString("es-VE", { minimumFractionDigits: 2 })}
+                ≈ Bs. {balanceBs.toLocaleString("es-VE", { minimumFractionDigits: 2 })} (@ Bs. {bcvEuroRate.toFixed(2)})
               </span>
             )}
             <div className="text-[10px] text-white/60 mt-1 flex gap-2 border-t border-white/10 pt-1">
-              <span>Límite: ${creditLimitUSD.toFixed(2)}</span>
+              <span>Límite: €{creditLimitEUR.toFixed(2)}</span>
               <span>•</span>
-              <span className="text-emerald-300">Disponible: ${availableCreditUSD.toFixed(2)}</span>
+              <span className="text-emerald-300">Disponible: €{availableCreditEUR.toFixed(2)}</span>
             </div>
           </div>
         </div>
 
         {/* Botón Destacado de Pago */}
-        {balanceUSD > 0 && (
+        {balanceEUR > 0 && (
           <div className="mt-6 pt-5 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs text-white/80 font-medium">
               Puedes pagar la totalidad de tu saldo o hacer un abono parcial.
             </p>
             <button
               onClick={() => {
-                setPayAmount(balanceUSD.toString())
+                setPayAmount(balanceEUR.toString())
                 setIsPayModalOpen(true)
               }}
               className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-kasa-dorado to-yellow-500 hover:from-yellow-400 hover:to-yellow-500 text-kasa-vinotinto font-black text-xs sm:text-sm rounded-2xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
@@ -245,7 +245,7 @@ export default function CantinaPortalClient({
                     </div>
                     <div className="text-right">
                       <span className="text-base sm:text-lg font-black text-kasa-vinotinto">
-                        ${Number(order.total).toFixed(2)}
+                        €{Number(order.total).toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -258,7 +258,7 @@ export default function CantinaPortalClient({
                           {it.quantity}x {it.product_name}
                         </span>
                         <span className="font-bold text-gray-900">
-                          ${Number(it.subtotal).toFixed(2)}
+                          {it.currency === 'USD' ? '$' : it.currency === 'USDT' ? 'USDT ' : '€'}{Number(it.subtotal).toFixed(2)}
                         </span>
                       </div>
                     ))}
@@ -310,7 +310,7 @@ export default function CantinaPortalClient({
 
                 <div className="text-left sm:text-right">
                   <span className="text-base font-black text-gray-900 block">
-                    ${Number(payment.amount).toFixed(2)}
+                    €{Number(payment.amount).toFixed(2)}
                   </span>
                   {payment.transferred_amount && (
                     <span className="text-xs text-gray-400">
@@ -339,9 +339,9 @@ export default function CantinaPortalClient({
             </div>
 
             <form onSubmit={handleSubmitPayment} className="space-y-4">
-              {/* Monto en USD */}
+              {/* Monto en EUR */}
               <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Monto a Pagar ($ USD)</label>
+                <label className="text-xs font-bold text-gray-700 block mb-1">Monto a Pagar (€ EUR)</label>
                 <input
                   type="number"
                   step="0.01"
@@ -351,9 +351,9 @@ export default function CantinaPortalClient({
                   onChange={(e) => setPayAmount(e.target.value)}
                   className="w-full text-sm font-black px-3.5 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-kasa-dorado"
                 />
-                {bcvRate > 0 && inputAmountUSD > 0 && (
+                {bcvEuroRate > 0 && inputAmountEUR > 0 && (
                   <p className="text-xs text-amber-700 font-bold mt-1">
-                    Equivalente oficial: Bs. {inputAmountBs.toLocaleString("es-VE", { minimumFractionDigits: 2 })} (@ Bs. {bcvRate.toFixed(2)})
+                    Equivalente oficial: Bs. {inputAmountBs.toLocaleString("es-VE", { minimumFractionDigits: 2 })} (@ Bs. {bcvEuroRate.toFixed(2)})
                   </p>
                 )}
               </div>
@@ -368,8 +368,9 @@ export default function CantinaPortalClient({
                 >
                   <option value="Pago Móvil">Pago Móvil</option>
                   <option value="Transferencia Bancaria">Transferencia Bancaria</option>
-                  <option value="Efectivo en Bolívares">Efectivo en Bolívares (Bs)</option>
+                  <option value="Efectivo en Euros">Efectivo en Euros (€)</option>
                   <option value="Efectivo en Dólares">Efectivo en Dólares ($)</option>
+                  <option value="Efectivo en Bolívares">Efectivo en Bolívares (Bs)</option>
                   <option value="Zelle">Zelle</option>
                   <option value="USDT/Binance">USDT / Binance</option>
                 </select>

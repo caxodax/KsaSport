@@ -1440,7 +1440,7 @@ export async function exportCantinaLedgerToExcel(data: CantinaExportData) {
     { header: 'Cédula', key: 'cedula', width: 16 },
     { header: 'Equipo', key: 'team', width: 22 },
     { header: 'Detalle de Productos', key: 'items', width: 35 },
-    { header: 'Total ($)', key: 'total', width: 14 },
+    { header: 'Total (€)', key: 'total', width: 14 },
     { header: 'Observaciones', key: 'notes', width: 25 },
   ];
 
@@ -1457,7 +1457,7 @@ export async function exportCantinaLedgerToExcel(data: CantinaExportData) {
       total: Number(o.total),
       notes: o.notes || '-'
     });
-    row.getCell('total').numFmt = '"$"#,##0.00';
+    row.getCell('total').numFmt = '"€"#,##0.00';
   });
 
   // Pestaña 2: Pagos y Abonos
@@ -1468,9 +1468,9 @@ export async function exportCantinaLedgerToExcel(data: CantinaExportData) {
     { header: 'Atleta', key: 'athlete', width: 26 },
     { header: 'Cédula', key: 'cedula', width: 16 },
     { header: 'Método de Pago', key: 'method', width: 22 },
-    { header: 'Monto ($)', key: 'amount', width: 14 },
+    { header: 'Monto (€)', key: 'amount', width: 14 },
     { header: 'Monto en Bs', key: 'amountBs', width: 18 },
-    { header: 'Tasa BCV', key: 'rate', width: 14 },
+    { header: 'Tasa BCV (€)', key: 'rate', width: 14 },
     { header: 'Referencia', key: 'ref', width: 18 },
     { header: 'Estatus', key: 'status', width: 15 },
   ];
@@ -1490,7 +1490,7 @@ export async function exportCantinaLedgerToExcel(data: CantinaExportData) {
       ref: p.reference || '-',
       status: p.status
     });
-    row.getCell('amount').numFmt = '"$"#,##0.00';
+    row.getCell('amount').numFmt = '"€"#,##0.00';
     if (p.transferredAmount) row.getCell('amountBs').numFmt = '"Bs."#,##0.00';
     if (p.exchangeRate) row.getCell('rate').numFmt = '#,##0.00';
   });

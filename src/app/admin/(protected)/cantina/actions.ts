@@ -72,7 +72,8 @@ export async function createFoodOrder(
     product_name: item.productName,
     quantity: item.quantity,
     unit_price: item.unitPrice,
-    subtotal: item.subtotal
+    subtotal: item.subtotal,
+    currency: (item as any).currency || 'EUR'
   }))
 
   const { error: itemsErr } = await supabase
@@ -284,6 +285,7 @@ export async function createFoodProduct(formData: FormData) {
   const description = formData.get('description') as string
   const price = Number(formData.get('price'))
   const category_id = formData.get('category_id') as string
+  const currency = (formData.get('currency') as string)?.trim() || 'EUR'
 
   if (!name || isNaN(price) || price < 0) {
     return { error: 'Nombre y precio válido son obligatorios.' }
@@ -296,6 +298,7 @@ export async function createFoodProduct(formData: FormData) {
       name: name.trim(),
       description: description?.trim() || null,
       price: Number(price.toFixed(2)),
+      currency,
       category_id: category_id || null,
       is_available: true
     }])
@@ -314,6 +317,7 @@ export async function updateFoodProduct(formData: FormData) {
   const description = formData.get('description') as string
   const price = Number(formData.get('price'))
   const category_id = formData.get('category_id') as string
+  const currency = (formData.get('currency') as string)?.trim() || 'EUR'
 
   if (!id || !name || isNaN(price) || price < 0) {
     return { error: 'Datos de producto inválidos.' }
@@ -326,6 +330,7 @@ export async function updateFoodProduct(formData: FormData) {
       name: name.trim(),
       description: description?.trim() || null,
       price: Number(price.toFixed(2)),
+      currency,
       category_id: category_id || null
     })
     .eq('id', id)

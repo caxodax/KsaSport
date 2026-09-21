@@ -18,7 +18,8 @@ import {
   Check,
   Download,
   AlertTriangle,
-  ShoppingBag
+  ShoppingBag,
+  Landmark
 } from "lucide-react"
 import { formatCedula } from "@/lib/cedula"
 import { exportCantinaLedgerToExcel } from "@/lib/exportExcel"
@@ -164,15 +165,24 @@ export default function CantinaHub({
     setOrderNotes("")
   }
 
+  const getEffectiveRate = (curr: string = 'EUR') => {
+    if (curr === 'USD') return Number(rates?.usd || 0);
+    if (curr === 'USDT') return Number(rates?.usdt || rates?.usdt_promedio || 0);
+    return Number(rates?.eur || 0);
+  };
+
   const cartItemsArray = useMemo(() => Object.values(cart), [cart])
-  const cartTotalUSD = useMemo(() => {
+  const cartTotalEUR = useMemo(() => {
     return cartItemsArray.reduce((sum, item) => sum + (Number(item.product.price) * item.quantity), 0)
   }, [cartItemsArray])
+  const cartTotalBs = useMemo(() => {
+    return cartTotalEUR * Number(rates?.eur || 0)
+  }, [cartTotalEUR, rates])
   const cartTotalItemsCount = useMemo(() => {
     return cartItemsArray.reduce((sum, item) => sum + item.quantity, 0)
   }, [cartItemsArray])
 
-  const projectedDebt = selectedAthleteCredit.balance + cartTotalUSD
+  const projectedDebt = selectedAthleteCredit.balance + cartTotalEUR
   const isCreditExceeded = projectedDebt > selectedAthleteCredit.credit_limit
 
   const handleConfirmOrder = async () => {
@@ -192,19 +202,20 @@ export default function CantinaHub({
         productName: item.product.name,
         quantity: item.quantity,
         unitPrice: Number(item.product.price),
-        subtotal: Number((Number(item.product.price) * item.quantity).toFixed(2))
+        subtotal: Number((Number(item.product.price) * item.quantity).toFixed(2)),
+        currency: item.product.currency || 'EUR'
       }))
 
       const res = await createFoodOrder(selectedAthleteId, itemsPayload, orderNotes)
       if (res?.error) {
         showToast(res.error, "error")
       } else {
-        showToast(`¡Venta de $${cartTotalUSD.toFixed(2)} asignada exitosamente a ${selectedAthlete?.name}!`, "success")
+        showToast(`¡Venta de €${cartTotalEUR.toFixed(2)} asignada exitosamente a ${selectedAthlete?.name}!`, "success")
         clearCart()
         setIsMobileCartOpen(false)
       }
     } catch (err: any) {
-      showToast("Error inesperado al registrar venta: " + err.message, "error")
+      showToast(err?.message || "Error al procesar la comanda.", "error")
     } finally {
       setIsSubmittingOrder(false)
     }
@@ -214,6 +225,8 @@ export default function CantinaHub({
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<any | null>(null)
+  const [productModalCurrency, setProductModalCurrency] = useState<string>("EUR")
+  const [productModalPrice, setProductModalPrice] = useState<string>("")
   const [newCategoryName, setNewCategoryName] = useState("")
 
   // TAB 3: CUENTAS POR COBRAR
@@ -332,10 +345,11 @@ export default function CantinaHub({
 
           <div className="flex items-center gap-3 bg-black/30 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10">
             <div className="text-right">
-              <p className="text-[10px] text-gray-300 uppercase font-black tracking-widest">Tasa BCV del Día</p>
-              <p className="text-base sm:text-lg font-black text-kasa-dorado">
-                Bs. {Number(rates?.usd || 0).toLocaleString("es-VE", { minimumFractionDigits: 2 })}
+              <p className="text-[10px] text-gray-300 uppercase font-black tracking-widest">Tasa Euro BCV (Oficial)</p>
+              <p className="text-base sm:text-lg font-black text-amber-300">
+                Bs. {Number(rates?.eur || 0).toLocaleString("es-VE", { minimumFractionDigits: 2 })}
               </p>
+              <p className="text-[9px] text-white/50 font-medium">USD: Bs. {Number(rates?.usd || 0).toFixed(2)}</p>
             </div>
           </div>
         </div>
@@ -461,14 +475,19 @@ export default function CantinaHub({
                     <div>
                       <span className="text-[10px] text-gray-400 font-bold uppercase block">Deuda Actual</span>
                       <span className="text-sm font-black text-red-600">
-                        ${selectedAthleteCredit.balance.toFixed(2)}
+                        €{selectedAthleteCredit.balance.toFixed(2)}
                       </span>
+                      {rates?.eur && selectedAthleteCredit.balance > 0 && (
+                        <span className="text-[10px] text-gray-400 block">
+                          ≈ Bs. {(selectedAthleteCredit.balance * rates.eur).toLocaleString("es-VE", { minimumFractionDigits: 2 })}
+                        </span>
+                      )}
                     </div>
                     <div className="w-px h-7 bg-gray-200"></div>
                     <div>
                       <span className="text-[10px] text-gray-400 font-bold uppercase block">Límite Crédito</span>
                       <span className="text-sm font-black text-gray-800">
-                        ${selectedAthleteCredit.credit_limit.toFixed(2)}
+                        €{selectedAthleteCredit.credit_limit.toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -550,9 +569,9 @@ export default function CantinaHub({
                             </div>
                             <div className="text-right">
                               <span className={`text-xs font-bold ${acc.balance > 0 ? "text-red-500" : "text-emerald-600"}`}>
-                                {acc.balance > 0 ? `Debe $${acc.balance.toFixed(2)}` : "Solvente"}
+                                {acc.balance > 0 ? `Debe €${acc.balance.toFixed(2)}` : "Solvente"}
                               </span>
-                              <span className="block text-[9px] text-gray-400">Límite: ${acc.credit_limit}</span>
+                              <span className="block text-[9px] text-gray-400">Límite: €{acc.credit_limit}</span>
                             </div>
                           </button>
                         )
@@ -625,9 +644,17 @@ export default function CantinaHub({
                           {product.description && (
                             <p className="text-[10px] text-gray-400 line-clamp-1 mt-0.5">{product.description}</p>
                           )}
-                          <p className="text-base sm:text-lg font-black text-kasa-vinotinto mt-2">
-                            ${Number(product.price).toFixed(2)}
-                          </p>
+                          <div className="mt-2">
+                            <div className="flex items-baseline gap-1">
+                              <p className="text-base sm:text-lg font-black text-kasa-vinotinto">
+                                {product.currency === 'USD' ? '$' : product.currency === 'USDT' ? 'USDT ' : '€'}{Number(product.price).toFixed(2)}
+                              </p>
+                              <span className="text-[10px] text-gray-400 font-bold uppercase">{product.currency || 'EUR'}</span>
+                            </div>
+                            <p className="text-[10px] text-gray-500 font-medium">
+                              ≈ Bs. {(Number(product.price) * getEffectiveRate(product.currency || 'EUR')).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                          </div>
                         </div>
 
                         <div className="mt-3">
@@ -712,12 +739,12 @@ export default function CantinaHub({
                       <div className="flex-1 pr-2">
                         <p className="font-bold text-gray-800 line-clamp-1">{item.product.name}</p>
                         <p className="text-[10px] text-gray-400">
-                          {item.quantity} x ${Number(item.product.price).toFixed(2)}
+                          {item.quantity} x {item.product.currency === 'USD' ? '$' : item.product.currency === 'USDT' ? 'USDT ' : '€'}{Number(item.product.price).toFixed(2)}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="font-black text-gray-900">
-                          ${(Number(item.product.price) * item.quantity).toFixed(2)}
+                          {item.product.currency === 'USD' ? '$' : item.product.currency === 'USDT' ? 'USDT ' : '€'}{(Number(item.product.price) * item.quantity).toFixed(2)}
                         </span>
                         <button
                           onClick={() => clearCartItem(item.product.id)}
@@ -739,11 +766,11 @@ export default function CantinaHub({
                 }`}>
                   <div className="flex justify-between font-bold">
                     <span>Deuda resultante:</span>
-                    <span>${projectedDebt.toFixed(2)}</span>
+                    <span>€{projectedDebt.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-[11px] opacity-80 mt-0.5">
                     <span>Límite asignado:</span>
-                    <span>${selectedAthleteCredit.credit_limit.toFixed(2)}</span>
+                    <span>€{selectedAthleteCredit.credit_limit.toFixed(2)}</span>
                   </div>
                   {isCreditExceeded && (
                     <p className="text-[10px] font-bold text-red-600 mt-1 flex items-center gap-1">
@@ -767,9 +794,14 @@ export default function CantinaHub({
 
               <div className="border-t border-gray-100 pt-4 space-y-3">
                 <div className="flex justify-between items-baseline">
-                  <span className="font-bold text-gray-500 text-sm">Total a Asignar:</span>
+                  <div>
+                    <span className="font-bold text-gray-500 text-sm block">Total a Asignar:</span>
+                    <span className="text-xs text-gray-400 font-medium">
+                      ≈ Bs. {cartTotalBs.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
                   <span className="text-2xl font-black text-kasa-vinotinto">
-                    ${cartTotalUSD.toFixed(2)}
+                    €{cartTotalEUR.toFixed(2)}
                   </span>
                 </div>
 
@@ -802,7 +834,7 @@ export default function CantinaHub({
               </div>
               <div>
                 <span className="text-[10px] text-slate-400 uppercase font-bold block">Total Comanda</span>
-                <span className="text-base font-black text-white">${cartTotalUSD.toFixed(2)} USD</span>
+                <span className="text-base font-black text-white">€{cartTotalEUR.toFixed(2)} EUR</span>
               </div>
             </div>
 
@@ -824,7 +856,7 @@ export default function CantinaHub({
                     Resumen de Venta
                   </h3>
                   <button onClick={() => setIsMobileCartOpen(false)} className="p-1 text-gray-400 hover:text-gray-600">
-                    <X className="w-6 h-6" />
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
 
@@ -842,10 +874,12 @@ export default function CantinaHub({
                     <div key={item.product.id} className="py-2 flex justify-between items-center text-xs">
                       <div>
                         <p className="font-bold text-gray-800">{item.product.name}</p>
-                        <p className="text-[10px] text-gray-400">{item.quantity} x ${Number(item.product.price).toFixed(2)}</p>
+                        <p className="text-[10px] text-gray-400">
+                          {item.quantity} x {item.product.currency === 'USD' ? '$' : item.product.currency === 'USDT' ? 'USDT ' : '€'}{Number(item.product.price).toFixed(2)}
+                        </p>
                       </div>
                       <span className="font-black text-gray-900">
-                        ${(Number(item.product.price) * item.quantity).toFixed(2)}
+                        {item.product.currency === 'USD' ? '$' : item.product.currency === 'USDT' ? 'USDT ' : '€'}{(Number(item.product.price) * item.quantity).toFixed(2)}
                       </span>
                     </div>
                   ))}
@@ -860,8 +894,13 @@ export default function CantinaHub({
                 />
 
                 <div className="flex justify-between items-center pt-2">
-                  <span className="text-sm font-bold text-gray-500">Total a Asignar:</span>
-                  <span className="text-2xl font-black text-kasa-vinotinto">${cartTotalUSD.toFixed(2)}</span>
+                  <div>
+                    <span className="text-sm font-bold text-gray-500 block">Total a Asignar:</span>
+                    <span className="text-xs text-gray-400 font-medium">
+                      ≈ Bs. {cartTotalBs.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  <span className="text-2xl font-black text-kasa-vinotinto">€{cartTotalEUR.toFixed(2)}</span>
                 </div>
 
                 <button
@@ -884,7 +923,7 @@ export default function CantinaHub({
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
               <h2 className="text-xl font-black text-gray-900">Catálogo de Alimentos y Bebidas</h2>
-              <p className="text-xs text-gray-500">Administra los productos disponibles para la cantina con precios en USD.</p>
+              <p className="text-xs text-gray-500">Administra los productos disponibles para la cantina con precios en Euro (EUR) o Dólar (USD).</p>
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <button
@@ -897,6 +936,8 @@ export default function CantinaHub({
               <button
                 onClick={() => {
                   setEditingProduct(null)
+                  setProductModalCurrency("EUR")
+                  setProductModalPrice("")
                   setIsProductModalOpen(true)
                 }}
                 className="flex-1 sm:flex-none text-xs font-bold px-4 py-2 rounded-xl bg-kasa-vinotinto hover:bg-red-900 text-white transition-colors flex items-center justify-center gap-1.5 shadow-sm"
@@ -913,7 +954,8 @@ export default function CantinaHub({
                 <tr>
                   <th className="p-3.5 px-4">Producto</th>
                   <th className="p-3.5">Categoría</th>
-                  <th className="p-3.5">Precio USD</th>
+                  <th className="p-3.5">Precio & Moneda</th>
+                  <th className="p-3.5">Tasa & Monto Bs.</th>
                   <th className="p-3.5">Disponibilidad</th>
                   <th className="p-3.5 text-right px-4">Acciones</th>
                 </tr>
@@ -921,7 +963,7 @@ export default function CantinaHub({
               <tbody className="divide-y divide-gray-100">
                 {foodProducts.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center">
+                    <td colSpan={6} className="p-8 text-center">
                       <ShoppingBag className="w-10 h-10 text-gray-300 mx-auto mb-2" />
                       <p className="font-semibold text-gray-600 text-sm">Catálogo vacío</p>
                       <p className="text-xs text-gray-400 mt-1">No hay productos registrados en el catálogo de cantina.</p>
@@ -930,6 +972,8 @@ export default function CantinaHub({
                 ) : (
                   foodProducts.map(p => {
                     const isAvail = p.is_available !== false
+                    const pCurr = p.currency || 'EUR'
+                    const pRate = getEffectiveRate(pCurr)
                     return (
                       <tr key={p.id} className="hover:bg-gray-50/60 transition-colors">
                         <td className="p-3.5 px-4">
@@ -941,8 +985,23 @@ export default function CantinaHub({
                             {p.food_categories?.name || "General"}
                           </span>
                         </td>
-                        <td className="p-3.5 font-black text-kasa-vinotinto text-sm">
-                          ${Number(p.price).toFixed(2)}
+                        <td className="p-3.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-black text-kasa-vinotinto text-sm">
+                              {pCurr === 'USD' ? '$' : pCurr === 'USDT' ? 'USDT ' : '€'}{Number(p.price).toFixed(2)}
+                            </span>
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                              {pCurr}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-3.5">
+                          <div className="font-black text-emerald-700 text-xs font-mono">
+                            Bs. {(Number(p.price) * pRate).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </div>
+                          <div className="text-[10px] text-gray-400 font-medium">
+                            @ Bs. {pRate.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                          </div>
                         </td>
                         <td className="p-3.5">
                           <button
@@ -962,6 +1021,8 @@ export default function CantinaHub({
                             <button
                               onClick={() => {
                                 setEditingProduct(p)
+                                setProductModalCurrency(p.currency || "EUR")
+                                setProductModalPrice(p.price ? String(p.price) : "")
                                 setIsProductModalOpen(true)
                               }}
                               className="text-xs font-bold text-kasa-vinotinto hover:underline p-1"
@@ -1043,18 +1104,57 @@ export default function CantinaHub({
                     </select>
                   </div>
 
-                  <div>
-                    <label className="text-xs font-bold text-gray-700 block mb-1">Precio ($ USD)</label>
-                    <input
-                      name="price"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      required
-                      defaultValue={editingProduct?.price || ""}
-                      placeholder="Ej: 1.50"
-                      className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-200"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-bold text-gray-700 block mb-1">Moneda / Tipo de Tasa *</label>
+                      <select
+                        name="currency"
+                        value={productModalCurrency}
+                        onChange={(e) => setProductModalCurrency(e.target.value)}
+                        className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-200 font-bold text-gray-900 bg-white"
+                      >
+                        <option value="EUR">EUR — Euro BCV (Oficial)</option>
+                        <option value="USD">USD — Dólar BCV (Oficial)</option>
+                        <option value="USDT">USDT — Tether Cripto (1:1)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-gray-700 block mb-1">
+                        Precio ({productModalCurrency === 'EUR' ? '€ EUR' : productModalCurrency === 'USD' ? '$ USD' : 'USDT'}) *
+                      </label>
+                      <input
+                        name="price"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        required
+                        value={productModalPrice}
+                        onChange={(e) => setProductModalPrice(e.target.value)}
+                        placeholder="Ej: 1.50"
+                        className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-200 font-bold font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Panel interactivo de Tasa Oficial y Monto en Vivo */}
+                  <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-3.5 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-amber-900 flex items-center gap-1.5">
+                        <Landmark className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                        Tasa {productModalCurrency} BCV ({rates?.date || 'Hoy'}):
+                      </span>
+                      <span className="font-black text-amber-950 font-mono">
+                        Bs. {getEffectiveRate(productModalCurrency).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs border-t border-amber-200/60 pt-2">
+                      <span className="font-bold text-gray-700">Monto Calculado en Bolívares:</span>
+                      <span className="text-sm font-black text-emerald-700 font-mono">
+                        Bs. {(Number(productModalPrice || 0) * getEffectiveRate(productModalCurrency)).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
                   </div>
 
                   <div>
@@ -1175,7 +1275,7 @@ export default function CantinaHub({
                 <tr>
                   <th className="p-3.5 px-4">Atleta</th>
                   <th className="p-3.5">Equipo / Cat</th>
-                  <th className="p-3.5">Deuda Pendiente</th>
+                  <th className="p-3.5">Deuda Pendiente (EUR)</th>
                   <th className="p-3.5">Límite Crédito</th>
                   <th className="p-3.5">Crédito Libre</th>
                   <th className="p-3.5 text-right px-4">Acciones</th>
@@ -1210,14 +1310,19 @@ export default function CantinaHub({
                         </td>
                         <td className="p-3.5">
                           <span className={`font-black text-sm ${acc.balance > 0 ? "text-red-600" : "text-emerald-600"}`}>
-                            ${acc.balance.toFixed(2)}
+                            €{acc.balance.toFixed(2)}
                           </span>
+                          {acc.balance > 0 && (
+                            <span className="block text-[10px] text-gray-500 font-medium mt-0.5">
+                              ≈ Bs. {(acc.balance * Number(rates?.eur || 0)).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          )}
                         </td>
                         <td className="p-3.5 font-bold text-gray-800">
-                          ${acc.credit_limit.toFixed(2)}
+                          €{acc.credit_limit.toFixed(2)}
                         </td>
                         <td className="p-3.5 font-medium text-gray-600">
-                          ${available.toFixed(2)}
+                          €{available.toFixed(2)}
                         </td>
                         <td className="p-3.5 text-right px-4">
                           <div className="flex items-center justify-end gap-2">
@@ -1261,15 +1366,20 @@ export default function CantinaHub({
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 mb-2">Atleta: <b>{adjustLimitAthlete.name}</b></p>
-                  <label className="text-xs font-bold text-gray-700 block mb-1">Nuevo Límite ($ USD)</label>
+                  <label className="text-xs font-bold text-gray-700 block mb-1">Nuevo Límite (€ EUR)</label>
                   <input
                     type="number"
                     step="5"
                     min="0"
                     value={newLimitValue}
                     onChange={(e) => setNewLimitValue(e.target.value)}
-                    className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-200"
+                    className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-200 font-bold text-gray-900"
                   />
+                  {rates?.eur && Number(newLimitValue) > 0 && (
+                    <p className="text-[11px] text-gray-500 mt-1">
+                      ≈ Bs. {(Number(newLimitValue) * rates.eur).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (Tasa: Bs. {rates.eur.toLocaleString("es-VE", { minimumFractionDigits: 2 })})
+                    </p>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -1309,7 +1419,7 @@ export default function CantinaHub({
                 <div className="space-y-3">
                   <p className="text-xs text-gray-500">Atleta: <b>{manualPayAthlete.name}</b></p>
                   <div>
-                    <label className="text-xs font-bold text-gray-700 block mb-1">Monto Cobrado ($ USD)</label>
+                    <label className="text-xs font-bold text-gray-700 block mb-1">Monto Cobrado (€ EUR)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -1318,6 +1428,11 @@ export default function CantinaHub({
                       onChange={(e) => setManualPayAmount(e.target.value)}
                       className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-200 font-bold text-emerald-700"
                     />
+                    {rates?.eur && Number(manualPayAmount) > 0 && (
+                      <p className="text-[11px] text-gray-500 mt-1 font-medium">
+                        ≈ Bs. {(Number(manualPayAmount) * rates.eur).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (Tasa €: Bs. {rates.eur.toLocaleString("es-VE", { minimumFractionDigits: 2 })})
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="text-xs font-bold text-gray-700 block mb-1">Método de Pago</label>
@@ -1326,6 +1441,7 @@ export default function CantinaHub({
                       onChange={(e) => setManualPayMethod(e.target.value)}
                       className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-200"
                     >
+                      <option value="Efectivo en Euros">Efectivo en Euros (€)</option>
                       <option value="Efectivo en Dólares">Efectivo en Dólares ($)</option>
                       <option value="Efectivo en Bolívares">Efectivo en Bolívares (Bs)</option>
                       <option value="Pago Móvil">Pago Móvil (Cobrado en sitio)</option>
@@ -1408,7 +1524,7 @@ export default function CantinaHub({
               <thead className="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px] border-b border-gray-100">
                 <tr>
                   <th className="p-3.5 px-4">Atleta</th>
-                  <th className="p-3.5">Monto ($)</th>
+                  <th className="p-3.5">Monto (€)</th>
                   <th className="p-3.5">Método / Ref</th>
                   <th className="p-3.5">Fecha</th>
                   <th className="p-3.5">Comprobante</th>
@@ -1432,7 +1548,7 @@ export default function CantinaHub({
                         </td>
                         <td className="p-3.5">
                           <span className="font-black text-sm text-gray-900">
-                            ${Number(payment.amount).toFixed(2)}
+                            €{Number(payment.amount).toFixed(2)}
                           </span>
                           {payment.transferred_amount && (
                             <span className="block text-[10px] text-gray-400">
@@ -1529,7 +1645,7 @@ export default function CantinaHub({
                     <span className="font-bold text-amber-400 text-sm">{viewingReceiptPayment.reference_number || "S/R"}</span>
                     <span className="text-slate-600">|</span>
                     <span className="text-slate-400">Monto:</span>
-                    <span className="font-bold text-white text-sm">${Number(viewingReceiptPayment.amount).toFixed(2)} USD</span>
+                    <span className="font-bold text-white text-sm">€{Number(viewingReceiptPayment.amount).toFixed(2)} EUR</span>
                     {viewingReceiptPayment.transferred_amount && (
                       <span className="text-emerald-400 text-xs">
                         (Bs. {Number(viewingReceiptPayment.transferred_amount).toLocaleString("es-VE")})
@@ -1582,11 +1698,16 @@ export default function CantinaHub({
                   </button>
                   <button
                     onClick={async () => {
+                      if (!rejectReason.trim()) {
+                        showToast("Indica un motivo de rechazo.", "error")
+                        return
+                      }
                       const res = await rejectFoodPayment(rejectModalPayment.id, rejectReason)
                       if (res?.error) showToast(res.error, "error")
                       else {
-                        showToast("Pago marcado como rechazado.")
+                        showToast("Pago rechazado.")
                         setRejectModalPayment(null)
+                        setRejectReason("")
                       }
                     }}
                     className="flex-1 py-2.5 rounded-xl bg-red-600 text-white font-bold text-xs"
@@ -1627,7 +1748,7 @@ export default function CantinaHub({
                 Total Ventas
               </span>
               <p className="text-2xl sm:text-3xl font-black text-gray-900">
-                ${reportTotals.totalVentas.toFixed(2)}
+                €{reportTotals.totalVentas.toFixed(2)}
               </p>
               <span className="text-[10px] text-gray-400">{foodOrders.length} despachos realizados</span>
             </div>
@@ -1637,7 +1758,7 @@ export default function CantinaHub({
                 Total Recaudado
               </span>
               <p className="text-2xl sm:text-3xl font-black text-emerald-600">
-                ${reportTotals.totalCobrado.toFixed(2)}
+                €{reportTotals.totalCobrado.toFixed(2)}
               </p>
               <span className="text-[10px] text-emerald-600 font-bold">Cobrado y verificado</span>
             </div>
@@ -1647,7 +1768,7 @@ export default function CantinaHub({
                 Cuentas por Cobrar
               </span>
               <p className="text-2xl sm:text-3xl font-black text-red-600">
-                ${reportTotals.totalDeuda.toFixed(2)}
+                €{reportTotals.totalDeuda.toFixed(2)}
               </p>
               <span className="text-[10px] text-red-600 font-bold">{athletesWithDebtCount} atletas con deuda</span>
             </div>
@@ -1657,7 +1778,7 @@ export default function CantinaHub({
                 Ticket Promedio
               </span>
               <p className="text-2xl sm:text-3xl font-black text-amber-700">
-                ${reportTotals.ticketPromedio.toFixed(2)}
+                €{reportTotals.ticketPromedio.toFixed(2)}
               </p>
               <span className="text-[10px] text-gray-400">Por comanda asignada</span>
             </div>
@@ -1681,7 +1802,7 @@ export default function CantinaHub({
                       <div key={m.method} className="space-y-1">
                         <div className="flex justify-between text-xs font-bold">
                           <span className="text-gray-700">{m.method} ({m.count})</span>
-                          <span className="text-gray-900">${m.total.toFixed(2)} ({pct.toFixed(1)}%)</span>
+                          <span className="text-gray-900">€{m.total.toFixed(2)} ({pct.toFixed(1)}%)</span>
                         </div>
                         <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                           <div className="h-full bg-kasa-dorado rounded-full" style={{ width: `${pct}%` }}></div>
@@ -1715,7 +1836,7 @@ export default function CantinaHub({
                           <p className="text-[10px] text-gray-400">{prod.quantity} unidades despachadas</p>
                         </div>
                       </div>
-                      <span className="font-black text-kasa-vinotinto">${prod.total.toFixed(2)}</span>
+                      <span className="font-black text-kasa-vinotinto">€{prod.total.toFixed(2)}</span>
                     </div>
                   ))
                 )}
