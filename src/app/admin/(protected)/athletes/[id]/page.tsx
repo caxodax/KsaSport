@@ -255,17 +255,17 @@ export default async function AthleteProfilePage({
                     </span>
                   )}
 
-                  {/* Badge y acceso rápido a Cantina */}
+                  {/* Badge y acceso rápido a Créditos */}
                   <Link
                     href="/admin/cantina"
                     className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 transition-colors shadow-2xs"
-                    title="Ver en Cantina KsaSports"
+                    title="Ver en Créditos KsaSports"
                   >
-                    <UtensilsCrossed className="w-4 h-4 text-amber-700" />
+                    <CreditCard className="w-4 h-4 text-amber-700" />
                     <div>
-                      <p className="text-[9px] uppercase font-black text-amber-800 tracking-wider leading-none">Cantina</p>
+                      <p className="text-[9px] uppercase font-black text-amber-800 tracking-wider leading-none">Créditos</p>
                       <p className="font-black text-xs text-amber-900 mt-0.5">
-                        {Number(foodCredit?.balance || 0) > 0 ? `Deuda: $${Number(foodCredit?.balance || 0).toFixed(2)}` : 'Al día ($0.00)'}
+                        {Number(foodCredit?.balance || 0) > 0 ? `Deuda: €${Number(foodCredit?.balance || 0).toFixed(2)}` : 'Al día (€0.00)'}
                       </p>
                     </div>
                   </Link>

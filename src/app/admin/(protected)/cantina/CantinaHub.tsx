@@ -335,12 +335,12 @@ export default function CantinaHub({
           <div>
             <div className="flex items-center gap-2.5 mb-1.5">
               <div className="p-2 bg-white/10 rounded-xl">
-                <UtensilsCrossed className="w-6 h-6 text-kasa-dorado" />
+                <CreditCard className="w-6 h-6 text-kasa-dorado" />
               </div>
-              <h1 className="text-3xl sm:text-4xl font-display uppercase tracking-wide">Cantina KsaSports</h1>
+              <h1 className="text-3xl sm:text-4xl font-display uppercase tracking-wide">Créditos KsaSports</h1>
             </div>
             <p className="text-white/80 text-xs sm:text-sm font-medium">
-              Punto de Venta, asignación de consumo a atletas, cobranzas y reportes 100% independientes.
+              Punto de Venta, asignación de crédito a atletas, cobranzas y reportes 100% independientes.
             </p>
           </div>
 
@@ -923,8 +923,8 @@ export default function CantinaHub({
         <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-gray-100 space-y-5">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
-              <h2 className="text-xl font-black text-gray-900">Catálogo de Alimentos y Bebidas</h2>
-              <p className="text-xs text-gray-500">Administra los productos disponibles para la cantina con precios en Euro (EUR) o Dólar (USD).</p>
+              <h2 className="text-xl font-black text-gray-900">Catálogo de Productos y Consumo</h2>
+              <p className="text-xs text-gray-500">Administra los productos disponibles para créditos con precios en Euro (EUR) o Dólar (USD).</p>
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <button
@@ -955,7 +955,7 @@ export default function CantinaHub({
               <div className="bg-white rounded-2xl p-8 text-center border border-gray-100 shadow-xs">
                 <ShoppingBag className="w-10 h-10 text-gray-300 mx-auto mb-2" />
                 <p className="font-semibold text-gray-600 text-sm">Catálogo vacío</p>
-                <p className="text-xs text-gray-400 mt-1">No hay productos registrados en el catálogo de cantina.</p>
+                <p className="text-xs text-gray-400 mt-1">No hay productos registrados en el catálogo de créditos.</p>
               </div>
             ) : (
               foodProducts.map(p => {
@@ -1063,7 +1063,7 @@ export default function CantinaHub({
                     <td colSpan={6} className="p-8 text-center">
                       <ShoppingBag className="w-10 h-10 text-gray-300 mx-auto mb-2" />
                       <p className="font-semibold text-gray-600 text-sm">Catálogo vacío</p>
-                      <p className="text-xs text-gray-400 mt-1">No hay productos registrados en el catálogo de cantina.</p>
+                      <p className="text-xs text-gray-400 mt-1">No hay productos registrados en el catálogo de créditos.</p>
                     </td>
                   </tr>
                 ) : (
@@ -1158,7 +1158,7 @@ export default function CantinaHub({
 
                 <div className="flex justify-between items-center border-b pb-3">
                   <h3 className="font-black text-gray-900 text-lg">
-                    {editingProduct ? "Editar Producto" : "Nuevo Producto de Cantina"}
+                    {editingProduct ? "Editar Producto" : "Nuevo Producto de Crédito"}
                   </h3>
                   <button 
                     onClick={() => setIsProductModalOpen(false)} 
@@ -1355,7 +1355,7 @@ export default function CantinaHub({
         <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-gray-100 space-y-5">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
-              <h2 className="text-xl font-black text-gray-900">Cuentas por Cobrar de Cantina</h2>
+              <h2 className="text-xl font-black text-gray-900">Cuentas por Cobrar de Créditos</h2>
               <p className="text-xs text-gray-500">Monitorea la deuda activa, ajusta límites de crédito y registra cobros directos.</p>
             </div>
 
@@ -1694,7 +1694,7 @@ export default function CantinaHub({
                     <label className="text-xs font-bold text-gray-700 block mb-1">Observación (Opcional)</label>
                     <input
                       type="text"
-                      placeholder="Ej: Pagó completo en cantina"
+                      placeholder="Ej: Pagó completo en efectivo"
                       value={manualPayNotes}
                       onChange={(e) => setManualPayNotes(e.target.value)}
                       className="w-full text-xs px-3.5 py-2 rounded-xl border border-gray-200"
@@ -1740,7 +1740,7 @@ export default function CantinaHub({
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
               <h2 className="text-xl font-black text-gray-900">Verificar Pagos Reportados</h2>
-              <p className="text-xs text-gray-500">Audita los pagos de cantina reportados por los atletas y valida sus comprobantes.</p>
+              <p className="text-xs text-gray-500">Audita los pagos de créditos reportados por los atletas y valida sus comprobantes.</p>
             </div>
 
             <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl">
@@ -1969,7 +1969,7 @@ export default function CantinaHub({
                   <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
                 </div>
                 <div className="flex justify-between items-center p-4 border-b">
-                  <h3 className="font-bold text-gray-900 text-sm sm:text-base">Comprobante de Pago Cantina</h3>
+                  <h3 className="font-bold text-gray-900 text-sm sm:text-base">Comprobante de Pago de Crédito</h3>
                   <button onClick={() => setViewingReceiptPayment(null)} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-gray-600">
                     <X className="w-6 h-6" />
                   </button>
@@ -2065,7 +2065,7 @@ export default function CantinaHub({
         <div className="space-y-6">
           <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h2 className="text-xl font-black text-gray-900">Finanzas de Cantina</h2>
+              <h2 className="text-xl font-black text-gray-900">Finanzas de Créditos</h2>
               <p className="text-xs text-gray-500">Período evaluado: <b>{dateRangeStr}</b></p>
             </div>
 

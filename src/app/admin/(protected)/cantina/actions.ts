@@ -167,7 +167,7 @@ export async function recordManualFoodPayment(
       method: method || 'Efectivo en Dólares',
       status: 'Completado',
       registered_by: 'admin',
-      admin_notes: notes || 'Abono directo registrado por administración en cantina',
+      admin_notes: notes || 'Abono directo registrado por administración en créditos',
       verified_at: new Date().toISOString()
     }])
 

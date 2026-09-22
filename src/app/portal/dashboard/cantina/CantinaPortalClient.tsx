@@ -89,7 +89,7 @@ export default function CantinaPortalClient({
       if (res?.error) {
         showToast(res.error, "error")
       } else {
-        showToast("¡Pago de cantina reportado con éxito! El administrador lo validará en breve.", "success")
+        showToast("¡Pago de crédito reportado con éxito! El administrador lo validará en breve.", "success")
         setIsPayModalOpen(false)
         setPayReference("")
         setReceiptFile(null)
@@ -127,7 +127,7 @@ export default function CantinaPortalClient({
         </span>
       </div>
 
-      {/* TARJETA DE ESTADO DE CUENTA DE CANTINA (Hero Card Mobile-First) */}
+      {/* TARJETA DE ESTADO DE CUENTA DE CRÉDITOS (Hero Card Mobile-First) */}
       <div className="bg-gradient-to-br from-kasa-vinotinto via-red-950 to-black rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
         <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-64 h-64 bg-kasa-dorado/15 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -135,13 +135,13 @@ export default function CantinaPortalClient({
           <div>
             <div className="flex items-center gap-2 mb-2">
               <div className="p-2 bg-white/10 rounded-xl">
-                <UtensilsCrossed className="w-5 h-5 text-kasa-dorado" />
+                <CreditCard className="w-5 h-5 text-kasa-dorado" />
               </div>
               <span className="text-xs font-black uppercase tracking-widest text-kasa-dorado">
-                Cantina & Alimentos KsaSports
+                Créditos & Consumo KsaSports
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black">Estado de Cuenta de Cantina</h1>
+            <h1 className="text-2xl sm:text-3xl font-black">Estado de Cuenta de Créditos</h1>
             <p className="text-white/70 text-xs sm:text-sm mt-1">
               Consulta tus consumos asignados y reporta tus abonos o pagos.
             </p>
@@ -180,7 +180,7 @@ export default function CantinaPortalClient({
               className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-kasa-dorado to-yellow-500 hover:from-yellow-400 hover:to-yellow-500 text-kasa-vinotinto font-black text-xs sm:text-sm rounded-2xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
             >
               <CreditCard className="w-4 h-4" />
-              Pagar Deuda de Cantina
+              Pagar Deuda de Créditos
             </button>
           </div>
         )}
@@ -218,8 +218,8 @@ export default function CantinaPortalClient({
         <div className="space-y-3">
           {orders.length === 0 ? (
             <div className="bg-white rounded-3xl p-10 text-center text-gray-400 border border-gray-100">
-              <UtensilsCrossed className="w-10 h-10 mx-auto mb-2 text-gray-300" />
-              <p className="text-sm font-bold text-gray-600">No tienes consumos de cantina registrados.</p>
+              <CreditCard className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+              <p className="text-sm font-bold text-gray-600">No tienes consumos de crédito registrados.</p>
               <p className="text-xs text-gray-400 mt-1">Los consumos despachados por el administrador aparecerán aquí.</p>
             </div>
           ) : (
@@ -331,7 +331,7 @@ export default function CantinaPortalClient({
             <div className="flex justify-between items-center border-b pb-3">
               <h3 className="font-black text-gray-900 text-lg flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-kasa-vinotinto" />
-                Reportar Pago de Cantina
+                Reportar Pago de Crédito
               </h3>
               <button onClick={() => setIsPayModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />

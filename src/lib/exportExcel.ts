@@ -1432,7 +1432,7 @@ export async function exportCantinaLedgerToExcel(data: CantinaExportData) {
   const workbook = createKsaWorkbook();
 
   // Pestaña 1: Ventas y Consumos
-  const wsOrders = workbook.addWorksheet('Ventas Cantina', { views: [{ showGridLines: true }] });
+  const wsOrders = workbook.addWorksheet('Ventas Créditos', { views: [{ showGridLines: true }] });
   wsOrders.columns = [
     { header: '#', key: 'index', width: 6 },
     { header: 'Fecha y Hora', key: 'date', width: 20 },
@@ -1461,7 +1461,7 @@ export async function exportCantinaLedgerToExcel(data: CantinaExportData) {
   });
 
   // Pestaña 2: Pagos y Abonos
-  const wsPayments = workbook.addWorksheet('Pagos Cantina', { views: [{ showGridLines: true }] });
+  const wsPayments = workbook.addWorksheet('Pagos Créditos', { views: [{ showGridLines: true }] });
   wsPayments.columns = [
     { header: '#', key: 'index', width: 6 },
     { header: 'Fecha', key: 'date', width: 20 },
@@ -1496,7 +1496,7 @@ export async function exportCantinaLedgerToExcel(data: CantinaExportData) {
   });
 
   const cleanRange = data.dateRangeStr.replace(/[^a-zA-Z0-9_-]/g, '_');
-  await downloadWorkbook(workbook, `KsaSports_Cantina_Finanzas_${cleanRange}.xlsx`);
+  await downloadWorkbook(workbook, `KsaSports_Creditos_Finanzas_${cleanRange}.xlsx`);
 }
 
 
