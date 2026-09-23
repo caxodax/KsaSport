@@ -76,9 +76,24 @@ export async function createFoodOrder(
     currency: (item as any).currency || 'EUR'
   }))
 
-  const { error: itemsErr } = await supabase
+  let { error: itemsErr } = await supabase
     .from('food_order_items')
     .insert(itemsToInsert)
+
+  if (itemsErr && (itemsErr.code === 'PGRST204' || itemsErr.message?.includes('currency'))) {
+    const fallbackItems = items.map(item => ({
+      order_id: order.id,
+      product_id: item.productId,
+      product_name: item.productName,
+      quantity: item.quantity,
+      unit_price: item.unitPrice,
+      subtotal: item.subtotal
+    }))
+    const retry = await supabase
+      .from('food_order_items')
+      .insert(fallbackItems)
+    itemsErr = retry.error
+  }
 
   if (itemsErr) {
     console.error('Error al insertar items de comanda:', itemsErr)
@@ -292,7 +307,7 @@ export async function createFoodProduct(formData: FormData) {
   }
 
   const supabase = getServiceSupabase()
-  const { error } = await supabase
+  let { error } = await supabase
     .from('food_products')
     .insert([{
       name: name.trim(),
@@ -302,6 +317,20 @@ export async function createFoodProduct(formData: FormData) {
       category_id: category_id || null,
       is_available: true
     }])
+
+  // Si la columna currency aún no ha sido agregada en la BD (PGRST204), reintentar sin currency
+  if (error && (error.code === 'PGRST204' || error.message?.includes('currency'))) {
+    const retry = await supabase
+      .from('food_products')
+      .insert([{
+        name: name.trim(),
+        description: description?.trim() || null,
+        price: Number(price.toFixed(2)),
+        category_id: category_id || null,
+        is_available: true
+      }])
+    error = retry.error
+  }
 
   if (error) return { error: error.message }
 
@@ -324,7 +353,7 @@ export async function updateFoodProduct(formData: FormData) {
   }
 
   const supabase = getServiceSupabase()
-  const { error } = await supabase
+  let { error } = await supabase
     .from('food_products')
     .update({
       name: name.trim(),
@@ -334,6 +363,20 @@ export async function updateFoodProduct(formData: FormData) {
       category_id: category_id || null
     })
     .eq('id', id)
+
+  // Si la columna currency aún no ha sido agregada en la BD (PGRST204), reintentar sin currency
+  if (error && (error.code === 'PGRST204' || error.message?.includes('currency'))) {
+    const retry = await supabase
+      .from('food_products')
+      .update({
+        name: name.trim(),
+        description: description?.trim() || null,
+        price: Number(price.toFixed(2)),
+        category_id: category_id || null
+      })
+      .eq('id', id)
+    error = retry.error
+  }
 
   if (error) return { error: error.message }
 

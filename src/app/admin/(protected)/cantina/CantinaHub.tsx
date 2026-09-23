@@ -1174,24 +1174,41 @@ export default function CantinaHub({
                     if (editingProduct) {
                       formData.append("id", editingProduct.id)
                       const res = await updateFoodProduct(formData)
-                      if (res?.error) showToast(res.error, "error")
-                      else showToast("Producto actualizado con éxito.")
+                      if (res?.error) {
+                        showToast(res.error, "error")
+                      } else {
+                        showToast("Producto actualizado con éxito.")
+                        setIsProductModalOpen(false)
+                      }
                     } else {
                       const res = await createFoodProduct(formData)
-                      if (res?.error) showToast(res.error, "error")
-                      else showToast("Producto creado con éxito.")
+                      if (res?.error) {
+                        showToast(res.error, "error")
+                      } else {
+                        showToast("Producto creado con éxito.")
+                        setIsProductModalOpen(false)
+                      }
                     }
-                    setIsProductModalOpen(false)
                   }}
                   className="space-y-3.5"
                 >
                   <div>
-                    <label className="text-xs font-bold text-gray-700 block mb-1">Nombre del Producto</label>
+                    <label className="text-xs font-bold text-gray-700 block mb-1">Nombre del Producto *</label>
                     <input
                       name="name"
                       required
                       defaultValue={editingProduct?.name || ""}
                       placeholder="Ej: Empanada Mechada"
+                      className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-200"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-gray-700 block mb-1">Descripción (Opcional)</label>
+                    <input
+                      name="description"
+                      defaultValue={editingProduct?.description || ""}
+                      placeholder="Ej: Carne mechada sazonada, queso blanco..."
                       className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-200"
                     />
                   </div>
