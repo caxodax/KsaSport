@@ -29,3 +29,20 @@ export async function toggleExemption(athleteId: string, productId: string, isEx
   revalidatePath('/admin/ledger');
   return { success: true };
 }
+
+export async function toggleAthleteAlliance(athleteId: string, hasAlliance: boolean) {
+  const supabase = getServiceSupabase();
+  const { error } = await supabase
+    .from('athletes')
+    .update({ has_alliance: hasAlliance })
+    .eq('id', athleteId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/admin/athletes/${athleteId}`);
+  revalidatePath('/admin/athletes');
+  return { success: true };
+}
+

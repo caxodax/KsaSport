@@ -304,21 +304,20 @@ export default async function AthleteProfilePage({
         </div>
 
         {/* CUERPO PRINCIPAL */}
-        <div className={`grid grid-cols-1 ${athlete.has_alliance ? 'lg:grid-cols-3' : ''} gap-6`}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          {/* Columna Izquierda: Alianzas Comerciales (si aplica) */}
-          {athlete.has_alliance && (
-            <div className="lg:col-span-1">
-              <ExemptionManager 
-                athleteId={athlete.id} 
-                products={products || []} 
-                initialExemptions={exemptionIds} 
-              />
-            </div>
-          )}
+          {/* Columna Izquierda: Alianzas Comerciales y Exoneraciones */}
+          <div className="lg:col-span-1">
+            <ExemptionManager 
+              athleteId={athlete.id} 
+              products={products || []} 
+              initialExemptions={exemptionIds}
+              initialHasAlliance={athlete.has_alliance || false}
+            />
+          </div>
 
           {/* Columna Finanzas: Estado de Cuenta e Historial de Reportes */}
-          <div className={`${athlete.has_alliance ? 'lg:col-span-2' : ''} space-y-6`}>
+          <div className="lg:col-span-2 space-y-6">
             
             {/* Estado de Cuenta */}
             <div className="bg-white rounded-3xl border border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] overflow-hidden">
