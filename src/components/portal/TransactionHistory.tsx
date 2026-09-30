@@ -10,7 +10,10 @@ type Payment = {
   reference_number?: string
   amount: number | string
   status: string
-  products?: { name?: string }
+  rate_type?: string
+  payment_currency?: string
+  transferred_amount?: number
+  products?: { name?: string; rate_type?: string }
 }
 
 export default function TransactionHistory({ payments }: { payments: Payment[] }) {
@@ -40,29 +43,42 @@ export default function TransactionHistory({ payments }: { payments: Payment[] }
       
       <div className="divide-y divide-gray-100 flex-1">
         {payments && payments.length > 0 ? (
-          currentPayments.map((payment) => (
-            <div key={payment.id} className="p-4 sm:px-6 flex items-center justify-between hover:bg-gray-50 transition-colors group">
-              <div>
-                <p className="font-bold text-sm text-gray-900 group-hover:text-kasa-vinotinto transition-colors">
-                  {payment.concept || payment.products?.name || 'Pago'}
-                </p>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {new Date(payment.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })} 
-                  <span className="mx-1.5 opacity-50">•</span> 
-                  Ref: <span className="font-mono">{payment.reference_number || 'N/A'}</span>
-                </p>
+          currentPayments.map((payment) => {
+            const isEur = payment.rate_type === 'EUR' || payment.products?.rate_type === 'EUR';
+            const currSymbol = isEur ? '€' : (payment.rate_type === 'VES' ? 'Bs. ' : '$');
+
+            return (
+              <div key={payment.id} className="p-4 sm:px-6 flex items-center justify-between hover:bg-gray-50 transition-colors group">
+                <div>
+                  <p className="font-bold text-sm text-gray-900 group-hover:text-kasa-vinotinto transition-colors">
+                    {payment.concept || payment.products?.name || 'Pago'}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {new Date(payment.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })} 
+                    <span className="mx-1.5 opacity-50">•</span> 
+                    Ref: <span className="font-mono">{payment.reference_number || 'N/A'}</span>
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-black text-sm text-gray-900">
+                    {currSymbol}{Number(payment.amount).toFixed(2)}
+                    {isEur && <span className="text-[10px] text-slate-400 font-bold ml-1">EUR</span>}
+                  </p>
+                  {payment.payment_currency === 'VES' && payment.transferred_amount ? (
+                    <p className="text-[11px] font-mono text-slate-500 font-bold">
+                      Bs. {Number(payment.transferred_amount).toLocaleString('es-VE', { minimumFractionDigits: 2 })}
+                    </p>
+                  ) : null}
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full inline-block mt-1 uppercase tracking-widest
+                    ${payment.status === 'Completado' ? 'bg-green-100 text-green-700' : 
+                      payment.status === 'Pendiente' ? 'bg-yellow-100 text-yellow-700' : 
+                      'bg-red-100 text-red-700'}`}>
+                    {payment.status}
+                  </span>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-black text-sm text-gray-900">${Number(payment.amount).toFixed(2)}</p>
-                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full inline-block mt-1 uppercase tracking-widest
-                  ${payment.status === 'Completado' ? 'bg-green-100 text-green-700' : 
-                    payment.status === 'Pendiente' ? 'bg-yellow-100 text-yellow-700' : 
-                    'bg-red-100 text-red-700'}`}>
-                  {payment.status}
-                </span>
-              </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className="p-12 text-center text-gray-500 flex flex-col items-center justify-center h-full">
             <Receipt className="w-12 h-12 text-gray-200 mb-3" />

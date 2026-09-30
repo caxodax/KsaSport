@@ -191,8 +191,9 @@ export default function PaymentForm({
     
     // Validar suma de montos
     const totalSplitsAmount = splits.reduce((sum, s) => sum + (Number(s.amount) || 0), 0)
+    const formCurrSymbol = selectedProduct.rate_type === 'EUR' ? '€' : '$'
     if (Math.abs(totalSplitsAmount - Number(amountToPay)) > 0.01) {
-      setError(`La suma de los métodos ($${totalSplitsAmount.toFixed(2)}) no coincide con el total a abonar ($${Number(amountToPay).toFixed(2)}).`)
+      setError(`La suma de los métodos (${formCurrSymbol}${totalSplitsAmount.toFixed(2)}) no coincide con el total a abonar (${formCurrSymbol}${Number(amountToPay).toFixed(2)}).`)
       return
     }
 
@@ -427,7 +428,9 @@ export default function PaymentForm({
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Monto Total a Reportar ($)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Monto Total a Reportar ({selectedProduct.rate_type === 'EUR' ? '€ EUR' : '$ USD'})
+              </label>
               <input 
                 type="number" 
                 step="0.01"
@@ -649,7 +652,7 @@ export default function PaymentForm({
                 <div className="flex justify-between font-bold text-gray-800">
                   <span>Total Métodos:</span>
                   <span className={Math.abs(splits.reduce((sum, s) => sum + (Number(s.amount) || 0), 0) - Number(amountToPay)) > 0.01 ? 'text-red-600' : 'text-green-600'}>
-                    ${splits.reduce((sum, s) => sum + (Number(s.amount) || 0), 0).toFixed(2)}
+                    {selectedProduct.rate_type === 'EUR' ? '€' : '$'}{splits.reduce((sum, s) => sum + (Number(s.amount) || 0), 0).toFixed(2)}
                   </span>
                 </div>
               </div>

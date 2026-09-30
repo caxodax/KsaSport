@@ -61,11 +61,11 @@ function ReceiptModal({ url, payment, onClose }: { url: string | null, payment: 
             <span className="font-bold text-white text-sm">
               {payment.payment_currency === 'VES' 
                 ? `Bs. ${Number(payment.transferred_amount || 0).toLocaleString('es-VE', { minimumFractionDigits: 2 })}` 
-                : `$${Number(payment.amount).toFixed(2)}`}
+                : `${payment.rate_type === 'EUR' ? '€' : '$'}${Number(payment.amount).toFixed(2)}`}
             </span>
             {payment.payment_currency === 'VES' && payment.exchange_rate && (
               <span className="text-emerald-400 text-xs">
-                (${Number(payment.amount).toFixed(2)} {payment.rate_type || 'USD'} @ {Number(payment.exchange_rate).toFixed(2)} Bs.)
+                ({payment.rate_type === 'EUR' ? '€' : '$'}{Number(payment.amount).toFixed(2)} {payment.rate_type || 'USD'} @ {Number(payment.exchange_rate).toFixed(2)} Bs.)
               </span>
             )}
             {payment.usdt_promedio && (
@@ -147,7 +147,7 @@ export default function PaymentRow({ payment }: { payment: Payment }) {
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
           <div className="text-sm font-bold text-kasa-vinotinto">
-            ${Number(payment.amount).toFixed(2)} <span className="text-[10px] text-slate-500 font-normal">{payment.rate_type || 'USD'}</span>
+            {payment.rate_type === 'EUR' ? '€' : '$'}{Number(payment.amount).toFixed(2)} <span className="text-[10px] text-slate-500 font-normal">{payment.rate_type || 'USD'}</span>
           </div>
           {payment.payment_currency === 'VES' && payment.transferred_amount ? (
             <div className="text-xs font-mono font-bold text-slate-700 mt-0.5">
@@ -242,7 +242,7 @@ export function PaymentCard({ payment }: { payment: Payment }) {
           </div>
           <div className="text-right">
             <div className="font-bold text-kasa-vinotinto">
-              ${Number(payment.amount).toFixed(2)} <span className="text-[10px] text-slate-500 font-normal">{payment.rate_type || 'USD'}</span>
+              {payment.rate_type === 'EUR' ? '€' : '$'}{Number(payment.amount).toFixed(2)} <span className="text-[10px] text-slate-500 font-normal">{payment.rate_type || 'USD'}</span>
             </div>
             {payment.payment_currency === 'VES' && payment.transferred_amount ? (
               <div className="text-xs font-mono font-bold text-slate-700">

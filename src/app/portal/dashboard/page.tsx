@@ -158,7 +158,7 @@ export default async function PortalDashboard() {
   // Obtener últimos pagos
   const { data: payments } = await adminSupabase
     .from('payments')
-    .select('*, products(name, price, allows_installments)')
+    .select('*, products(name, price, allows_installments, rate_type)')
     .eq('athlete_id', athlete.id)
     .order('created_at', { ascending: false })
 
@@ -189,12 +189,15 @@ export default async function PortalDashboard() {
       if (exemptIds.has(val.product.id)) return
       const remaining = Number(val.product.price) - val.totalPaid
       if (remaining > 0) {
+        const symbol = val.product.rate_type === 'EUR' ? '€' : '$'
         activeDebts.push({
           id: val.product.id,
           name: val.product.name,
           total: Number(val.product.price),
           paid: val.totalPaid,
-          remaining: remaining
+          remaining: remaining,
+          currencySymbol: symbol,
+          rateType: val.product.rate_type || 'USD'
         })
       }
     })
@@ -461,10 +464,10 @@ export default async function PortalDashboard() {
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <h4 className="font-bold text-gray-900">{debt.name}</h4>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Costo Total: ${debt.total.toFixed(2)}</p>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Costo Total: {debt.currencySymbol}{debt.total.toFixed(2)}</p>
                       </div>
                       <span className="bg-red-50 text-red-700 text-xs font-black px-3 py-1 rounded-full border border-red-100">
-                        Resta: ${debt.remaining.toFixed(2)}
+                        Resta: {debt.currencySymbol}{debt.remaining.toFixed(2)}
                       </span>
                     </div>
                     
@@ -475,7 +478,7 @@ export default async function PortalDashboard() {
                     </div>
                     
                     <div className="flex justify-between text-xs">
-                      <span className="text-green-600 font-bold">Abonado: ${debt.paid.toFixed(2)}</span>
+                      <span className="text-green-600 font-bold">Abonado: {debt.currencySymbol}{debt.paid.toFixed(2)}</span>
                       <span className="text-gray-400 font-medium">Progreso: {Math.round((debt.paid / debt.total) * 100)}%</span>
                     </div>
                   </div>

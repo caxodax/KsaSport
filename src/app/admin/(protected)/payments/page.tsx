@@ -48,6 +48,16 @@ export default async function PaymentsPage({
   const rejectedTotal = rejectedPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
   const grandTotalAmount = completedTotal + pendingTotal + rejectedTotal;
 
+  const formatPaymentsTotal = (list: any[]) => {
+    const usd = list.filter(p => (p.rate_type || 'USD') === 'USD').reduce((s, p) => s + Number(p.amount || 0), 0);
+    const eur = list.filter(p => p.rate_type === 'EUR').reduce((s, p) => s + Number(p.amount || 0), 0);
+    const parts: string[] = [];
+    if (eur > 0) parts.push(`€${eur.toFixed(2)}`);
+    if (usd > 0) parts.push(`$${usd.toFixed(2)}`);
+    if (parts.length === 0) return '$0.00';
+    return parts.join(' + ');
+  };
+
   // Desglose por Método y Concepto
   const methodMap = new Map<string, { count: number; total: number }>();
   const conceptMap = new Map<string, { count: number; total: number }>();
@@ -161,7 +171,7 @@ export default async function PaymentsPage({
               <div className="flex items-baseline gap-2 mt-1">
                 <h3 className="text-4xl sm:text-5xl font-display tracking-wide text-gray-900">{pendingCount}</h3>
                 <span className="text-sm font-display tracking-wider text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200">
-                  ${pendingTotal.toFixed(2)}
+                  {formatPaymentsTotal(pendingPayments)}
                 </span>
               </div>
               <p className="text-[11px] font-medium text-amber-700 mt-1.5">Pagos en espera de verificación</p>
@@ -180,7 +190,7 @@ export default async function PaymentsPage({
               <div className="flex items-baseline gap-2 mt-1">
                 <h3 className="text-4xl sm:text-5xl font-display tracking-wide text-gray-900">{completedCount}</h3>
                 <span className="text-sm font-display tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
-                  ${completedTotal.toFixed(2)}
+                  {formatPaymentsTotal(completedPayments)}
                 </span>
               </div>
               <p className="text-[11px] font-medium text-emerald-700 mt-1.5">Aprobados y conciliados</p>
@@ -199,7 +209,7 @@ export default async function PaymentsPage({
               <div className="flex items-baseline gap-2 mt-1">
                 <h3 className="text-4xl sm:text-5xl font-display tracking-wide text-gray-900">{rejectedCount}</h3>
                 <span className="text-sm font-display tracking-wider text-red-800 bg-red-50 px-2.5 py-0.5 rounded-lg border border-red-200">
-                  ${rejectedTotal.toFixed(2)}
+                  {formatPaymentsTotal(rejectedPayments)}
                 </span>
               </div>
               <p className="text-[11px] font-medium text-red-700 mt-1.5">No coinciden o inválidos</p>

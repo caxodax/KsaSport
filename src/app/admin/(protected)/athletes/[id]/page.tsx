@@ -430,7 +430,7 @@ export default async function AthleteProfilePage({
                         </td>
                         <td className="py-4 px-6">
                           <div className="font-mono font-black text-gray-900 text-sm">
-                            ${Number(pay.amount).toFixed(2)} <span className="text-[10px] text-slate-400 font-normal">{pay.rate_type || 'USD'}</span>
+                            {(pay.rate_type === 'EUR' ? '€' : '$')}{Number(pay.amount).toFixed(2)} <span className="text-[10px] text-slate-400 font-normal">{pay.rate_type || 'USD'}</span>
                           </div>
                           {pay.payment_currency === 'VES' && pay.transferred_amount ? (
                             <div className="text-xs font-mono font-bold text-slate-700">
