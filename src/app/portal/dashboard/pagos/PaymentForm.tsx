@@ -262,9 +262,30 @@ export default function PaymentForm({
             let hasPenalty = false;
             
             if (isMensualidad) {
-              if (product.start_date && gracePeriodDays !== undefined) {
-                const startDate = new Date(product.start_date);
-                const deadline = new Date(startDate.getFullYear(), startDate.getMonth(), gracePeriodDays);
+              let year: number | null = null;
+              let month: number | null = null;
+
+              if (product.start_date) {
+                const parts = product.start_date.split('T')[0].split('-').map(Number);
+                if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                  year = parts[0];
+                  month = parts[1];
+                }
+              }
+
+              if (!month) {
+                const nameLower = product.name.toLowerCase();
+                const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+                const foundIdx = months.findIndex(m => nameLower.includes(m));
+                if (foundIdx !== -1) {
+                  month = foundIdx + 1;
+                  year = new Date().getFullYear();
+                }
+              }
+
+              if (year && month && gracePeriodDays !== undefined) {
+                // Fecha límite: día gracePeriodDays a las 23:59:59 del mes correspondiente
+                const deadline = new Date(year, month - 1, gracePeriodDays, 23, 59, 59, 999);
                 hasPenalty = new Date() > deadline;
               } else {
                 hasPenalty = !!isLate;

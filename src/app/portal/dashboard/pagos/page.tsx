@@ -65,29 +65,30 @@ export default async function PagosPage() {
   let monthsOwed = 1 // Por defecto, se debe 1 mes
 
   if (paidUntil) {
-    // La fecha límite es paid_until + effectiveGracePeriod.
-    // Ej: paid_until = 2026-08-31. Mes en curso = Septiembre.
-    // Límite = día effectiveGracePeriod de Septiembre.
-    const paidDate = new Date(paidUntil)
-    // El mes que debe pagar es el siguiente al pagado
-    const dueMonth = paidDate.getMonth() + 1 
-    const dueYear = paidDate.getFullYear()
+    // Extraer año y mes sin desfase de zona horaria
+    const parts = paidUntil.split('T')[0].split('-').map(Number);
+    const pYear = parts[0];
+    const pMonth = parts[1]; // 1-12 (mes solvente)
     
-    const limitDate = new Date(dueYear, dueMonth, effectiveGracePeriod)
-    const today = new Date()
-    
-    // Solo está moroso si hoy es estrictamente mayor que la fecha límite
-    if (today > limitDate) {
-      isLate = true
-    }
+    if (!isNaN(pYear) && !isNaN(pMonth)) {
+      // El mes a pagar es el siguiente al solvente (1-indexed).
+      // En JS Date(año, mes_index_0_based, dia, hora...):
+      // Para mes_index, pasar pMonth equivale a (pMonth - 1) + 1.
+      const limitDate = new Date(pYear, pMonth, effectiveGracePeriod, 23, 59, 59, 999);
+      const today = new Date();
+      
+      // Solo está moroso si hoy es estrictamente mayor que la fecha límite
+      if (today > limitDate) {
+        isLate = true;
+      }
 
-    // Calcular cuántos meses se deben si la fecha de solvencia ya pasó
-    const yearDiff = today.getFullYear() - paidDate.getFullYear()
-    const monthDiff = today.getMonth() - paidDate.getMonth()
-    
-    const calculatedMonths = (yearDiff * 12) + monthDiff
-    if (calculatedMonths >= 1) {
-      monthsOwed = calculatedMonths
+      // Calcular cuántos meses se deben si la fecha de solvencia ya pasó
+      const currentYear = today.getFullYear();
+      const currentMonth = today.getMonth() + 1;
+      const calculatedMonths = (currentYear - pYear) * 12 + (currentMonth - pMonth);
+      if (calculatedMonths >= 1) {
+        monthsOwed = calculatedMonths;
+      }
     }
   }
 
