@@ -340,7 +340,7 @@ export default function PaymentForm({
                 ) : null}
                 {hasPenalty && (
                   <p className="text-xs text-red-500 font-medium mt-2 bg-red-50 p-2 rounded-md">
-                    El monto incluye ${penaltyTotal.toFixed(2)} por pago fuera de la fecha límite (Día {gracePeriodDays}).
+                    El monto incluye {currSymbol}{penaltyTotal.toFixed(2)} {product.rate_type || 'USD'} por pago fuera de la fecha límite (Día {gracePeriodDays}).
                   </p>
                 )}
               </button>
@@ -362,7 +362,7 @@ export default function PaymentForm({
               <h3 className="font-bold text-xl text-gray-900">{selectedProduct.name}</h3>
               {selectedProduct.penalty_applied && selectedProduct.penalty_applied > 0 ? (
                 <p className="text-xs text-rose-600 font-bold mt-1">
-                  Incluye recargo de mora: +${selectedProduct.penalty_applied.toFixed(2)}
+                  Incluye recargo de mora: +{selectedProduct.rate_type === 'EUR' ? '€' : '$'}{selectedProduct.penalty_applied.toFixed(2)}
                 </p>
               ) : null}
             </div>

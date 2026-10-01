@@ -1,5 +1,5 @@
 import { getServiceSupabase } from '@/lib/supabase';
-import { CircleDollarSign, TrendingUp, CreditCard, ShoppingCart, BarChart3, Receipt, ChevronUp, Users, Calendar } from 'lucide-react';
+import { CircleDollarSign, TrendingUp, CreditCard, ShoppingCart, BarChart3, Receipt, ChevronUp, Users, Calendar, Euro } from 'lucide-react';
 import DateRangeFilter from '../DateRangeFilter';
 import { parseDateRange } from '@/lib/dateRange';
 import ExportLedgerButton from './ExportLedgerButton';
@@ -17,18 +17,22 @@ export default async function LedgerPage({
   const supabase = getServiceSupabase();
 
   // Fetch ALL completed payments in the date range
-  const { data: payments } = await supabase
+  const { data: payments, error: paymentsError } = await supabase
     .from('payments')
-    .select('id, amount, method, reference, reference_number, rate_type, exchange_rate, usdt_promedio, transferred_amount, payment_currency, date_rate, created_at, products(name), athletes(name, cedula)')
+    .select('id, amount, method, reference_number, rate_type, exchange_rate, usdt_promedio, transferred_amount, payment_currency, date_rate, created_at, products(name), athletes(name, cedula)')
     .eq('status', 'Completado')
     .gte('created_at', startDate.toISOString())
     .lte('created_at', endDate.toISOString())
     .order('created_at', { ascending: false });
 
+  if (paymentsError) {
+    console.error('Error fetching completed payments for ledger:', paymentsError);
+  }
+
   // Fetch all active installment products (to show debt)
   const { data: installmentProducts } = await supabase
     .from('products')
-    .select('id, name, price, requires_opt_in')
+    .select('id, name, price, rate_type, requires_opt_in')
     .eq('is_active', true)
     .eq('allows_installments', true);
 
@@ -41,7 +45,7 @@ export default async function LedgerPage({
   // Fetch all opt-ins to calculate expected revenue for tournaments
   const { data: allOptIns } = await supabase
     .from('athlete_product_opt_ins')
-    .select('product_id, athlete_id');
+    .select('product_id, athlete_id, athletes(name)');
 
   // Fetch all exemptions to remove from expected revenue
   const { data: allExemptions } = await supabase
@@ -90,14 +94,15 @@ export default async function LedgerPage({
 
   const formatRevenueStr = () => {
     const parts: string[] = [];
-    if (eurRevenue > 0) parts.push(`€${eurRevenue.toFixed(2)}`);
-    if (usdRevenue > 0) parts.push(`$${usdRevenue.toFixed(2)}`);
-    if (parts.length === 0) return '$0.00';
+    if (eurRevenue > 0) parts.push(`€${eurRevenue.toFixed(2)} EUR`);
+    if (usdRevenue > 0) parts.push(`$${usdRevenue.toFixed(2)} USD`);
+    if (parts.length === 0) return '€0.00 EUR';
     return parts.join(' + ');
   };
 
   const transactionCount = payments?.length || 0;
   const averageTicket = transactionCount > 0 ? totalRevenue / transactionCount : 0;
+  const ticketSymbol = eurRevenue > 0 && usdRevenue === 0 ? '€' : '$';
 
   // Sorting
   const sortedMethods = Array.from(methodMap.entries()).sort((a, b) => b[1].total - a[1].total);
@@ -108,6 +113,7 @@ export default async function LedgerPage({
     const pmt = installmentPayments?.filter(p => p.product_id === prod.id) || [];
     let expectedAthleteCount = 0;
     const exemptionsForProduct = new Set(allExemptions?.filter(e => e.product_id === prod.id).map(e => e.athlete_id) || []);
+    let enrolledAthletes: string[] = [];
 
     if (prod.requires_opt_in) {
       // Para torneos, la deuda esperada se basa SOLO en los inscritos explícitamente
@@ -115,6 +121,7 @@ export default async function LedgerPage({
       // Excluir a los exonerados
       const validOptIns = optIns.filter(o => !exemptionsForProduct.has(o.athlete_id));
       expectedAthleteCount = validOptIns.length;
+      enrolledAthletes = validOptIns.map(o => (o.athletes as any)?.name).filter(Boolean);
     } else {
       // Para mensualidades (sin opt-in explícito), se asume que todos los que han pagado algo son los esperados
       // Excluyendo a los exonerados
@@ -130,11 +137,17 @@ export default async function LedgerPage({
     const totalAbonado = pagosValidados.reduce((sum, p) => sum + Number(p.amount), 0);
     
     const saldoPendiente = Math.max(0, totalFacturado - totalAbonado);
+    const rateType = prod.rate_type || 'USD';
+    const currencySymbol = rateType === 'EUR' ? '€' : '$';
+
     return {
       id: prod.id, name: prod.name, price: Number(prod.price),
+      rateType,
+      currencySymbol,
+      enrolledAthletes,
       athleteCount: expectedAthleteCount, totalFacturado, totalAbonado, saldoPendiente
     };
-  }).filter(p => p.athleteCount > 0);
+  });
 
   // Preparar payload para exportación a Excel
   const exportPayload: LedgerExportData = {
@@ -173,7 +186,7 @@ export default async function LedgerPage({
         athleteCedula: athleteObj?.cedula || '',
         productName: prodObj?.name || 'Sin Concepto',
         method: p.method || 'No especificado',
-        reference: p.reference_number || p.reference || '',
+        reference: p.reference_number || '',
         amount: Number(p.amount) || 0,
         rateType: p.rate_type || 'USD',
         exchangeRate: p.exchange_rate ? Number(p.exchange_rate) : undefined,
@@ -233,7 +246,11 @@ export default async function LedgerPage({
         {/* KPI: Ingreso Total */}
         <div className="bg-gradient-to-br from-green-600 to-emerald-800 rounded-3xl p-6 shadow-xl shadow-green-900/20 text-white relative overflow-hidden">
           <div className="absolute -right-4 -top-4 opacity-20">
-            <CircleDollarSign className="w-32 h-32" />
+            {eurRevenue > 0 && usdRevenue === 0 ? (
+              <Euro className="w-32 h-32" />
+            ) : (
+              <CircleDollarSign className="w-32 h-32" />
+            )}
           </div>
           <div className="relative z-10">
             <p className="text-green-100 font-bold uppercase tracking-wider text-sm mb-1">Ingreso Total Validado</p>
@@ -268,7 +285,7 @@ export default async function LedgerPage({
           </div>
           <div>
             <p className="text-gray-500 font-bold uppercase tracking-wider text-xs mb-1">Ticket Promedio</p>
-            <h3 className="text-3xl font-black text-gray-900">${averageTicket.toFixed(2)}</h3>
+            <h3 className="text-3xl font-black text-gray-900">{ticketSymbol}{averageTicket.toFixed(2)}</h3>
           </div>
         </div>
 
@@ -407,19 +424,29 @@ export default async function LedgerPage({
                   return (
                     <tr key={prod.id} className="hover:bg-gray-50/80 transition-colors">
                       <td className="px-6 py-5">
-                        <span className="font-bold text-gray-900">{prod.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-gray-900">{prod.name}</span>
+                          <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 uppercase tracking-wider">
+                            {prod.rateType}
+                          </span>
+                        </div>
+                        {prod.enrolledAthletes && prod.enrolledAthletes.length > 0 && (
+                          <p className="text-xs text-slate-500 font-medium mt-1">
+                            Inscritas: <span className="text-slate-700 font-semibold">{prod.enrolledAthletes.join(', ')}</span>
+                          </p>
+                        )}
                       </td>
                       <td className="px-6 py-5 text-center">
                         <span className="text-sm font-bold text-gray-600">{prod.athleteCount}</span>
                       </td>
                       <td className="px-6 py-5 text-right">
-                        <span className="text-sm font-bold text-gray-500">${prod.totalFacturado.toFixed(2)}</span>
+                        <span className="text-sm font-bold text-gray-500">{prod.currencySymbol}{prod.totalFacturado.toFixed(2)}</span>
                       </td>
                       <td className="px-6 py-5 text-right">
-                        <span className="text-sm font-black text-green-700">${prod.totalAbonado.toFixed(2)}</span>
+                        <span className="text-sm font-black text-green-700">{prod.currencySymbol}{prod.totalAbonado.toFixed(2)}</span>
                       </td>
                       <td className="px-6 py-5 text-right">
-                        <span className="text-sm font-black text-red-700">${prod.saldoPendiente.toFixed(2)}</span>
+                        <span className="text-sm font-black text-red-700">{prod.currencySymbol}{prod.saldoPendiente.toFixed(2)}</span>
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-3">

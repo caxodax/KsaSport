@@ -12,6 +12,7 @@ type OptInCardProps = {
     name: string
     price: number
     description: string
+    rate_type?: string
   }
 }
 
@@ -20,6 +21,7 @@ export default function OptInCard({ athleteId, product }: OptInCardProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
+  const currSymbol = product.rate_type === 'EUR' ? '€' : '$'
 
   useEffect(() => {
     setMounted(true)
@@ -58,7 +60,10 @@ export default function OptInCard({ athleteId, product }: OptInCardProps) {
           <div className="flex items-center justify-between mt-auto">
             <div className="flex flex-col">
               <span className="text-xs text-gray-500 font-medium">Costo de Participación</span>
-              <span className="text-2xl font-black text-kasa-vinotinto">${Number(product.price).toFixed(2)}</span>
+              <span className="text-2xl font-black text-kasa-vinotinto">
+                {currSymbol}{Number(product.price).toFixed(2)}
+                <span className="text-xs text-slate-500 font-bold ml-1 uppercase">{product.rate_type || 'USD'}</span>
+              </span>
             </div>
             
             <button 
@@ -84,7 +89,7 @@ export default function OptInCard({ athleteId, product }: OptInCardProps) {
             <div className="p-6">
               <p className="text-gray-600 text-center mb-6">
                 Estás a punto de confirmar tu inscripción a <strong>{product.name}</strong>. 
-                Esto generará un compromiso de pago de <span className="font-bold text-kasa-vinotinto">${Number(product.price).toFixed(2)}</span> en tu cuenta.
+                Esto generará un compromiso de pago de <span className="font-bold text-kasa-vinotinto">{currSymbol}{Number(product.price).toFixed(2)} {product.rate_type || 'USD'}</span> en tu cuenta.
               </p>
               
               {error && (

@@ -206,7 +206,7 @@ export default async function PortalDashboard() {
   // Opt-ins (Invitaciones a torneos)
   const { data: optInProducts } = await adminSupabase
     .from('products')
-    .select('id, name, price, description')
+    .select('id, name, price, description, rate_type')
     .eq('is_active', true)
     .eq('requires_opt_in', true)
 
