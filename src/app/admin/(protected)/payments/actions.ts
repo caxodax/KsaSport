@@ -70,6 +70,8 @@ export async function approvePayment(paymentId: string, athleteId: string, conce
 
   revalidatePath('/admin/payments')
   revalidatePath('/admin/athletes')
+  revalidatePath('/admin/ledger')
+  revalidatePath('/admin')
   return { success: true }
 }
 
@@ -84,5 +86,8 @@ export async function rejectPayment(paymentId: string) {
   if (error) return { error: error.message }
 
   revalidatePath('/admin/payments')
+  revalidatePath('/admin/athletes')
+  revalidatePath('/admin/ledger')
+  revalidatePath('/admin')
   return { success: true }
 }

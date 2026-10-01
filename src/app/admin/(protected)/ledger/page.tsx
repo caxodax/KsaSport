@@ -50,8 +50,10 @@ export default async function LedgerPage({
 
   // --- Metrics Calculation ---
   let totalRevenue = 0;
-  const methodMap = new Map<string, { count: number, total: number }>();
-  const productMap = new Map<string, { count: number, total: number }>();
+  let usdRevenue = 0;
+  let eurRevenue = 0;
+  const methodMap = new Map<string, { count: number, total: number, rateType?: string }>();
+  const productMap = new Map<string, { count: number, total: number, rateType?: string }>();
   let highestTicket = 0;
   let lowestTicket = Infinity;
 
@@ -59,20 +61,25 @@ export default async function LedgerPage({
     payments.forEach(pay => {
       const amount = Number(pay.amount);
       totalRevenue += amount;
+      if (pay.rate_type === 'EUR') {
+        eurRevenue += amount;
+      } else {
+        usdRevenue += amount;
+      }
       
       if (amount > highestTicket) highestTicket = amount;
       if (amount < lowestTicket) lowestTicket = amount;
 
       // Method Breakdown
       const method = pay.method || 'No Especificado';
-      if (!methodMap.has(method)) methodMap.set(method, { count: 0, total: 0 });
+      if (!methodMap.has(method)) methodMap.set(method, { count: 0, total: 0, rateType: pay.rate_type });
       const mEntry = methodMap.get(method)!;
       mEntry.count += 1;
       mEntry.total += amount;
 
       // Product Breakdown
       const prodName = (pay.products as any)?.name || 'Producto Eliminado / Desconocido';
-      if (!productMap.has(prodName)) productMap.set(prodName, { count: 0, total: 0 });
+      if (!productMap.has(prodName)) productMap.set(prodName, { count: 0, total: 0, rateType: pay.rate_type });
       const pEntry = productMap.get(prodName)!;
       pEntry.count += 1;
       pEntry.total += amount;
@@ -80,6 +87,14 @@ export default async function LedgerPage({
   } else {
     lowestTicket = 0;
   }
+
+  const formatRevenueStr = () => {
+    const parts: string[] = [];
+    if (eurRevenue > 0) parts.push(`€${eurRevenue.toFixed(2)}`);
+    if (usdRevenue > 0) parts.push(`$${usdRevenue.toFixed(2)}`);
+    if (parts.length === 0) return '$0.00';
+    return parts.join(' + ');
+  };
 
   const transactionCount = payments?.length || 0;
   const averageTicket = transactionCount > 0 ? totalRevenue / transactionCount : 0;
@@ -222,7 +237,7 @@ export default async function LedgerPage({
           </div>
           <div className="relative z-10">
             <p className="text-green-100 font-bold uppercase tracking-wider text-sm mb-1">Ingreso Total Validado</p>
-            <h3 className="text-4xl font-black tracking-tight">${totalRevenue.toFixed(2)}</h3>
+            <h3 className="text-4xl font-black tracking-tight">{formatRevenueStr()}</h3>
             <div className="mt-4 flex items-center gap-2">
               <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 backdrop-blur-md">
                 <TrendingUp className="w-3 h-3" /> Histórico
@@ -287,7 +302,7 @@ export default async function LedgerPage({
                 <div key={method}>
                   <div className="flex justify-between text-sm mb-2">
                     <span className="font-bold text-gray-700">{method}</span>
-                    <span className="font-black text-gray-900">${data.total.toFixed(2)}</span>
+                    <span className="font-black text-gray-900">{data.rateType === 'EUR' ? '€' : '$'}{data.total.toFixed(2)}</span>
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
                     <div 
@@ -324,7 +339,7 @@ export default async function LedgerPage({
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-black text-gray-500 uppercase tracking-widest">Producto / Concepto</th>
                   <th className="px-6 py-4 text-center text-xs font-black text-gray-500 uppercase tracking-widest">Transacciones</th>
-                  <th className="px-6 py-4 text-right text-xs font-black text-gray-500 uppercase tracking-widest">Ingreso ($)</th>
+                  <th className="px-6 py-4 text-right text-xs font-black text-gray-500 uppercase tracking-widest">Ingreso</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-50">
@@ -339,7 +354,7 @@ export default async function LedgerPage({
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <span className="font-black text-green-700 text-base">${data.total.toFixed(2)}</span>
+                      <span className="font-black text-green-700 text-base">{data.rateType === 'EUR' ? '€' : '$'}{data.total.toFixed(2)}</span>
                     </td>
                   </tr>
                 ))}
