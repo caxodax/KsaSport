@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Plus, Shield, Camera, Upload, AlertCircle, Loader2 } from 'lucide-react';
 import { createTeam, updateTeam } from './actions';
+import { compressImageClient } from '@/lib/clientImageCompressor';
 
 interface TeamData {
   id: string;
@@ -55,21 +56,22 @@ export default function TeamDrawer({
 
   if (!isOpen) return null;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMsg('La imagen no debe pesar más de 5MB.');
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMsg('La imagen no debe pesar más de 10MB.');
       return;
     }
 
-    setLogoFile(file);
+    const optimized = await compressImageClient(file, 1080, 0.85);
+    setLogoFile(optimized);
     const reader = new FileReader();
     reader.onload = (event) => {
       setLogoPreview(event.target?.result as string);
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(optimized);
     setErrorMsg(null);
   };
 

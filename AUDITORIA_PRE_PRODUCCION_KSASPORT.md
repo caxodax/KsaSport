@@ -493,7 +493,7 @@ Reemplazar por notificaciones flotantes (*toasts*) no intrusivas o modales de co
 │  [X] 11. Corregir impureza de Date.now() en PaymentForm.tsx (3.1).          │
 │  [X] 12. Implementar dynamic import para exceljs (3.2).                     │
 │  [X] 13. Crear src/app/loading.tsx y src/app/error.tsx (3.3).               │
-│  [ ] 14. Robustecer uploadImageToCloudflare (UUID y límites de archivo) (3.4).│
+│  [X] 14. Robustecer uploadImageToCloudflare (UUID y límites de archivo) (3.4).│
 │  [ ] 15. Ajustar contraste de texto dorado sobre fondo claro (4.1).         │
 │  [ ] 16. Corregir enlaces rotos y redes en Landing Page (4.2).              │
 │  [ ] 17. Reemplazar favicon.ico por el escudo oficial de KsaSport (4.3).    │

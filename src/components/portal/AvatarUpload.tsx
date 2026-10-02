@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Camera, Loader2, Upload, X, User } from 'lucide-react';
 import { updateAvatar } from '@/app/portal/dashboard/actions';
+import { compressImageClient } from '@/lib/clientImageCompressor';
 
 export default function AvatarUpload({ 
   athleteId, 
@@ -41,8 +42,10 @@ export default function AvatarUpload({
     setAvatar(objectUrl);
     setIsUploading(true);
 
+    const optimized = await compressImageClient(file, 1080, 0.85);
+
     const formData = new FormData();
-    formData.append('avatar', file);
+    formData.append('avatar', optimized);
 
     const res = await updateAvatar(athleteId, formData);
     

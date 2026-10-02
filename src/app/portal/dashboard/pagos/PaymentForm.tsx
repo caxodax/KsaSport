@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ArrowLeft, CheckCircle2, Wallet, Camera, X, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import { reportPayment } from '../../actions'
+import { compressImageClient } from '@/lib/clientImageCompressor'
 
 type Product = {
   id: string
@@ -639,14 +640,15 @@ export default function PaymentForm({
                         type="file" 
                         className="hidden" 
                         accept="image/jpeg, image/png, image/webp" 
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const file = e.target.files?.[0]
                           if (file) {
-                            if (file.size > 5 * 1024 * 1024) {
-                              setError('La imagen es muy pesada. Máximo 5MB.')
+                            if (file.size > 10 * 1024 * 1024) {
+                              setError('La imagen es muy pesada. Máximo 10MB.')
                               return
                             }
-                            updateSplit(split.id, 'file', file)
+                            const optimized = await compressImageClient(file)
+                            updateSplit(split.id, 'file', optimized)
                           }
                         }}
                       />

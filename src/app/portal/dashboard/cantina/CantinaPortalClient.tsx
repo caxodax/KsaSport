@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { formatCedula } from "@/lib/cedula"
 import { reportFoodPayment } from "./actions"
+import { compressImageClient } from "@/lib/clientImageCompressor"
 
 interface CantinaPortalClientProps {
   athlete: any
@@ -397,9 +398,11 @@ export default function CantinaPortalClient({
                     accept="image/*"
                     id="receipt-upload"
                     className="hidden"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       if (e.target.files?.[0]) {
-                        setReceiptFile(e.target.files[0])
+                        const file = e.target.files[0]
+                        const optimized = await compressImageClient(file)
+                        setReceiptFile(optimized)
                       }
                     }}
                   />

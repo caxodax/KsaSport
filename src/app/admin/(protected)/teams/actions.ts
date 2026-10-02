@@ -14,7 +14,7 @@ export async function createTeam(formData: FormData) {
 
   let logo_url = null;
   if (logoFile && logoFile.size > 0) {
-    if (logoFile.size > 5 * 1024 * 1024) return { error: 'El logo no debe pesar más de 5MB.' };
+    if (logoFile.size > 10 * 1024 * 1024) return { error: 'El logo no debe pesar más de 10MB.' };
     logo_url = await uploadImageToCloudflare(logoFile, 'teams');
   }
 
@@ -58,7 +58,7 @@ export async function updateTeam(formData: FormData) {
   const updateData: any = { name, category };
 
   if (logoFile && logoFile.size > 0) {
-    if (logoFile.size > 5 * 1024 * 1024) return { error: 'El logo no debe pesar más de 5MB.' };
+    if (logoFile.size > 10 * 1024 * 1024) return { error: 'El logo no debe pesar más de 10MB.' };
     const publicUrl = await uploadImageToCloudflare(logoFile, 'teams');
     if (publicUrl) {
       updateData.logo_url = publicUrl;

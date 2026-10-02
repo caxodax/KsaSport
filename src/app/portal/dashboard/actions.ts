@@ -15,9 +15,9 @@ export async function updateAvatar(athleteId: string, formData: FormData) {
     return { error: 'El archivo debe ser una imagen válida.' };
   }
 
-  // Verificar tamaño (ej: máximo 5MB)
-  if (file.size > 5 * 1024 * 1024) {
-    return { error: 'La imagen no debe pesar más de 5MB.' };
+  // Verificar tamaño (máximo 10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    return { error: 'La imagen no debe pesar más de 10MB.' };
   }
 
   try {
