@@ -1,9 +1,15 @@
 'use server'
 
 import { getServiceSupabase } from '@/lib/supabase';
+import { checkAdminPermission } from '@/lib/auth-admin';
 import { revalidatePath } from 'next/cache';
 
 export async function toggleExemption(athleteId: string, productId: string, isExempt: boolean) {
+  const { permissions } = await checkAdminPermission();
+  if (!permissions.includes('manage_catalog') && !permissions.includes('view_finances')) {
+    return { error: 'No autorizado para modificar exoneraciones' };
+  }
+
   const supabase = getServiceSupabase();
   
   if (isExempt) {
@@ -31,6 +37,11 @@ export async function toggleExemption(athleteId: string, productId: string, isEx
 }
 
 export async function toggleAthleteAlliance(athleteId: string, hasAlliance: boolean) {
+  const { permissions } = await checkAdminPermission();
+  if (!permissions.includes('manage_catalog') && !permissions.includes('view_finances')) {
+    return { error: 'No autorizado para modificar alianza' };
+  }
+
   const supabase = getServiceSupabase();
   const { error } = await supabase
     .from('athletes')

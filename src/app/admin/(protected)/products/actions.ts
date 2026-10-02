@@ -1,9 +1,11 @@
 'use server'
 
 import { getServiceSupabase } from '@/lib/supabase'
+import { checkAdminPermission } from '@/lib/auth-admin'
 import { revalidatePath } from 'next/cache'
 
 export async function createProduct(formData: FormData) {
+  await checkAdminPermission('manage_catalog')
   const name = formData.get('name') as string
   const description = formData.get('description') as string
   const price = Number(formData.get('price'))
@@ -49,6 +51,7 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function toggleProductStatus(id: string, currentStatus: boolean) {
+  await checkAdminPermission('manage_catalog')
   const supabase = getServiceSupabase()
   
   const { error } = await supabase
@@ -65,6 +68,7 @@ export async function toggleProductStatus(id: string, currentStatus: boolean) {
 }
 
 export async function deleteProduct(id: string) {
+  await checkAdminPermission('manage_catalog')
   const supabase = getServiceSupabase()
   
   // Si el producto ya tiene pagos asociados, fallará por la llave foránea (que es lo ideal para no romper la contabilidad).
@@ -83,6 +87,7 @@ export async function deleteProduct(id: string) {
 }
 
 export async function updateProduct(formData: FormData) {
+  await checkAdminPermission('manage_catalog')
   const id = formData.get('id') as string
   const name = formData.get('name') as string
   const description = formData.get('description') as string

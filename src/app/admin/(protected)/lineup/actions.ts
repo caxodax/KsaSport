@@ -1,10 +1,11 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server';
 import { getServiceSupabase } from '@/lib/supabase';
+import { checkAdminPermission } from '@/lib/auth-admin';
 import { revalidatePath } from 'next/cache';
 
 export async function assignPosition(athleteId: string, position: string) {
+  await checkAdminPermission('view_roster');
   const supabase = getServiceSupabase();
   const { error } = await supabase.from('athletes').update({ position }).eq('id', athleteId);
   
@@ -18,6 +19,7 @@ export async function assignPosition(athleteId: string, position: string) {
 }
 
 export async function unassignPosition(athleteId: string) {
+  await checkAdminPermission('view_roster');
   const supabase = getServiceSupabase();
   const { error } = await supabase.from('athletes').update({ position: null }).eq('id', athleteId);
   
@@ -31,6 +33,7 @@ export async function unassignPosition(athleteId: string) {
 }
 
 export async function updateBattingOrder(athleteId: string, order: number | null) {
+  await checkAdminPermission('view_roster');
   const supabase = getServiceSupabase();
   const { error } = await supabase.from('athletes').update({ batting_order: order }).eq('id', athleteId);
   
@@ -40,6 +43,7 @@ export async function updateBattingOrder(athleteId: string, order: number | null
 }
 
 export async function addOffensiveStat(athleteId: string, statType: 'hit' | 'out') {
+  await checkAdminPermission('view_roster');
   const supabase = getServiceSupabase();
   // Obtener estado actual
   const { data: athlete } = await supabase.from('athletes').select('stats_hits, stats_off_outs').eq('id', athleteId).single();
@@ -58,6 +62,7 @@ export async function addOffensiveStat(athleteId: string, statType: 'hit' | 'out
 }
 
 export async function addDefensiveStat(athleteId: string) {
+  await checkAdminPermission('view_roster');
   const supabase = getServiceSupabase();
   // Obtener estado actual
   const { data: athlete } = await supabase.from('athletes').select('stats_def_outs').eq('id', athleteId).single();

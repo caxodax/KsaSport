@@ -283,3 +283,4 @@ La aplicación ha sido auditada y optimizada bajo las directrices del motor **`u
 El software de **KsaSport** transforma una operación tradicional propensa a errores manuales, pérdidas por devaluación cambiaria y retrasos en cuadres de caja, en una **organización deportiva moderna, digitalizada y transparente**. 
 
 Garantiza certeza contable para la directiva, autonomía y agilidad para entrenadores y una experiencia de usuario de primer nivel para los atletas y sus familias.
+

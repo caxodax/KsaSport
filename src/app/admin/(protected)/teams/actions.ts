@@ -1,9 +1,11 @@
 'use server'
 import { getServiceSupabase } from '@/lib/supabase';
+import { checkAdminPermission } from '@/lib/auth-admin';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { uploadImageToCloudflare } from '@/lib/cloudflare';
 
 export async function createTeam(formData: FormData) {
+  await checkAdminPermission('manage_catalog');
   const name = formData.get('name') as string;
   const category = formData.get('category') as string;
   const logoFile = formData.get('logo') as File | null;
@@ -30,6 +32,7 @@ export async function createTeam(formData: FormData) {
 }
 
 export async function deleteTeam(id: string) {
+  await checkAdminPermission('manage_catalog');
   const supabase = getServiceSupabase();
   const { error } = await supabase.from('teams').delete().eq('id', id);
 
@@ -44,6 +47,7 @@ export async function deleteTeam(id: string) {
 }
 
 export async function updateTeam(formData: FormData) {
+  await checkAdminPermission('manage_catalog');
   const id = formData.get('id') as string;
   const name = formData.get('name') as string;
   const category = formData.get('category') as string;

@@ -1,12 +1,14 @@
 'use server'
 
 import { getServiceSupabase } from '@/lib/supabase'
+import { checkAdminPermission } from '@/lib/auth-admin'
 import { revalidatePath } from 'next/cache'
 
 /**
  * Actualiza la regla general / global por defecto del club.
  */
 export async function updateGlobalSettings(formData: FormData) {
+  await checkAdminPermission('manage_settings')
   const grace_period_days = Number(formData.get('grace_period_days'))
   const penalty_amount = Number(formData.get('penalty_amount'))
 
@@ -48,6 +50,7 @@ export async function updateCategoryPenalty(
   grace_period_days?: number | null,
   penalty_amount?: number | null
 ) {
+  await checkAdminPermission('manage_settings')
   if (!categoryId) {
     return { error: 'ID de categoría no válido.' }
   }

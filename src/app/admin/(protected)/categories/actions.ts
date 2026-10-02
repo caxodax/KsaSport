@@ -1,9 +1,11 @@
 'use server'
 import { getServiceSupabase } from '@/lib/supabase';
+import { checkAdminPermission } from '@/lib/auth-admin';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { normalizePositions } from '@/lib/positions';
 
 export async function createCategory(formData: FormData) {
+  await checkAdminPermission('manage_catalog');
   const name = formData.get('name') as string;
   const positionsRaw = formData.get('positions') as string;
   const positions = normalizePositions(positionsRaw);
@@ -26,6 +28,7 @@ export async function createCategory(formData: FormData) {
 }
 
 export async function deleteCategory(id: string) {
+  await checkAdminPermission('manage_catalog');
   const supabase = getServiceSupabase();
   const { error } = await supabase.from('categories').delete().eq('id', id);
 
@@ -41,6 +44,7 @@ export async function deleteCategory(id: string) {
 }
 
 export async function updateCategory(formData: FormData) {
+  await checkAdminPermission('manage_catalog');
   const id = formData.get('id') as string;
   const name = formData.get('name') as string;
   const positionsRaw = formData.get('positions') as string;

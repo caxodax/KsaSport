@@ -1,9 +1,11 @@
 'use server'
 import { getServiceSupabase } from '@/lib/supabase';
+import { checkAdminPermission } from '@/lib/auth-admin';
 import { revalidatePath } from 'next/cache';
 import { cleanCedula } from '@/lib/cedula';
 
 export async function createStaff(formData: FormData) {
+  await checkAdminPermission('manage_catalog');
   const name = formData.get('name') as string;
   const cedula = cleanCedula(formData.get('cedula') as string);
   const phone = formData.get('phone') as string;
@@ -33,6 +35,7 @@ export async function createStaff(formData: FormData) {
 }
 
 export async function deleteStaff(id: string) {
+  await checkAdminPermission('manage_catalog');
   const supabase = getServiceSupabase();
   const { error } = await supabase.from('staff').delete().eq('id', id);
 
@@ -45,6 +48,7 @@ export async function deleteStaff(id: string) {
 }
 
 export async function updateStaff(formData: FormData) {
+  await checkAdminPermission('manage_catalog');
   const id = formData.get('id') as string;
   const name = formData.get('name') as string;
   const cedula = cleanCedula(formData.get('cedula') as string);

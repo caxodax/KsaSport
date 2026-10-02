@@ -1,9 +1,11 @@
 'use server'
 
 import { getServiceSupabase } from '@/lib/supabase'
+import { checkAdminPermission } from '@/lib/auth-admin'
 import { revalidatePath } from 'next/cache'
 
 export async function approvePayment(paymentId: string, athleteId: string, concept: string) {
+  await checkAdminPermission('view_finances')
   const supabase = getServiceSupabase()
   
   // 1. Obtener la data del pago antes de actualizar
@@ -76,6 +78,7 @@ export async function approvePayment(paymentId: string, athleteId: string, conce
 }
 
 export async function rejectPayment(paymentId: string) {
+  await checkAdminPermission('view_finances')
   const supabase = getServiceSupabase()
   
   const { error } = await supabase

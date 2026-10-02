@@ -1,12 +1,18 @@
 'use server'
 
 import { syncRates, saveManualRate } from '@/lib/exchangeRate';
+import { checkAdminPermission } from '@/lib/auth-admin';
 import { revalidatePath } from 'next/cache';
 
 /**
  * Ejecuta manualmente la sincronización de tasas oficiales (BCV -> Fallback DolarApi).
  */
 export async function syncRatesNow() {
+  const { permissions } = await checkAdminPermission();
+  if (!permissions.includes('manage_settings') && !permissions.includes('view_finances')) {
+    return { error: 'No autorizado para sincronizar tasas.' };
+  }
+
   try {
     const res = await syncRates();
 
@@ -33,6 +39,11 @@ export async function syncRatesNow() {
  * Guarda manualmente una tasa oficial como fallback administrativo.
  */
 export async function saveManualRateAction(formData: FormData) {
+  const { permissions } = await checkAdminPermission();
+  if (!permissions.includes('manage_settings') && !permissions.includes('view_finances')) {
+    return { error: 'No autorizado para guardar tasas manuales.' };
+  }
+
   const dateRate = formData.get('date_rate') as string;
   const usdRate = Number(formData.get('usd_rate'));
   const eurRate = Number(formData.get('eur_rate'));

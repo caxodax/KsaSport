@@ -1,15 +1,19 @@
 'use server'
 import { getServiceSupabase } from '@/lib/supabase';
+import { checkAdminPermission } from '@/lib/auth-admin';
 import { revalidatePath } from 'next/cache';
 import { cleanCedula } from '@/lib/cedula';
 
 export async function createAthlete(formData: FormData) {
+  const { permissions } = await checkAdminPermission('view_roster');
+  const isSuperAdmin = permissions.includes('manage_catalog');
+
   const name = formData.get('name') as string;
   const cedula = cleanCedula(formData.get('cedula') as string);
   const phone = formData.get('phone') as string;
   const team_id = formData.get('team_id') as string;
-  const status = formData.get('status') as string || 'Solvente';
-  const paid_until = formData.get('paid_until') as string || null;
+  const status = isSuperAdmin ? ((formData.get('status') as string) || 'Solvente') : 'Solvente';
+  const paid_until = isSuperAdmin ? ((formData.get('paid_until') as string) || null) : null;
   const has_alliance = formData.get('has_alliance') === 'on' || formData.get('has_alliance') === 'true';
 
   if (!name || !cedula) return { error: 'Nombre y cédula son requeridos' };
@@ -43,6 +47,7 @@ export async function createAthlete(formData: FormData) {
 }
 
 export async function deleteAthlete(id: string) {
+  await checkAdminPermission('manage_catalog');
   const supabase = getServiceSupabase();
   const { error } = await supabase.from('athletes').delete().eq('id', id);
 
@@ -56,6 +61,9 @@ export async function deleteAthlete(id: string) {
 }
 
 export async function updateAthlete(formData: FormData) {
+  const { permissions } = await checkAdminPermission('view_roster');
+  const isSuperAdmin = permissions.includes('manage_catalog');
+
   const id = formData.get('id') as string;
   const name = formData.get('name') as string;
   const cedula = cleanCedula(formData.get('cedula') as string);
@@ -77,9 +85,11 @@ export async function updateAthlete(formData: FormData) {
     team_id: team_id || null
   };
   
-  // Solo actualizar el status si viene en el form (para evitar que coaches lo pisen con null)
-  if (status) updateData.status = status;
-  if (formData.has('paid_until')) updateData.paid_until = paid_until;
+  // Solo roles con manage_catalog pueden alterar manualmente status o paid_until
+  if (isSuperAdmin) {
+    if (status) updateData.status = status;
+    if (formData.has('paid_until')) updateData.paid_until = paid_until;
+  }
   if (formData.has('position')) updateData.position = formData.get('position') as string;
   if (formData.has('stats_avg')) updateData.stats_avg = formData.get('stats_avg') ? Number(formData.get('stats_avg')) : null;
   if (formData.has('stats_hits')) updateData.stats_hits = formData.get('stats_hits') ? Number(formData.get('stats_hits')) : null;
@@ -107,6 +117,7 @@ export async function getAthletesForExport(filters: {
   category?: string;
   status?: string;
 }) {
+  await checkAdminPermission('view_roster');
   const supabase = getServiceSupabase();
 
   const selectQuery = filters.category
