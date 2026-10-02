@@ -376,6 +376,7 @@ export default function TeamDashboard({
 
       {/* 4. DRAWER LATERAL (CREAR / EDITAR) */}
       <TeamDrawer
+        key={selectedTeam?.id || 'new'}
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         team={selectedTeam}

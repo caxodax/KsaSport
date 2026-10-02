@@ -409,6 +409,7 @@ export default function UsersDashboard({
 
       {/* Drawer de Creación y Edición */}
       <UserDrawer
+        key={editingUser?.id || 'new'}
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         editingUser={editingUser}

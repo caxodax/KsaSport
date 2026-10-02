@@ -548,6 +548,7 @@ export default function ProductDashboard({
 
       {/* 4. MODAL DRAWER (Creación y Edición) */}
       <ProductDrawer
+        key={selectedProduct?.id || 'new'}
         isOpen={isDrawerOpen}
         onClose={() => {
           setIsDrawerOpen(false);

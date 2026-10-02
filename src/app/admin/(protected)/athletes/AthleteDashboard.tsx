@@ -823,6 +823,7 @@ export default function AthleteDashboard({
 
       {/* 5. DRAWER LATERAL (CREAR / EDITAR) */}
       <AthleteDrawer
+        key={selectedAthlete?.id || 'new'}
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         athlete={selectedAthlete}

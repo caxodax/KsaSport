@@ -471,6 +471,7 @@ export default function CategoryDashboard({
 
       {/* 5. DRAWER LATERAL (CREAR / EDITAR) */}
       <CategoryDrawer
+        key={selectedCategory?.id || 'new'}
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         category={selectedCategory}

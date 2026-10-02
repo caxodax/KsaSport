@@ -489,8 +489,8 @@ Reemplazar por notificaciones flotantes (*toasts*) no intrusivas o modales de co
 │  [X] 9. Corregir bug de zona horaria de toLocaleDateString en paid_until (2.4).│
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ DÍA 2: ESTABILIDAD, PERFORMANCE Y REFINAMIENTO UX                           │
-│  [ ] 10. Eliminar useEffects en Drawers usando keys en el componente (3.1). │
-│  [ ] 11. Corregir impureza de Date.now() en PaymentForm.tsx (3.1).          │
+│  [X] 10. Eliminar useEffects en Drawers usando keys en el componente (3.1). │
+│  [X] 11. Corregir impureza de Date.now() en PaymentForm.tsx (3.1).          │
 │  [ ] 12. Implementar dynamic import para exceljs (3.2).                     │
 │  [ ] 13. Crear src/app/loading.tsx y src/app/error.tsx (3.3).               │
 │  [ ] 14. Robustecer uploadImageToCloudflare (UUID y límites de archivo) (3.4).│

@@ -73,7 +73,7 @@ export default function PaymentForm({
     const dateRate = rates?.date || new Date().toISOString().split('T')[0]
 
     setSplits([{
-      id: Date.now(),
+      id: 1,
       amount: pendingStr,
       transferred_amount: (pending * effectiveRate).toFixed(2),
       payment_currency: 'USD',
@@ -98,9 +98,10 @@ export default function PaymentForm({
 
     const effectiveRate = getRateForProduct(selectedProduct?.rate_type)
     const dateRate = rates?.date || new Date().toISOString().split('T')[0]
+    const nextId = splits.length > 0 ? Math.max(...splits.map(s => Number(s.id))) + 1 : 1
 
     setSplits([...splits, {
-      id: Date.now(),
+      id: nextId,
       amount: remaining.toString(),
       transferred_amount: (remaining * effectiveRate).toFixed(2),
       payment_currency: 'USD',

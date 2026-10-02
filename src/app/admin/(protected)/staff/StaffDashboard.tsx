@@ -554,6 +554,7 @@ export default function StaffDashboard({
 
       {/* 4. MODAL DRAWER DE CREACIÓN Y EDICIÓN */}
       <StaffDrawer
+        key={selectedStaff?.id || 'new'}
         isOpen={isDrawerOpen}
         onClose={() => {
           setIsDrawerOpen(false);
