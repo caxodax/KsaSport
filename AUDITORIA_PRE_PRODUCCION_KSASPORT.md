@@ -491,7 +491,7 @@ Reemplazar por notificaciones flotantes (*toasts*) no intrusivas o modales de co
 │ DÍA 2: ESTABILIDAD, PERFORMANCE Y REFINAMIENTO UX                           │
 │  [X] 10. Eliminar useEffects en Drawers usando keys en el componente (3.1). │
 │  [X] 11. Corregir impureza de Date.now() en PaymentForm.tsx (3.1).          │
-│  [ ] 12. Implementar dynamic import para exceljs (3.2).                     │
+│  [X] 12. Implementar dynamic import para exceljs (3.2).                     │
 │  [ ] 13. Crear src/app/loading.tsx y src/app/error.tsx (3.3).               │
 │  [ ] 14. Robustecer uploadImageToCloudflare (UUID y límites de archivo) (3.4).│
 │  [ ] 15. Ajustar contraste de texto dorado sobre fondo claro (4.1).         │

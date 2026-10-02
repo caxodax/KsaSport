@@ -3,7 +3,7 @@ import { CircleDollarSign, TrendingUp, CreditCard, ShoppingCart, BarChart3, Rece
 import DateRangeFilter from '../DateRangeFilter';
 import { parseDateRange } from '@/lib/dateRange';
 import ExportLedgerButton from './ExportLedgerButton';
-import { LedgerExportData } from '@/lib/exportExcel';
+import type { LedgerExportData } from '@/lib/exportExcel';
 
 export const revalidate = 0;
 

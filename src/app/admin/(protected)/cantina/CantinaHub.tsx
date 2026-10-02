@@ -23,7 +23,6 @@ import {
   Edit
 } from "lucide-react"
 import { formatCedula } from "@/lib/cedula"
-import { exportCantinaLedgerToExcel } from "@/lib/exportExcel"
 import { formatLocalDateShort } from "@/lib/dateUtils"
 import DateRangeFilter from "../DateRangeFilter"
 import {
@@ -285,7 +284,7 @@ export default function CantinaHub({
     }
   }, [foodOrders, foodPayments, creditAccounts])
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     const exportData = {
       dateRangeStr,
       totalVentas: reportTotals.totalVentas,
@@ -314,7 +313,8 @@ export default function CantinaHub({
         status: p.status
       }))
     }
-    exportCantinaLedgerToExcel(exportData)
+    const { exportCantinaLedgerToExcel } = await import("@/lib/exportExcel")
+    await exportCantinaLedgerToExcel(exportData)
   }
 
   return (

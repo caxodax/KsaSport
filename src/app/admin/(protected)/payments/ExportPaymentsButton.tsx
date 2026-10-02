@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { FileSpreadsheet, Loader2 } from 'lucide-react';
-import { exportPaymentsToExcel, PaymentsExportData } from '@/lib/exportExcel';
+import type { PaymentsExportData } from '@/lib/exportExcel';
 
 export default function ExportPaymentsButton({ data }: { data: PaymentsExportData }) {
   const [exporting, setExporting] = useState(false);
@@ -10,6 +10,7 @@ export default function ExportPaymentsButton({ data }: { data: PaymentsExportDat
   const handleExport = async () => {
     try {
       setExporting(true);
+      const { exportPaymentsToExcel } = await import('@/lib/exportExcel');
       await exportPaymentsToExcel(data);
     } catch (err: any) {
       console.error('Error al exportar Finanzas y Pagos a Excel:', err);

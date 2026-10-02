@@ -5,7 +5,7 @@ import { checkAdminPermission } from '@/lib/auth-admin'
 import DateRangeFilter from '../DateRangeFilter'
 import { parseDateRange } from '@/lib/dateRange'
 import ExportPaymentsButton from './ExportPaymentsButton'
-import { PaymentsExportData } from '@/lib/exportExcel'
+import type { PaymentsExportData } from '@/lib/exportExcel'
 
 export const revalidate = 0
 

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { FileSpreadsheet, Loader2 } from 'lucide-react';
-import { exportLedgerToExcel, LedgerExportData } from '@/lib/exportExcel';
+import type { LedgerExportData } from '@/lib/exportExcel';
 
 export default function ExportLedgerButton({ data }: { data: LedgerExportData }) {
   const [exporting, setExporting] = useState(false);
@@ -10,6 +10,7 @@ export default function ExportLedgerButton({ data }: { data: LedgerExportData })
   const handleExport = async () => {
     try {
       setExporting(true);
+      const { exportLedgerToExcel } = await import('@/lib/exportExcel');
       await exportLedgerToExcel(data);
     } catch (err: any) {
       console.error('Error al exportar el Libro Mayor a Excel:', err);

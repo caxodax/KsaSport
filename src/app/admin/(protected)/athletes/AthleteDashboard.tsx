@@ -12,7 +12,6 @@ import { deleteAthlete, getAthletesForExport } from './actions';
 import AthleteDrawer from './AthleteDrawer';
 import Pagination from '../Pagination';
 import { formatCedula } from '@/lib/cedula';
-import { exportAthletesToExcel } from '@/lib/exportExcel';
 import { formatLocalDateShort } from '@/lib/dateUtils';
 
 interface TeamItem {
@@ -117,6 +116,7 @@ export default function AthleteDashboard({
         label = selectedStatus;
       }
 
+      const { exportAthletesToExcel } = await import('@/lib/exportExcel');
       await exportAthletesToExcel(res.athletes, label);
     } catch (err: any) {
       console.error('Error exportando a Excel:', err);
