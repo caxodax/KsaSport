@@ -26,7 +26,7 @@ export default async function PublicLandingPage() {
       <Navbar />
       
       <main className="flex-1 flex flex-col">
-        <Hero />
+        <Hero settings={settings} />
         <SocialProof />
         <BentoFeatures />
         <EventShowcase settings={settings} />
