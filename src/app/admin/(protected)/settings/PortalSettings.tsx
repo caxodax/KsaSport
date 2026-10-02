@@ -177,7 +177,13 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
         setTimeout(() => setSuccess(false), 4500)
       }
     } catch (err: any) {
-      setError(err?.message || 'Error guardando la configuración.')
+      console.error('Error al guardar configuración de portal:', err)
+      const msg = err?.message || ''
+      if (msg.includes('441') || msg.includes('Server Components render') || msg.includes('Failed to fetch')) {
+        setError('Ocurrió un error al procesar los archivos en el servidor. Verifica que los archivos no excedan el límite permitido e intenta nuevamente.')
+      } else {
+        setError(msg || 'Error guardando la configuración.')
+      }
     } finally {
       setSaving(false)
     }
