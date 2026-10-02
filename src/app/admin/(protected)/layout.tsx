@@ -37,9 +37,21 @@ export default async function AdminLayout({
   const permissions = (adminUser.admin_roles as any)?.permissions || []
   const roleName = (adminUser.admin_roles as any)?.name || 'Admin'
   
+  // Obtener logotipo de la configuración
+  const { data: settings } = await adminSupabase
+    .from('club_settings')
+    .select('logo_url')
+    .eq('id', 1)
+    .single()
+
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
-      <Sidebar permissions={permissions} roleName={roleName} email={adminUser.email} />
+      <Sidebar 
+        permissions={permissions} 
+        roleName={roleName} 
+        email={adminUser.email} 
+        logoUrl={settings?.logo_url}
+      />
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col h-screen overflow-y-auto bg-gray-50">

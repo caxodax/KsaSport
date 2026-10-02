@@ -30,6 +30,7 @@ export interface ClubSettings {
   calendar_images?: string[];
   calendar_pdf_url?: string;
   calendar_is_active?: boolean;
+  logo_url?: string | null;
 }
 
 export interface CategorySettingItem {

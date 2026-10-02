@@ -2,10 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Medal, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import BrandLogo from '@/components/ui/BrandLogo';
 
-export default function Navbar() {
+interface NavbarProps {
+  settings?: {
+    logo_url?: string | null;
+  } | null;
+}
+
+export default function Navbar({ settings }: NavbarProps = {}) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -28,10 +35,13 @@ export default function Navbar() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group relative z-50">
-            <Medal className={`w-8 h-8 transition-colors ${
-              isScrolled ? "text-kasa-vinotinto" : "text-kasa-dorado"
-            }`} />
+          <Link href="/" className="flex items-center gap-2.5 group relative z-50">
+            <BrandLogo
+              src={settings?.logo_url}
+              size="sm"
+              variant={isScrolled ? "plain" : "badge"}
+              className="group-hover:scale-105 transition-transform"
+            />
             <span className={`text-xl font-extrabold tracking-wider transition-colors ${
               isScrolled ? "text-gray-900" : "text-white"
             }`}>

@@ -1,10 +1,12 @@
 'use client'
 
-import { Medal, MessageCircle } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import Link from 'next/link';
+import BrandLogo from '@/components/ui/BrandLogo';
 
 interface FooterProps {
   settings?: {
+    logo_url?: string | null;
     instagram_url?: string | null;
     facebook_url?: string | null;
     whatsapp_number?: string | null;
@@ -24,8 +26,13 @@ export default function Footer({ settings }: FooterProps) {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           {/* Brand */}
           <div className="col-span-1 md:col-span-2">
-            <Link href="/" className="flex items-center gap-2 mb-6 group">
-              <Medal className="w-8 h-8 text-kasa-dorado group-hover:scale-105 transition-transform" />
+            <Link href="/" className="flex items-center gap-2.5 mb-6 group">
+              <BrandLogo 
+                src={settings?.logo_url} 
+                size="sm" 
+                variant="badge" 
+                className="group-hover:scale-105 transition-transform" 
+              />
               <span className="text-xl font-extrabold tracking-wider text-white">
                 KASA SPORTS
               </span>

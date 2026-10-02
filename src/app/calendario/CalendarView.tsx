@@ -3,13 +3,15 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { 
-  Trophy, Calendar, Download, MessageCircle, ArrowLeft, 
+  Calendar, Download, MessageCircle, ArrowLeft, 
   ExternalLink, ZoomIn, X, ChevronLeft, ChevronRight,
   Sparkles, Layers
 } from 'lucide-react'
+import BrandLogo from '@/components/ui/BrandLogo'
 
 interface CalendarViewProps {
   settings: {
+    logo_url?: string | null;
     calendar_title?: string | null;
     calendar_season?: string | null;
     calendar_description?: string | null;
@@ -95,10 +97,13 @@ export default function CalendarView({ settings }: CalendarViewProps) {
       {/* HEADER DE NAVEGACIÓN SUPERIOR */}
       <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-white/10 px-4 sm:px-6 lg:px-8 py-3.5">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/" className="inline-flex items-center gap-2 group">
-            <div className="w-9 h-9 rounded-xl bg-kasa-vinotinto text-white flex items-center justify-center font-black shadow-md border border-white/10 group-hover:scale-105 transition-transform">
-              <Trophy className="w-5 h-5 text-kasa-dorado" />
-            </div>
+          <Link href="/" className="inline-flex items-center gap-2.5 group">
+            <BrandLogo 
+              src={settings?.logo_url} 
+              size="sm" 
+              variant="badge" 
+              className="group-hover:scale-105 transition-transform" 
+            />
             <div className="flex flex-col">
               <span className="font-extrabold tracking-wider text-base text-white leading-none">
                 KASA SPORTS

@@ -1,17 +1,30 @@
 import Link from 'next/link';
-import { Medal } from 'lucide-react';
+import BrandLogo from '@/components/ui/BrandLogo';
+import { getServiceSupabase } from '@/lib/supabase';
 
-export default function PortalLayout({
+export default async function PortalLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const supabase = getServiceSupabase();
+  const { data: settings } = await supabase
+    .from('club_settings')
+    .select('logo_url')
+    .eq('id', 1)
+    .single();
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <nav className="bg-kasa-vinotinto text-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-2">
-            <Medal className="w-8 h-8 text-kasa-dorado" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <BrandLogo 
+              src={settings?.logo_url} 
+              size="sm" 
+              variant="badge" 
+              className="group-hover:scale-105 transition-transform" 
+            />
             <span className="text-xl font-bold tracking-wider">KASA SPORTS</span>
           </Link>
           <div className="flex gap-4">

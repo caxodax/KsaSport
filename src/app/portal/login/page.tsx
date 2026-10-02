@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { login, signup } from '../actions';
-import { Medal, Mail, Lock } from 'lucide-react';
+import { Mail, Lock } from 'lucide-react';
+import BrandLogo from '@/components/ui/BrandLogo';
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -26,7 +27,9 @@ export default function LoginPage() {
     <div className="flex-1 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
         <div className="text-center mb-8">
-          <Medal className="w-16 h-16 text-kasa-vinotinto mx-auto mb-4" />
+          <div className="flex justify-center mb-4">
+            <BrandLogo size="xl" variant="plain" />
+          </div>
           <h2 className="text-2xl font-bold text-gray-900">
             {isLogin ? 'Bienvenida de nuevo' : 'Crea tu cuenta'}
           </h2>

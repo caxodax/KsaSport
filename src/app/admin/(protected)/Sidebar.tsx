@@ -3,10 +3,21 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Medal, LayoutDashboard, Users, Shield, Trophy, Menu, Tags, X, ShoppingBag, Wallet, Settings, LogOut, BarChart3, UserCog, Landmark, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, Trophy, Menu, Tags, X, ShoppingBag, Wallet, Settings, LogOut, BarChart3, UserCog, Landmark, CreditCard } from 'lucide-react';
 import { logoutAdmin } from '../login/actions';
+import BrandLogo from '@/components/ui/BrandLogo';
 
-export default function Sidebar({ permissions, roleName, email }: { permissions: string[], roleName: string, email: string }) {
+export default function Sidebar({ 
+  permissions, 
+  roleName, 
+  email,
+  logoUrl
+}: { 
+  permissions: string[], 
+  roleName: string, 
+  email: string,
+  logoUrl?: string | null
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const allLinks = [
@@ -62,8 +73,8 @@ export default function Sidebar({ permissions, roleName, email }: { permissions:
     <>
       {/* Mobile Top Bar */}
       <div className="md:hidden bg-kasa-vinotinto text-white p-4 flex justify-between items-center shadow-md z-20 relative">
-        <div className="flex items-center gap-2">
-          <Medal className="w-6 h-6 text-kasa-dorado" />
+        <div className="flex items-center gap-2.5">
+          <BrandLogo src={logoUrl} size="xs" variant="badge" />
           <h1 className="font-bold tracking-tight text-lg">Kasa Sports</h1>
         </div>
         <button 
@@ -87,12 +98,11 @@ export default function Sidebar({ permissions, roleName, email }: { permissions:
         fixed md:sticky top-0 inset-y-0 left-0 z-30 w-64 bg-kasa-vinotinto text-white flex flex-col h-screen transform transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
-        <div className="p-6 hidden md:flex items-center gap-3 border-b border-white/10">
-          <div className="p-2 bg-white/10 rounded-lg">
-            <Medal className="w-6 h-6 text-kasa-dorado" />
-          </div>
+        <div className="p-5 hidden md:flex items-center gap-3 border-b border-white/10">
+          <BrandLogo src={logoUrl} size="sm" variant="badge" />
           <div>
-            <h1 className="text-xl font-bold tracking-tight">Kasa Sports</h1>
+            <h1 className="text-xl font-bold tracking-tight leading-none">Kasa Sports</h1>
+            <p className="text-[10px] text-white/60 font-semibold tracking-wider uppercase mt-1">Panel de Control</p>
           </div>
         </div>
         

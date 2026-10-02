@@ -108,6 +108,20 @@ export async function updatePortalAndCalendarSettings(formData: FormData) {
     const calendar_description = (formData.get('calendar_description') as string || '').trim()
     const calendar_is_active = formData.get('calendar_is_active') === 'true'
 
+    // Logotipo Oficial de la Marca
+    const removeLogo = formData.get('remove_logo') === 'true'
+    const newLogoFile = formData.get('logo') as File | null
+    let brand_logo_url: string | undefined = undefined
+
+    if (newLogoFile && newLogoFile.size > 0) {
+      const uploadedLogoUrl = await uploadImageToCloudflare(newLogoFile, 'branding')
+      if (uploadedLogoUrl) {
+        brand_logo_url = uploadedLogoUrl
+      }
+    } else if (removeLogo) {
+      brand_logo_url = 'https://pub-d9a707e799754eaf97bb7a295f4a8030.r2.dev/branding/ksasport-official-logo.png'
+    }
+
     // Imágenes existentes conservadas
     let images: string[] = []
     const retainedJson = formData.get('retained_images') as string
@@ -161,6 +175,10 @@ export async function updatePortalAndCalendarSettings(formData: FormData) {
       updatePayload.calendar_pdf_url = calendar_pdf_url
     }
 
+    if (brand_logo_url !== undefined) {
+      updatePayload.logo_url = brand_logo_url
+    }
+
     const { data: updatedSettings, error } = await supabase
       .from('club_settings')
       .update(updatePayload)
@@ -170,11 +188,19 @@ export async function updatePortalAndCalendarSettings(formData: FormData) {
 
     if (error) {
       console.error('Error updating portal and calendar settings:', error)
+      if (error.code === '42703' || error.message.includes('logo_url')) {
+        return {
+          error: 'La columna de logotipo aún no existe en la base de datos. Por favor ejecuta el script migration_brand_logo.sql en el SQL Editor de Supabase.'
+        }
+      }
       return { error: error.message }
     }
 
     revalidatePath('/admin/settings')
+    revalidatePath('/admin')
     revalidatePath('/calendario')
+    revalidatePath('/portal')
+    revalidatePath('/portal/login')
     revalidatePath('/')
     return { success: true, settings: updatedSettings }
   } catch (err: any) {

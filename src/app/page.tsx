@@ -23,7 +23,7 @@ export default async function PublicLandingPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans selection:bg-kasa-dorado selection:text-kasa-vinotinto">
-      <Navbar />
+      <Navbar settings={settings} />
       
       <main className="flex-1 flex flex-col">
         <Hero settings={settings} />

@@ -6,13 +6,14 @@ import {
   Globe, MessageCircle, Share2, Calendar, FileText, 
   Upload, Trash2, ExternalLink, Save, CheckCircle2, 
   AlertCircle, Loader2, Plus, Eye, Image as ImageIcon,
-  RotateCcw
+  RotateCcw, Sparkles
 } from 'lucide-react'
 import { updatePortalAndCalendarSettings } from './actions'
 import { compressImageClient } from '@/lib/clientImageCompressor'
 
 interface PortalSettingsProps {
   settings: {
+    logo_url?: string | null;
     instagram_url?: string | null;
     facebook_url?: string | null;
     whatsapp_number?: string | null;
@@ -25,8 +26,19 @@ interface PortalSettingsProps {
   }
 }
 
+const DEFAULT_BRAND_LOGO = 'https://pub-d9a707e799754eaf97bb7a295f4a8030.r2.dev/branding/ksasport-official-logo.png'
+
 export default function PortalSettings({ settings }: PortalSettingsProps) {
   const router = useRouter()
+
+  // Logotipo Oficial de la Marca
+  const [currentLogoUrl, setCurrentLogoUrl] = useState<string>(settings?.logo_url || DEFAULT_BRAND_LOGO)
+  const [newLogoFile, setNewLogoFile] = useState<File | null>(null)
+  const [newLogoPreview, setNewLogoPreview] = useState<string | null>(null)
+  const [removeLogo, setRemoveLogo] = useState(false)
+  const logoInputRef = useRef<HTMLInputElement>(null)
+
+  const activeLogoPreview = newLogoPreview || (removeLogo ? DEFAULT_BRAND_LOGO : (currentLogoUrl || DEFAULT_BRAND_LOGO))
 
   // Redes Sociales
   const [instagramUrl, setInstagramUrl] = useState(settings?.instagram_url || '')
@@ -42,6 +54,7 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
   // Sincronizar estado si cambian las props del servidor (por router.refresh())
   useEffect(() => {
     if (settings) {
+      setCurrentLogoUrl(settings.logo_url || DEFAULT_BRAND_LOGO)
       setInstagramUrl(settings.instagram_url || '')
       setFacebookUrl(settings.facebook_url || '')
       setWhatsappNumber(settings.whatsapp_number || '')
@@ -104,6 +117,29 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
     })
   }
 
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 10 * 1024 * 1024) {
+      setError('El archivo de logotipo no debe superar 10MB.')
+      return
+    }
+    const preview = URL.createObjectURL(file)
+    setNewLogoFile(file)
+    setNewLogoPreview(preview)
+    setRemoveLogo(false)
+  }
+
+  const handleResetLogo = () => {
+    if (newLogoPreview) {
+      URL.revokeObjectURL(newLogoPreview)
+    }
+    setNewLogoFile(null)
+    setNewLogoPreview(null)
+    setRemoveLogo(true)
+    if (logoInputRef.current) logoInputRef.current.value = ''
+  }
+
   const handlePdfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -131,6 +167,13 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
 
     try {
       const formData = new FormData()
+      
+      // Logotipo
+      if (newLogoFile) {
+        formData.append('logo', newLogoFile)
+      }
+      formData.append('remove_logo', String(removeLogo))
+
       formData.append('instagram_url', instagramUrl)
       formData.append('facebook_url', facebookUrl)
       formData.append('whatsapp_number', whatsappNumber)
@@ -156,6 +199,11 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
       } else {
         setSuccess(true)
         if (res.settings) {
+          if (res.settings.logo_url) {
+            setCurrentLogoUrl(res.settings.logo_url)
+          } else if (removeLogo) {
+            setCurrentLogoUrl(DEFAULT_BRAND_LOGO)
+          }
           setCurrentPdfUrl(res.settings.calendar_pdf_url || null)
           setRetainedImages(Array.isArray(res.settings.calendar_images) ? res.settings.calendar_images : [])
           setInstagramUrl(res.settings.instagram_url || '')
@@ -166,6 +214,13 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
           setCalendarDescription(res.settings.calendar_description || '')
           setCalendarIsActive(res.settings.calendar_is_active !== false)
         }
+        if (newLogoPreview) {
+          URL.revokeObjectURL(newLogoPreview)
+        }
+        setNewLogoFile(null)
+        setNewLogoPreview(null)
+        setRemoveLogo(false)
+        if (logoInputRef.current) logoInputRef.current.value = ''
         setNewImageFiles([])
         setNewPdfFile(null)
         setRemovePdf(false)
@@ -202,7 +257,11 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
             
             <div className="space-y-1.5">
               <h4 className="text-lg font-black text-gray-900">
-                {newPdfFile && newImageFiles.length > 0
+                {newLogoFile && (newPdfFile || newImageFiles.length > 0)
+                  ? 'Subiendo nuevo logotipo y archivos...'
+                  : newLogoFile
+                  ? 'Actualizando logotipo oficial...'
+                  : newPdfFile && newImageFiles.length > 0
                   ? 'Subiendo PDF e imágenes...'
                   : newPdfFile
                   ? 'Subiendo documento PDF...'
@@ -211,7 +270,9 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
                   : 'Guardando configuración...'}
               </h4>
               <p className="text-xs text-gray-500 leading-relaxed">
-                {newPdfFile && newImageFiles.length > 0
+                {newLogoFile
+                  ? 'Cargando el nuevo logotipo oficial de KsaSport a Cloudflare R2 y actualizando los componentes de la plataforma.'
+                  : newPdfFile && newImageFiles.length > 0
                   ? 'Cargando el PDF oficial y optimizando las fotos del fixture en Cloudflare R2.'
                   : newPdfFile
                   ? 'Cargando el rol de juegos PDF oficial a Cloudflare R2. Puede tardar unos segundos según tu conexión.'
@@ -243,9 +304,148 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
       {success && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3 text-emerald-800 text-sm shadow-xs animate-in zoom-in-95 duration-200">
           <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600" />
-          <span className="font-bold">¡Configuración guardada exitosamente! Los cambios ya son visibles en la Landing y en /calendario.</span>
+          <span className="font-bold">¡Configuración guardada exitosamente! Los cambios ya son visibles en la Landing, Portal y /calendario.</span>
         </div>
       )}
+
+      {/* SECCIÓN 0: IDENTIDAD DE MARCA & LOGOTIPO OFICIAL */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-kasa-vinotinto/10 rounded-2xl text-kasa-vinotinto">
+              <Sparkles className="w-6 h-6 text-kasa-dorado" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xl font-black text-gray-900">Identidad de Marca & Logotipo Oficial</h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-kasa-dorado/20 text-yellow-800 border border-kasa-dorado/30">
+                  Punto 4.3
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Escudo dinámico de KsaSport. Se aplica en el Navbar superior, Footer, Portal de Atletas, App Móvil (PWA) y Menú Admin.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              ref={logoInputRef}
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              onChange={handleLogoChange}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => logoInputRef.current?.click()}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-kasa-vinotinto hover:bg-kasa-vinotinto-dark text-white transition-all shadow-xs hover:shadow-md cursor-pointer"
+            >
+              <Upload className="w-4 h-4 text-kasa-dorado" />
+              <span>Cambiar Logotipo</span>
+            </button>
+            {(newLogoPreview || removeLogo || (currentLogoUrl && !currentLogoUrl.includes('ksasport-official-logo.png'))) && (
+              <button
+                type="button"
+                onClick={handleResetLogo}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-gray-600 hover:text-red-700 hover:bg-red-50 border border-gray-200 transition-colors cursor-pointer"
+                title="Restablecer logotipo al diseño original de fábrica"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Restablecer</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Dual Preview Box: Impeccable verification for Dark and Light backgrounds */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Preview sobre Vinotinto (Navbar / Sidebar) */}
+          <div className="bg-kasa-vinotinto rounded-2xl p-4 sm:p-5 border border-white/10 shadow-inner flex flex-col justify-between space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-kasa-dorado bg-black/25 px-2.5 py-1 rounded-full border border-kasa-dorado/20">
+                Cabecera Vinotinto / Navbar
+              </span>
+              <span className="text-[10px] text-white/50 font-mono">#5A0F1D</span>
+            </div>
+            
+            <div className="flex items-center gap-3 py-2">
+              <div className="w-10 h-10 rounded-xl bg-white/95 border border-white/40 shadow-xs flex items-center justify-center p-1 shrink-0">
+                <img
+                  src={activeLogoPreview}
+                  alt="Previsualización KsaSport"
+                  className="w-7 h-7 object-contain"
+                />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-lg font-black tracking-wider text-white leading-none">
+                  KASA SPORTS
+                </span>
+                <span className="text-[10px] text-white/70 font-semibold tracking-widest uppercase mt-0.5">
+                  Ecosistema Deportivo
+                </span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-white/60">
+              Contenedor badge protector que garantiza el máximo contraste de la &quot;k&quot; vinotinto y &quot;S&quot; dorada sobre fondos oscuros.
+            </p>
+          </div>
+
+          {/* Preview sobre Fondo Claro (Cards / Login / Documentos) */}
+          <div className="bg-slate-50 rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-xs flex flex-col justify-between space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-gray-600 bg-white px-2.5 py-1 rounded-full border border-gray-200">
+                Fondo Claro / Login / PWA
+              </span>
+              <span className="text-[10px] text-gray-400 font-mono">Retina / 1x</span>
+            </div>
+
+            <div className="flex items-center gap-3 py-2">
+              <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                <img
+                  src={activeLogoPreview}
+                  alt="Previsualización KsaSport Fondo Claro"
+                  className="w-9 h-9 object-contain"
+                />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-lg font-black tracking-wider text-gray-900 leading-none">
+                  KASA SPORTS
+                </span>
+                <span className="text-[10px] text-gray-500 font-semibold tracking-widest uppercase mt-0.5">
+                  Portal & Documentos
+                </span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-gray-500">
+              Renderizado directo con transparencia nativa sobre superficies blancas y gris claro.
+            </p>
+          </div>
+        </div>
+
+        {/* Notificación si hay archivo nuevo seleccionado */}
+        {newLogoFile && (
+          <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between text-xs text-amber-900">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+              <span className="font-bold">Nuevo archivo seleccionado:</span>
+              <span className="font-mono">{newLogoFile.name}</span>
+              <span className="text-amber-700">({Math.round(newLogoFile.size / 1024)} KB)</span>
+            </div>
+            <span className="font-bold text-kasa-vinotinto">Pulsa &quot;Guardar Configuración&quot; para aplicar</span>
+          </div>
+        )}
+
+        {/* Notificación si se restablece */}
+        {removeLogo && !newLogoFile && (
+          <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-2xl flex items-center gap-2 text-xs text-blue-900">
+            <RotateCcw className="w-4 h-4 text-blue-600 shrink-0" />
+            <span className="font-bold">Se restablecerá el logotipo oficial de fábrica al guardar.</span>
+          </div>
+        )}
+      </div>
 
       {/* SECCIÓN 1: REDES SOCIALES Y CONTACTO */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm space-y-6">
