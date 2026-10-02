@@ -99,6 +99,10 @@ export async function linkProfile(formData: FormData) {
     return { error: 'No se encontró ningún registro con esta cédula en Kasa Sports. Contacta a administración.' }
   }
 
+  if (!athlete && staff) {
+    return { error: 'Esta cédula corresponde a un miembro del cuerpo técnico. El acceso al panel administrativo debe ser gestionado por el Súper Administrador desde el panel de usuarios.' }
+  }
+
   // 2. Verificar y vincular Atleta
   if (athlete) {
     if (athlete.user_id && athlete.user_id !== user.id) {
@@ -112,32 +116,12 @@ export async function linkProfile(formData: FormData) {
     if (updateError) return { error: 'Ocurrió un error al vincular el perfil de atleta.' }
   }
 
-  // 3. Verificar y vincular Staff
-  if (staff) {
-    if (staff.user_id && staff.user_id !== user.id) {
-      return { error: 'Esta cédula ya está vinculada a otra cuenta de staff.' }
-    }
-    const { error: updateError } = await adminSupabase
+  // 3. Si además es miembro de staff, vincular el registro en staff SIN auto-promover a admin_users
+  if (staff && (!staff.user_id || staff.user_id === user.id)) {
+    await adminSupabase
       .from('staff')
       .update({ user_id: user.id })
       .eq('id', staff.id);
-      
-    if (updateError) return { error: 'Ocurrió un error al vincular el perfil de staff.' }
-
-    // Darle acceso automático al panel de administración como Coach (solo si no es admin ya)
-    const { data: existingAdmin } = await adminSupabase.from('admin_users').select('id').eq('id', user.id).single();
-    
-    if (!existingAdmin) {
-      const { error: adminError } = await adminSupabase
-        .from('admin_users')
-        .insert({
-          id: user.id,
-          email: user.email,
-          role_id: 'coach'
-        });
-        
-      if (adminError) console.error("Error asignando rol de admin al coach:", adminError);
-    }
   }
 
   revalidatePath('/gateway')
