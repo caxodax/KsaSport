@@ -9,6 +9,7 @@ import AvatarUpload from '@/components/portal/AvatarUpload'
 import OptInCard from '@/components/portal/OptInCard'
 import TransactionHistory from '@/components/portal/TransactionHistory'
 import { formatCedula } from '@/lib/cedula'
+import { formatLocalDate } from '@/lib/dateUtils'
 
 export const revalidate = 0;
 
@@ -356,7 +357,7 @@ export default async function PortalDashboard() {
                 {athlete.paid_until && (
                   <div className="mt-4 bg-gray-50 border border-gray-100 px-4 py-2 rounded-xl text-xs font-bold text-gray-600 flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-gray-400" />
-                    Válido hasta: {new Date(athlete.paid_until).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    Válido hasta: {formatLocalDate(athlete.paid_until, { day: 'numeric', month: 'long', year: 'numeric' })}
                   </div>
                 )}
               </>
@@ -370,7 +371,7 @@ export default async function PortalDashboard() {
                 {athlete.paid_until && (
                   <div className="mt-4 bg-gray-50 border border-gray-100 px-4 py-2 rounded-xl text-xs font-bold text-gray-600 flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-gray-400" />
-                    Vencido desde: {new Date(athlete.paid_until).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    Vencido desde: {formatLocalDate(athlete.paid_until, { day: 'numeric', month: 'long', year: 'numeric' })}
                   </div>
                 )}
               </>

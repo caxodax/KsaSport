@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ArrowLeft, User, Calendar, CreditCard, ShieldCheck, Activity, Trophy, MessageCircle, ExternalLink, Receipt, UtensilsCrossed } from 'lucide-react'
 import ExemptionManager from './ExemptionManager'
 import { formatCedula } from '@/lib/cedula'
+import { formatLocalDate } from '@/lib/dateUtils'
 
 export const revalidate = 0
 
@@ -231,7 +232,7 @@ export default async function AthleteProfilePage({
                           {isSolvente ? 'Válido Hasta' : 'Pendiente Desde'}
                         </p>
                         <p className="font-bold text-gray-900 text-xs mt-0.5">
-                          {new Date(athlete.paid_until).toLocaleDateString('es-ES', { month: 'short', year: 'numeric', day: 'numeric' })}
+                          {formatLocalDate(athlete.paid_until, { month: 'short', year: 'numeric', day: 'numeric' })}
                         </p>
                       </div>
                     </div>
@@ -422,7 +423,7 @@ export default async function AthleteProfilePage({
                       <tr key={pay.id} className="hover:bg-slate-50/70 transition-colors">
                         <td className="py-4 px-6 whitespace-nowrap">
                           <div className="font-bold text-gray-900 text-sm">
-                            {new Date(pay.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            {formatLocalDate(pay.created_at, { day: '2-digit', month: 'short', year: 'numeric' })}
                           </div>
                           <div className="text-xs font-semibold text-slate-400 mt-0.5">
                             {pay.method || 'Método no especificado'} {pay.reference ? `• Ref #${pay.reference}` : ''}

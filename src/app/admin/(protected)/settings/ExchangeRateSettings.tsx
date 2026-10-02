@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { syncRatesNow, saveManualRateAction } from './rate-actions';
 import { ExchangeRateResult, RateHistoryItem } from '@/lib/exchangeRate';
+import { formatLocalDate } from '@/lib/dateUtils';
 
 export default function ExchangeRateSettings({
   currentRates,
@@ -35,19 +36,12 @@ export default function ExchangeRateSettings({
 
   // Formateador amigable de Fecha Valor oficial (ej: Martes, 15 de Septiembre de 2026)
   const formatFechaValor = (dateStr: string) => {
-    if (!dateStr) return '';
-    try {
-      const [y, m, d] = dateStr.split('-').map(Number);
-      const dateObj = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
-      return dateObj.toLocaleDateString('es-ES', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      });
-    } catch {
-      return dateStr;
-    }
+    return formatLocalDate(dateStr, {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
   };
 
   const handleSyncNow = async () => {
@@ -391,7 +385,7 @@ export default function ExchangeRateSettings({
                 {groupedHistory.map((item) => (
                   <tr key={item.date} className="hover:bg-slate-50/70 transition-colors">
                     <td className="py-4 px-6 font-bold text-gray-900 whitespace-nowrap">
-                      {new Date(item.date + 'T12:00:00Z').toLocaleDateString('es-ES', { 
+                      {formatLocalDate(item.date, { 
                         weekday: 'short', 
                         day: '2-digit', 
                         month: 'short', 

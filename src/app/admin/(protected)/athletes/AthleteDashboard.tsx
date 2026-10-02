@@ -13,6 +13,7 @@ import AthleteDrawer from './AthleteDrawer';
 import Pagination from '../Pagination';
 import { formatCedula } from '@/lib/cedula';
 import { exportAthletesToExcel } from '@/lib/exportExcel';
+import { formatLocalDateShort } from '@/lib/dateUtils';
 
 interface TeamItem {
   id: string;
@@ -510,7 +511,7 @@ export default function AthleteDashboard({
 
                     {athlete.paid_until && (
                       <span className="text-[11px] font-bold text-slate-600 bg-slate-100/90 px-2.5 py-0.5 rounded-lg border border-slate-200/70">
-                        {isSolvente ? 'Vence' : 'Pendiente'}: {new Date(athlete.paid_until).toLocaleDateString('es-ES')}
+                        {isSolvente ? 'Vence' : 'Pendiente'}: {formatLocalDateShort(athlete.paid_until)}
                       </span>
                     )}
                   </div>
@@ -768,7 +769,7 @@ export default function AthleteDashboard({
                           </span>
                           {athlete.paid_until && (
                             <span className="text-[10px] font-bold text-slate-500 mt-1">
-                              {isSolvente ? 'Vence' : 'Pendiente'}: {new Date(athlete.paid_until).toLocaleDateString('es-ES')}
+                              {isSolvente ? 'Vence' : 'Pendiente'}: {formatLocalDateShort(athlete.paid_until)}
                             </span>
                           )}
                         </div>

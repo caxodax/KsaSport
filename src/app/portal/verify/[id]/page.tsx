@@ -2,6 +2,7 @@ import { getServiceSupabase } from '@/lib/supabase'
 import { CheckCircle2, AlertOctagon, Trophy, Camera } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import { formatCedula } from '@/lib/cedula'
+import { formatLocalDate } from '@/lib/dateUtils'
 
 export const revalidate = 0;
 
@@ -145,7 +146,7 @@ export default async function VerifyAthletePage(props: { params: Promise<{ id: s
               <div className={`text-sm font-semibold rounded-xl p-3 
                 ${isSolvente ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
                 {isSolvente ? 'Válido hasta:' : 'Vencido desde:'} <br/>
-                {new Date(athlete.paid_until).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                {formatLocalDate(athlete.paid_until, { day: 'numeric', month: 'long', year: 'numeric' })}
               </div>
             ) : null}
           </div>

@@ -4,6 +4,7 @@ import { Check, X, Clock, FileText } from 'lucide-react'
 import { approvePayment, rejectPayment } from './actions'
 import { useState } from 'react'
 import { formatCedula } from '@/lib/cedula'
+import { formatLocalDateShort } from '@/lib/dateUtils'
 
 type Payment = {
   id: string
@@ -75,7 +76,7 @@ function ReceiptModal({ url, payment, onClose }: { url: string | null, payment: 
             )}
           </div>
           <span className="text-[11px] text-slate-400">
-            Fecha Tasa: {payment.date_rate || new Date(payment.created_at).toLocaleDateString()}
+            Fecha Tasa: {formatLocalDateShort(payment.date_rate || payment.created_at)}
           </span>
         </div>
 
@@ -126,7 +127,7 @@ export default function PaymentRow({ payment }: { payment: Payment }) {
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
           <div className="text-sm text-gray-900 font-medium">{payment.concept}</div>
-          <div className="text-xs text-gray-500">{new Date(payment.created_at).toLocaleDateString()}</div>
+          <div className="text-xs text-gray-500">{formatLocalDateShort(payment.created_at)}</div>
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
           <div className="text-sm text-gray-900 font-medium">{payment.method}</div>
@@ -156,7 +157,7 @@ export default function PaymentRow({ payment }: { payment: Payment }) {
           ) : null}
           {payment.exchange_rate && Number(payment.exchange_rate) > 1 ? (
             <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-              @ {Number(payment.exchange_rate).toFixed(2)} Bs. • {payment.date_rate || new Date(payment.created_at).toLocaleDateString()}
+              @ {Number(payment.exchange_rate).toFixed(2)} Bs. • {formatLocalDateShort(payment.date_rate || payment.created_at)}
             </div>
           ) : null}
           {payment.usdt_promedio ? (

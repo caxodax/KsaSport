@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { toggleProductStatus, deleteProduct } from './actions';
 import ProductDrawer, { ProductData, CategoryOption } from './ProductDrawer';
+import { formatDateRangeText } from '@/lib/dateUtils';
 
 export default function ProductDashboard({
   initialProducts = [],
@@ -25,11 +26,12 @@ export default function ProductDashboard({
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
 
-  // Helper de expiración
+  // Helper de expiración: expira solo cuando el día calendario ha concluido
   const isProductExpired = (p: ProductData) => {
     if (!p.end_date) return false;
-    const end = new Date(p.end_date);
-    return end < new Date();
+    const cleanEnd = p.end_date.split('T')[0];
+    const todayStr = new Date().toISOString().split('T')[0];
+    return cleanEnd < todayStr;
   };
 
   // Contadores
@@ -314,7 +316,7 @@ export default function ProductDashboard({
                     <div className="flex items-center gap-2 bg-slate-50/80 px-3 py-2 rounded-xl border border-slate-200/80 text-xs text-slate-600 font-bold mb-3 shadow-2xs">
                       <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                       <span className="font-mono text-[11px]">
-                        {new Date(p.start_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })} — {new Date(p.end_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        {formatDateRangeText(p.start_date, p.end_date)}
                       </span>
                     </div>
                   )}
@@ -451,7 +453,7 @@ export default function ProductDashboard({
                               <div className="text-[11px] font-mono text-slate-400 mt-1 flex items-center gap-1">
                                 <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
                                 <span className="whitespace-nowrap">
-                                  {new Date(p.start_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })} — {new Date(p.end_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                  {formatDateRangeText(p.start_date, p.end_date)}
                                 </span>
                               </div>
                             )}

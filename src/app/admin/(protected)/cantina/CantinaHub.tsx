@@ -24,6 +24,7 @@ import {
 } from "lucide-react"
 import { formatCedula } from "@/lib/cedula"
 import { exportCantinaLedgerToExcel } from "@/lib/exportExcel"
+import { formatLocalDateShort } from "@/lib/dateUtils"
 import DateRangeFilter from "../DateRangeFilter"
 import {
   createFoodOrder,
@@ -2006,7 +2007,7 @@ export default function CantinaHub({
                     )}
                   </div>
                   <span className="text-[11px] text-slate-400">
-                    {new Date(viewingReceiptPayment.created_at).toLocaleDateString()}
+                    {formatLocalDateShort(viewingReceiptPayment.created_at)}
                   </span>
                 </div>
 

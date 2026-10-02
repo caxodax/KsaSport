@@ -100,14 +100,16 @@ export default async function PagosPage() {
 
   // 2. Obtener productos vencidos adeudados (Inactivos, pero que su end_date es mayor a paid_until)
   let expiredOwedProducts: any[] = []
+  const todayStr = new Date().toISOString().split('T')[0]
   if (paidUntil) {
+    const cleanPaidUntil = paidUntil.split('T')[0]
     const { data: expired } = await adminSupabase
       .from('products')
       .select('*')
       .eq('is_active', false)
       .ilike('name', '%mensualidad%')
-      .gt('end_date', new Date(paidUntil).toISOString())
-      .lte('start_date', new Date().toISOString())
+      .gt('end_date', cleanPaidUntil)
+      .lte('start_date', todayStr)
       
     if (expired) {
       expiredOwedProducts = expired
@@ -119,7 +121,7 @@ export default async function PagosPage() {
       .select('*')
       .eq('is_active', false)
       .ilike('name', '%mensualidad%')
-      .lte('start_date', new Date().toISOString())
+      .lte('start_date', todayStr)
       
     if (expired) {
       expiredOwedProducts = expired

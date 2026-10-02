@@ -478,15 +478,15 @@ Reemplazar por notificaciones flotantes (*toasts*) no intrusivas o modales de co
 │                       HOJA DE RUTA 48H A PRODUCCIÓN                         │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ DÍA 1: SEGURIDAD, BASE DE DATOS Y CONCURRENCIA                              │
-│  [ ] 1. Ejecutar script de RLS en Supabase (Sección 1.2).                   │
-│  [ ] 2. Eliminar políticas erróneas en food_cantina_schema.sql (1.3).       │
-│  [ ] 3. Agregar checkAdminPermission() en todas las Server Actions (1.1).   │
-│  [ ] 4. Retirar auto-promoción a rol coach en linkProfile (1.4).            │
-│  [ ] 5. Reemplazar getSession() por getUser() en todo el portal (1.6).      │
-│  [ ] 6. Proteger rutas cron con obligatoriedad de CRON_SECRET (1.5).        │
-│  [ ] 7. Crear función SQL atómica para balance de cantina (2.1).            │
+│  [X] 1. Ejecutar script de RLS en Supabase (Sección 1.2).                   │
+│  [X] 2. Eliminar políticas erróneas en food_cantina_schema.sql (1.3).       │
+│  [X] 3. Agregar checkAdminPermission() en todas las Server Actions (1.1).   │
+│  [X] 4. Retirar auto-promoción a rol coach en linkProfile (1.4).            │
+│  [X] 5. Reemplazar getSession() por getUser() en todo el portal (1.6).      │
+│  [X] 6. Proteger rutas cron con obligatoriedad de CRON_SECRET (1.5).        │
+│  [X] 7. Crear función SQL atómica para balance de cantina (2.1).            │
 │  [ ] 8. Corregir teams!inner por join opcional en admin/page.tsx (2.5).     │
-│  [ ] 9. Corregir bug de zona horaria de toLocaleDateString en paid_until (2.4).│
+│  [X] 9. Corregir bug de zona horaria de toLocaleDateString en paid_until (2.4).│
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ DÍA 2: ESTABILIDAD, PERFORMANCE Y REFINAMIENTO UX                           │
 │  [ ] 10. Eliminar useEffects en Drawers usando keys en el componente (3.1). │
