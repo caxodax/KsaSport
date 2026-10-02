@@ -130,16 +130,16 @@ export async function linkProfile(formData: FormData) {
 
 export async function reportPayment(formData: FormData) {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session) return { error: 'No autorizado' }
+  if (!user) return { error: 'No autorizado' }
 
   const adminSupabase = getServiceSupabase()
   
   const { data: athlete } = await adminSupabase
     .from('athletes')
     .select('id')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .single()
 
   if (!athlete) return { error: 'Atleta no encontrado' }

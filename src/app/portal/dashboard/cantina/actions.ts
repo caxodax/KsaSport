@@ -7,9 +7,9 @@ import { revalidatePath } from "next/cache"
 
 export async function reportFoodPayment(formData: FormData) {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     return { error: "No autorizado. Por favor inicia sesión." }
   }
 
@@ -19,7 +19,7 @@ export async function reportFoodPayment(formData: FormData) {
   const { data: athlete } = await adminSupabase
     .from("athletes")
     .select("id")
-    .eq("user_id", session.user.id)
+    .eq("user_id", user.id)
     .single()
 
   if (!athlete) {

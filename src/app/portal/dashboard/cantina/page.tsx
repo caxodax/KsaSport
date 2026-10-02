@@ -8,9 +8,9 @@ export const revalidate = 0
 
 export default async function CantinaPortalPage() {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     redirect("/portal/login")
   }
 
@@ -20,7 +20,7 @@ export default async function CantinaPortalPage() {
   const { data: athlete } = await adminSupabase
     .from("athletes")
     .select("id, name, cedula, avatar_url, teams(name, category)")
-    .eq("user_id", session.user.id)
+    .eq("user_id", user.id)
     .single()
 
   if (!athlete) {

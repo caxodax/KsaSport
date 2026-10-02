@@ -14,9 +14,9 @@ export const revalidate = 0;
 
 export default async function PortalDashboard() {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     redirect('/portal/login')
   }
 
@@ -24,7 +24,7 @@ export default async function PortalDashboard() {
   const { data: athlete } = await adminSupabase
     .from('athletes')
     .select('id, name, cedula, status, avatar_url, paid_until, position, stats_avg, stats_hits, stats_rbi, stats_runs, has_alliance, teams(id, name, logo_url, category)')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .single()
 
   if (!athlete) {

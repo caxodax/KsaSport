@@ -8,9 +8,9 @@ export const revalidate = 0
 
 export default async function PagosPage() {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     redirect('/portal/login')
   }
 
@@ -20,7 +20,7 @@ export default async function PagosPage() {
   const { data: athlete } = await adminSupabase
     .from('athletes')
     .select('id, status, paid_until, teams(category)')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .single()
 
   if (!athlete) {
