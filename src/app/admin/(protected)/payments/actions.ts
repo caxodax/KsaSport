@@ -9,15 +9,27 @@ export async function approvePayment(paymentId: string, athleteId: string, conce
   const supabase = getServiceSupabase()
   
   // 1. Obtener la data del pago antes de actualizar
-  const { data: payment } = await supabase.from('payments').select('amount, product_id').eq('id', paymentId).single()
+  const { data: payment } = await supabase
+    .from('payments')
+    .select('amount, product_id, status')
+    .eq('id', paymentId)
+    .single()
   
-  // 2. Actualizar estatus del pago
-  const { error: paymentError } = await supabase
+  if (!payment) return { error: 'Pago no encontrado.' }
+  if (payment.status === 'Completado') return { error: 'Este pago ya fue aprobado previamente.' }
+
+  // 2. Actualizar estatus del pago de forma atómica asegurando que siga en Pendiente
+  const { data: updatedPayment, error: paymentError } = await supabase
     .from('payments')
     .update({ status: 'Completado' })
     .eq('id', paymentId)
+    .eq('status', 'Pendiente')
+    .select('id')
+    .single()
 
-  if (paymentError) return { error: paymentError.message }
+  if (paymentError || !updatedPayment) {
+    return { error: 'Este pago ya fue procesado o no se encuentra en estado Pendiente.' }
+  }
 
   // 3. Si el concepto incluye "Mensualidad", actualizar el estatus de la atleta
   if (concept.toLowerCase().includes('mensualidad') && payment) {
@@ -81,12 +93,17 @@ export async function rejectPayment(paymentId: string) {
   await checkAdminPermission('view_finances')
   const supabase = getServiceSupabase()
   
-  const { error } = await supabase
+  const { data: updatedPayment, error } = await supabase
     .from('payments')
     .update({ status: 'Rechazado' })
     .eq('id', paymentId)
+    .eq('status', 'Pendiente')
+    .select('id')
+    .single()
 
-  if (error) return { error: error.message }
+  if (error || !updatedPayment) {
+    return { error: 'El pago ya fue procesado o no se encuentra en estado Pendiente.' }
+  }
 
   revalidatePath('/admin/payments')
   revalidatePath('/admin/athletes')

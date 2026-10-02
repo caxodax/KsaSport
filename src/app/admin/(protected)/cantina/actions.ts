@@ -99,15 +99,26 @@ export async function createFoodOrder(
     console.error('Error al insertar items de comanda:', itemsErr)
   }
 
-  // 3. Actualizar Saldo Deudor en food_credit_accounts
-  const newBalance = Number((Number(account.balance || 0) + total).toFixed(2))
-  await supabase
-    .from('food_credit_accounts')
-    .update({ 
-      balance: newBalance,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', account.id)
+  // 3. Actualizar Saldo Deudor en food_credit_accounts de forma atómica
+  let newBalance: number
+  const { data: rpcBalance, error: rpcErr } = await supabase.rpc('increment_food_balance', {
+    p_athlete_id: athleteId,
+    p_amount: Number(total.toFixed(2))
+  })
+
+  if (!rpcErr && rpcBalance !== null && rpcBalance !== undefined) {
+    newBalance = Number(rpcBalance)
+  } else {
+    // Fallback si la función RPC aún no está creada en la BD
+    newBalance = Number((Number(account.balance || 0) + total).toFixed(2))
+    await supabase
+      .from('food_credit_accounts')
+      .update({ 
+        balance: newBalance,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', account.id)
+  }
 
   revalidatePath('/admin/cantina')
   revalidatePath('/portal/dashboard')
@@ -190,8 +201,13 @@ export async function recordManualFoodPayment(
     return { error: 'Error al registrar abono: ' + payErr.message }
   }
 
-  // Reducir saldo deudor
-  if (account) {
+  // Reducir saldo deudor de forma atómica
+  const { error: rpcErr } = await supabase.rpc('increment_food_balance', {
+    p_athlete_id: athleteId,
+    p_amount: -Number(amount.toFixed(2))
+  })
+
+  if (rpcErr && account) {
     const currentBal = Number(account.balance || 0)
     const newBal = Math.max(0, Number((currentBal - amount).toFixed(2)))
     await supabase
@@ -229,33 +245,42 @@ export async function approveFoodPayment(paymentId: string) {
     return { error: 'Este pago ya fue aprobado previamente.' }
   }
 
-  // Actualizar estado del pago
-  const { error: updateErr } = await supabase
+  // Actualizar estado del pago con bloqueo optimista (solo si sigue en Pendiente)
+  const { data: updatedPayment, error: updateErr } = await supabase
     .from('food_payments')
     .update({
       status: 'Completado',
       verified_at: new Date().toISOString()
     })
     .eq('id', paymentId)
+    .eq('status', 'Pendiente')
+    .select('id')
+    .single()
 
-  if (updateErr) {
-    return { error: updateErr.message }
+  if (updateErr || !updatedPayment) {
+    return { error: 'El pago ya fue procesado o no se encuentra en estado Pendiente.' }
   }
 
-  // Descontar del balance deudor
-  const accountId = payment.account_id || (payment.food_credit_accounts as any)?.id
-  const currentBalance = Number((payment.food_credit_accounts as any)?.balance || 0)
+  // Descontar del balance deudor de forma atómica
   const paymentAmount = Number(payment.amount || 0)
+  const { error: rpcErr } = await supabase.rpc('increment_food_balance', {
+    p_athlete_id: payment.athlete_id,
+    p_amount: -paymentAmount
+  })
 
-  if (accountId) {
-    const newBalance = Math.max(0, Number((currentBalance - paymentAmount).toFixed(2)))
-    await supabase
-      .from('food_credit_accounts')
-      .update({
-        balance: newBalance,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', accountId)
+  if (rpcErr) {
+    const accountId = payment.account_id || (payment.food_credit_accounts as any)?.id
+    const currentBalance = Number((payment.food_credit_accounts as any)?.balance || 0)
+    if (accountId) {
+      const newBalance = Math.max(0, Number((currentBalance - paymentAmount).toFixed(2)))
+      await supabase
+        .from('food_credit_accounts')
+        .update({
+          balance: newBalance,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', accountId)
+    }
   }
 
   revalidatePath('/admin/cantina')
@@ -274,7 +299,7 @@ export async function rejectFoodPayment(paymentId: string, reason: string) {
     return { error: 'Debes indicar el motivo del rechazo.' }
   }
 
-  const { error } = await supabase
+  const { data: updatedPayment, error } = await supabase
     .from('food_payments')
     .update({
       status: 'Rechazado',
@@ -282,9 +307,12 @@ export async function rejectFoodPayment(paymentId: string, reason: string) {
       verified_at: new Date().toISOString()
     })
     .eq('id', paymentId)
+    .eq('status', 'Pendiente')
+    .select('id')
+    .single()
 
-  if (error) {
-    return { error: error.message }
+  if (error || !updatedPayment) {
+    return { error: 'El pago ya fue procesado o no se encuentra en estado Pendiente.' }
   }
 
   revalidatePath('/admin/cantina')
