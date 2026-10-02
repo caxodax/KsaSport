@@ -6,12 +6,21 @@ import EventShowcase from '@/components/landing/EventShowcase';
 import CallToAction from '@/components/landing/CallToAction';
 import Footer from '@/components/landing/Footer';
 
+import { getServiceSupabase } from '@/lib/supabase';
+
 export const metadata = {
   title: 'Kasa Sports | Ecosistema Deportivo Inteligente',
   description: 'Plataforma integral para la gestión de ligas de béisbol y kickingball, captación de nuevos talentos y estadísticas en tiempo real.',
 };
 
-export default function PublicLandingPage() {
+export default async function PublicLandingPage() {
+  const supabase = getServiceSupabase();
+  const { data: settings } = await supabase
+    .from('club_settings')
+    .select('*')
+    .eq('id', 1)
+    .single();
+
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans selection:bg-kasa-dorado selection:text-kasa-vinotinto">
       <Navbar />
@@ -20,11 +29,11 @@ export default function PublicLandingPage() {
         <Hero />
         <SocialProof />
         <BentoFeatures />
-        <EventShowcase />
+        <EventShowcase settings={settings} />
         <CallToAction />
       </main>
 
-      <Footer />
+      <Footer settings={settings} />
     </div>
   );
 }

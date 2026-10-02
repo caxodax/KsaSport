@@ -70,7 +70,7 @@ export default function Hero() {
               Ver Próximos Tryouts
             </Link>
             <Link 
-              href="#eventos" 
+              href="/calendario" 
               className="w-full sm:w-auto group flex items-center justify-center gap-2 bg-transparent text-white border border-white/30 hover:bg-white/10 px-8 py-4 rounded-xl text-lg font-bold transition-all"
             >
               <Calendar className="w-5 h-5 opacity-70 group-hover:opacity-100" />

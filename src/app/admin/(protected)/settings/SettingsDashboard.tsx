@@ -5,10 +5,11 @@ import {
   Settings as SettingsIcon, Globe, Trophy, ShieldAlert, 
   Save, Check, AlertCircle, Loader2, Calendar, DollarSign,
   Layers, CheckCircle2, Sparkles, HelpCircle, ArrowRight,
-  Sliders, Info, Landmark
+  Sliders, Info, Landmark, Share2
 } from 'lucide-react';
 import { updateGlobalSettings, updateCategoryPenalty } from './actions';
 import ExchangeRateSettings from './ExchangeRateSettings';
+import PortalSettings from './PortalSettings';
 import { ExchangeRateResult, RateHistoryItem } from '@/lib/exchangeRate';
 
 export interface ClubSettings {
@@ -19,6 +20,15 @@ export interface ClubSettings {
   last_bcv_usd?: number;
   last_bcv_eur?: number;
   bcv_updated_at?: string;
+  instagram_url?: string;
+  facebook_url?: string;
+  whatsapp_number?: string;
+  calendar_title?: string;
+  calendar_description?: string;
+  calendar_season?: string;
+  calendar_images?: string[];
+  calendar_pdf_url?: string;
+  calendar_is_active?: boolean;
 }
 
 export interface CategorySettingItem {
@@ -41,12 +51,12 @@ export default function SettingsDashboard({
   categories: CategorySettingItem[];
   currentRates?: ExchangeRateResult;
   ratesHistory?: RateHistoryItem[];
-  initialTab?: 'penalties' | 'rates';
+  initialTab?: 'penalties' | 'rates' | 'portal';
 }) {
   // Pestaña Activa
-  const [activeTab, setActiveTab] = useState<'penalties' | 'rates'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'penalties' | 'rates' | 'portal'>(initialTab);
 
-  const handleTabChange = (tab: 'penalties' | 'rates') => {
+  const handleTabChange = (tab: 'penalties' | 'rates' | 'portal') => {
     setActiveTab(tab);
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
@@ -216,7 +226,7 @@ export default function SettingsDashboard({
     <div className="space-y-6 sm:space-y-8">
       
       {/* NAVEGACIÓN SUPERIOR DE PESTAÑAS (ALTA VISIBILIDAD) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         {/* Pestaña: Tasa Oficial (BCV) */}
         <button
           type="button"
@@ -298,6 +308,47 @@ export default function SettingsDashboard({
             {activeTab === 'penalties' ? 'Activo' : 'Seleccionar'}
           </span>
         </button>
+
+        {/* Pestaña: Portal & Redes */}
+        <button
+          type="button"
+          onClick={() => handleTabChange('portal')}
+          className={`p-4 sm:p-5 rounded-3xl border-2 text-left transition-all cursor-pointer flex items-center justify-between gap-4 ${
+            activeTab === 'portal'
+              ? 'bg-gradient-to-br from-amber-50 via-white to-yellow-50/40 border-amber-600 shadow-md ring-2 ring-amber-600/20'
+              : 'bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/50 shadow-2xs'
+          }`}
+        >
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border transition-all ${
+              activeTab === 'portal'
+                ? 'bg-amber-700 text-white border-amber-700 shadow-sm'
+                : 'bg-amber-50 text-amber-800 border-amber-200'
+            }`}>
+              <Share2 className="w-6 h-6" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm sm:text-base font-black text-gray-900 truncate">
+                  Portal & Redes
+                </span>
+                {activeTab === 'portal' && (
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-600 animate-pulse shrink-0" />
+                )}
+              </div>
+              <p className="text-xs text-slate-500 font-medium mt-0.5 truncate">
+                Redes, WhatsApp y Calendario
+              </p>
+            </div>
+          </div>
+          <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border shrink-0 ${
+            activeTab === 'portal'
+              ? 'bg-amber-700 text-white border-amber-700'
+              : 'bg-slate-100 text-slate-600 border-slate-200'
+          }`}>
+            {activeTab === 'portal' ? 'Activo' : 'Seleccionar'}
+          </span>
+        </button>
       </div>
 
       {/* CABECERA PRINCIPAL DINÁMICA */}
@@ -309,6 +360,11 @@ export default function SettingsDashboard({
                 <Landmark className="w-3.5 h-3.5" />
                 Banco Central de Venezuela • Divisas Oficiales & Automatización
               </span>
+            ) : activeTab === 'portal' ? (
+              <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-900 text-xs font-black uppercase tracking-wider border border-amber-200/80 shadow-2xs flex items-center gap-1.5">
+                <Share2 className="w-3.5 h-3.5" />
+                Presencia Digital • Redes Sociales & Calendario de Ligas
+              </span>
             ) : (
               <span className="px-3 py-1 rounded-full bg-red-50 text-kasa-vinotinto text-xs font-black uppercase tracking-wider border border-red-200/80 shadow-2xs flex items-center gap-1.5">
                 <SettingsIcon className="w-3.5 h-3.5" />
@@ -317,11 +373,13 @@ export default function SettingsDashboard({
             )}
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
-            {activeTab === 'rates' ? 'Configuración de Tasa Oficial (BCV)' : 'Configuración de Cobros & Morosidad'}
+            {activeTab === 'rates' ? 'Configuración de Tasa Oficial (BCV)' : activeTab === 'portal' ? 'Portal, Redes y Calendario de Ligas' : 'Configuración de Cobros & Morosidad'}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1 max-w-2xl">
             {activeTab === 'rates' 
               ? 'Supervisa la tasa oficial vigente para la conversión a Bolívares en pagos, ejecuta manualmente el cron job de sincronización con el BCV, carga contingencias y consulta el histórico diario.'
+              : activeTab === 'portal'
+              ? 'Administra los enlaces oficiales de Instagram, Facebook y WhatsApp, y publica las fotos del rol de juegos y el PDF descargable del calendario para fanáticos y delegados.'
               : 'Establece los días límite de gracia y los montos de penalidad por mora tanto a nivel general del club como de forma particular para cada disciplina deportiva.'}
           </p>
         </div>
@@ -332,6 +390,8 @@ export default function SettingsDashboard({
           currentRates={currentRates || { usd: 0, eur: 0, date: new Date().toISOString().split('T')[0], source: 'settings' }}
           history={ratesHistory}
         />
+      ) : activeTab === 'portal' ? (
+        <PortalSettings settings={settings} />
       ) : (
         <div className="space-y-8">
           {/* SECCIÓN 1: REGLA GENERAL DE LA ACADEMIA (FALLBACK GLOBAL) */}

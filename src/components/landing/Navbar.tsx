@@ -44,7 +44,7 @@ export default function Navbar() {
             <div className={`flex gap-6 font-semibold text-sm transition-colors ${
               isScrolled ? "text-gray-600" : "text-white/90"
             }`}>
-              <a href="#eventos" className={`transition-colors ${isScrolled ? "hover:text-kasa-dorado-dark" : "hover:text-kasa-dorado"}`}>Ligas Activas</a>
+              <Link href="/calendario" className={`transition-colors ${isScrolled ? "hover:text-kasa-dorado-dark" : "hover:text-kasa-dorado"}`}>Ligas Activas</Link>
               <a href="#tryouts" className={`transition-colors ${isScrolled ? "hover:text-kasa-dorado-dark" : "hover:text-kasa-dorado"}`}>Scouting</a>
               <a href="#tecnologia" className={`transition-colors ${isScrolled ? "hover:text-kasa-dorado-dark" : "hover:text-kasa-dorado"}`}>Plataforma</a>
             </div>
@@ -94,7 +94,7 @@ export default function Navbar() {
             className="fixed inset-0 z-40 bg-white pt-24 px-6 md:hidden flex flex-col"
           >
             <div className="flex flex-col gap-6 text-xl font-bold text-gray-900">
-              <a href="#eventos" onClick={() => setMobileMenuOpen(false)} className="border-b border-gray-100 pb-4">Ligas Activas</a>
+              <Link href="/calendario" onClick={() => setMobileMenuOpen(false)} className="border-b border-gray-100 pb-4">Ligas Activas & Calendario</Link>
               <a href="#tryouts" onClick={() => setMobileMenuOpen(false)} className="border-b border-gray-100 pb-4">Scouting y Tryouts</a>
               <a href="#tecnologia" onClick={() => setMobileMenuOpen(false)} className="border-b border-gray-100 pb-4">Tecnología</a>
             </div>

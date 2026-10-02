@@ -12,7 +12,7 @@ export default async function SettingsPage({
 }) {
   await checkAdminPermission('manage_settings')
   const resolvedParams = searchParams ? await searchParams : undefined;
-  const initialTab = resolvedParams?.tab === 'rates' ? 'rates' : 'penalties';
+  const initialTab = resolvedParams?.tab === 'rates' ? 'rates' : resolvedParams?.tab === 'portal' ? 'portal' : 'penalties';
   const supabase = getServiceSupabase()
   
   // 1. Configuración global
