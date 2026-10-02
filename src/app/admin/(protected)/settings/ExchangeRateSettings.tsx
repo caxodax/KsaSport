@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   DollarSign, RefreshCw, AlertCircle, CheckCircle2, 
   Calendar, ShieldCheck, Landmark, Clock, ArrowUpRight, 
@@ -17,6 +18,7 @@ export default function ExchangeRateSettings({
   currentRates: ExchangeRateResult;
   history: RateHistoryItem[];
 }) {
+  const router = useRouter();
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -65,6 +67,7 @@ export default function ExchangeRateSettings({
       if (usdtVal) {
         setManualUsdt(String(usdtVal));
       }
+      router.refresh();
       setTimeout(() => setSyncMessage(null), 6000);
     }
   };
@@ -87,6 +90,7 @@ export default function ExchangeRateSettings({
       setManualMessage({ type: 'error', text: res.error });
     } else {
       setManualMessage({ type: 'success', text: 'Tasa oficial guardada manualmente con éxito.' });
+      router.refresh();
       setTimeout(() => {
         setManualMessage(null);
         setShowManualForm(false);

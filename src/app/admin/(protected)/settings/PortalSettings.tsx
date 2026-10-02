@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { 
   Globe, MessageCircle, Share2, Calendar, FileText, 
   Upload, Trash2, ExternalLink, Save, CheckCircle2, 
-  AlertCircle, Loader2, Plus, Eye, Image as ImageIcon
+  AlertCircle, Loader2, Plus, Eye, Image as ImageIcon,
+  RotateCcw
 } from 'lucide-react'
 import { updatePortalAndCalendarSettings } from './actions'
 import { compressImageClient } from '@/lib/clientImageCompressor'
@@ -24,6 +26,8 @@ interface PortalSettingsProps {
 }
 
 export default function PortalSettings({ settings }: PortalSettingsProps) {
+  const router = useRouter()
+
   // Redes Sociales
   const [instagramUrl, setInstagramUrl] = useState(settings?.instagram_url || '')
   const [facebookUrl, setFacebookUrl] = useState(settings?.facebook_url || '')
@@ -34,6 +38,21 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
   const [calendarSeason, setCalendarSeason] = useState(settings?.calendar_season || 'Temporada 2026')
   const [calendarDescription, setCalendarDescription] = useState(settings?.calendar_description || '')
   const [calendarIsActive, setCalendarIsActive] = useState(settings?.calendar_is_active !== false)
+
+  // Sincronizar estado si cambian las props del servidor (por router.refresh())
+  useEffect(() => {
+    if (settings) {
+      setInstagramUrl(settings.instagram_url || '')
+      setFacebookUrl(settings.facebook_url || '')
+      setWhatsappNumber(settings.whatsapp_number || '')
+      setCalendarTitle(settings.calendar_title || 'Calendario Oficial de Ligas Activas')
+      setCalendarSeason(settings.calendar_season || 'Temporada 2026')
+      setCalendarDescription(settings.calendar_description || '')
+      setCalendarIsActive(settings.calendar_is_active !== false)
+      setRetainedImages(Array.isArray(settings.calendar_images) ? settings.calendar_images : [])
+      setCurrentPdfUrl(settings.calendar_pdf_url || null)
+    }
+  }, [settings])
 
   // Imágenes existentes y nuevas
   const [retainedImages, setRetainedImages] = useState<string[]>(
@@ -136,10 +155,26 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
         setError(res.error)
       } else {
         setSuccess(true)
+        if (res.settings) {
+          setCurrentPdfUrl(res.settings.calendar_pdf_url || null)
+          setRetainedImages(Array.isArray(res.settings.calendar_images) ? res.settings.calendar_images : [])
+          setInstagramUrl(res.settings.instagram_url || '')
+          setFacebookUrl(res.settings.facebook_url || '')
+          setWhatsappNumber(res.settings.whatsapp_number || '')
+          setCalendarTitle(res.settings.calendar_title || 'Calendario Oficial de Ligas Activas')
+          setCalendarSeason(res.settings.calendar_season || 'Temporada 2026')
+          setCalendarDescription(res.settings.calendar_description || '')
+          setCalendarIsActive(res.settings.calendar_is_active !== false)
+        }
         setNewImageFiles([])
         setNewPdfFile(null)
         setRemovePdf(false)
-        setTimeout(() => setSuccess(false), 4000)
+        if (imageInputRef.current) imageInputRef.current.value = ''
+        if (pdfInputRef.current) pdfInputRef.current.value = ''
+        
+        // Refrescar estado del servidor en segundo plano sin recarga completa
+        router.refresh()
+        setTimeout(() => setSuccess(false), 4500)
       }
     } catch (err: any) {
       setError(err?.message || 'Error guardando la configuración.')
@@ -149,7 +184,47 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 animate-in fade-in duration-300">
+    <form onSubmit={handleSubmit} className="space-y-8 animate-in fade-in duration-300 relative">
+      
+      {/* OVERLAY MODAL LOADER NO BLOQUEANTE / FEEDBACK VISUAL INMEDIATO */}
+      {saving && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border border-gray-100 flex flex-col items-center text-center space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 rounded-2xl bg-kasa-vinotinto/10 border border-kasa-dorado/30 text-kasa-vinotinto flex items-center justify-center relative shadow-inner">
+              <Loader2 className="w-8 h-8 animate-spin text-kasa-vinotinto" />
+            </div>
+            
+            <div className="space-y-1.5">
+              <h4 className="text-lg font-black text-gray-900">
+                {newPdfFile && newImageFiles.length > 0
+                  ? 'Subiendo PDF e imágenes...'
+                  : newPdfFile
+                  ? 'Subiendo documento PDF...'
+                  : newImageFiles.length > 0
+                  ? 'Optimizando imágenes...'
+                  : 'Guardando configuración...'}
+              </h4>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                {newPdfFile && newImageFiles.length > 0
+                  ? 'Cargando el PDF oficial y optimizando las fotos del fixture en Cloudflare R2.'
+                  : newPdfFile
+                  ? 'Cargando el rol de juegos PDF oficial a Cloudflare R2. Puede tardar unos segundos según tu conexión.'
+                  : newImageFiles.length > 0
+                  ? `Optimizando y subiendo ${newImageFiles.length} imagen(es) en alta resolución.`
+                  : 'Actualizando parámetros y enlaces del portal.'}
+              </p>
+            </div>
+
+            <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+              <div className="bg-gradient-to-r from-kasa-vinotinto via-kasa-dorado to-kasa-vinotinto h-full w-full animate-pulse" />
+            </div>
+
+            <p className="text-[11px] text-gray-400 font-medium">
+              Por favor, espera un momento sin recargar la página.
+            </p>
+          </div>
+        </div>
+      )}
       
       {/* Alertas */}
       {error && (
@@ -455,7 +530,21 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
           </div>
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-200">
-            {newPdfFile ? (
+            {removePdf ? (
+              <div className="flex-1 flex items-center justify-between text-xs text-amber-800 bg-amber-50/80 p-3 rounded-xl border border-amber-200">
+                <span className="font-semibold">El PDF oficial se eliminará al guardar los cambios.</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRemovePdf(false)
+                    setCurrentPdfUrl(settings?.calendar_pdf_url || null)
+                  }}
+                  className="font-black underline text-amber-900 hover:text-black cursor-pointer inline-flex items-center gap-1.5 ml-2"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" /> Deshacer
+                </button>
+              </div>
+            ) : newPdfFile ? (
               <div className="flex-1 flex items-center gap-3">
                 <FileText className="w-8 h-8 text-emerald-600 shrink-0" />
                 <div className="truncate">

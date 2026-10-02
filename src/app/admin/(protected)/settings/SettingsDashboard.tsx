@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Settings as SettingsIcon, Globe, Trophy, ShieldAlert, 
   Save, Check, AlertCircle, Loader2, Calendar, DollarSign,
@@ -53,6 +54,8 @@ export default function SettingsDashboard({
   ratesHistory?: RateHistoryItem[];
   initialTab?: 'penalties' | 'rates' | 'portal';
 }) {
+  const router = useRouter();
+
   // Pestaña Activa
   const [activeTab, setActiveTab] = useState<'penalties' | 'rates' | 'portal'>(initialTab);
 
@@ -142,6 +145,7 @@ export default function SettingsDashboard({
       setGlobalError(res.error);
     } else {
       setGlobalSuccess(true);
+      router.refresh();
       setTimeout(() => setGlobalSuccess(false), 3500);
     }
   };
@@ -213,6 +217,7 @@ export default function SettingsDashboard({
           originalPenalty: prev[catId].penalty
         }
       }));
+      router.refresh();
       setTimeout(() => {
         setCategoryStates(prev => {
           if (!prev[catId]) return prev;

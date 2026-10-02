@@ -22,7 +22,7 @@ export async function updateGlobalSettings(formData: FormData) {
   }
 
   const supabase = getServiceSupabase()
-  const { error } = await supabase
+  const { data: updatedSettings, error } = await supabase
     .from('club_settings')
     .update({ 
       grace_period_days, 
@@ -30,6 +30,8 @@ export async function updateGlobalSettings(formData: FormData) {
       updated_at: new Date().toISOString() 
     })
     .eq('id', 1)
+    .select('*')
+    .single()
 
   if (error) {
     console.error('Error updating global settings:', error)
@@ -39,7 +41,7 @@ export async function updateGlobalSettings(formData: FormData) {
   revalidatePath('/admin/settings')
   revalidatePath('/admin')
   revalidatePath('/portal/dashboard/pagos')
-  return { success: true }
+  return { success: true, settings: updatedSettings }
 }
 
 /**
@@ -158,10 +160,12 @@ export async function updatePortalAndCalendarSettings(formData: FormData) {
     updatePayload.calendar_pdf_url = calendar_pdf_url
   }
 
-  const { error } = await supabase
+  const { data: updatedSettings, error } = await supabase
     .from('club_settings')
     .update(updatePayload)
     .eq('id', 1)
+    .select('*')
+    .single()
 
   if (error) {
     console.error('Error updating portal and calendar settings:', error)
@@ -171,7 +175,7 @@ export async function updatePortalAndCalendarSettings(formData: FormData) {
   revalidatePath('/admin/settings')
   revalidatePath('/calendario')
   revalidatePath('/')
-  return { success: true }
+  return { success: true, settings: updatedSettings }
 }
 
 
