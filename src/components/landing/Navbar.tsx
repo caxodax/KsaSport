@@ -44,9 +44,9 @@ export default function Navbar() {
             <div className={`flex gap-6 font-semibold text-sm transition-colors ${
               isScrolled ? "text-gray-600" : "text-white/90"
             }`}>
-              <a href="#eventos" className="hover:text-kasa-dorado transition-colors">Ligas Activas</a>
-              <a href="#tryouts" className="hover:text-kasa-dorado transition-colors">Scouting</a>
-              <a href="#tecnologia" className="hover:text-kasa-dorado transition-colors">Plataforma</a>
+              <a href="#eventos" className={`transition-colors ${isScrolled ? "hover:text-kasa-dorado-dark" : "hover:text-kasa-dorado"}`}>Ligas Activas</a>
+              <a href="#tryouts" className={`transition-colors ${isScrolled ? "hover:text-kasa-dorado-dark" : "hover:text-kasa-dorado"}`}>Scouting</a>
+              <a href="#tecnologia" className={`transition-colors ${isScrolled ? "hover:text-kasa-dorado-dark" : "hover:text-kasa-dorado"}`}>Plataforma</a>
             </div>
             
             <div className="flex items-center gap-3">

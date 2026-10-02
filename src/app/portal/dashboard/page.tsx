@@ -381,7 +381,7 @@ export default async function PortalDashboard() {
           {/* Tarjeta de Estadísticas Dinámica (Athletic Stat Box) */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
             <h3 className="font-black text-gray-900 flex items-center gap-2 mb-4">
-              <Activity className="w-5 h-5 text-kasa-dorado" />
+              <Activity className="w-5 h-5 text-kasa-dorado-dark" />
               Estadísticas de Temporada
             </h3>
             

@@ -471,7 +471,7 @@ export default function PaymentForm({
                 <button 
                   type="button" 
                   onClick={handleAddSplit}
-                  className="text-xs font-bold text-amber-700 hover:text-yellow-600 bg-yellow-50 px-3 py-1.5 rounded-full transition-colors"
+                  className="text-xs font-bold text-amber-800 hover:text-amber-950 bg-amber-100/70 hover:bg-amber-100 px-3 py-1.5 rounded-full transition-colors border border-amber-200/60"
                 >
                   + Añadir otro método
                 </button>

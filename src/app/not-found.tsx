@@ -5,8 +5,8 @@ export default function NotFound() {
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center">
       <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-100 shadow-xl shadow-slate-200/50 flex flex-col items-center">
-        <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-kasa-dorado mb-5 shadow-xs">
-          <Trophy className="w-8 h-8 text-amber-600" />
+        <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-kasa-dorado-dark mb-5 shadow-xs">
+          <Trophy className="w-8 h-8 text-amber-700" />
         </div>
 
         <span className="font-display text-6xl tracking-wider text-kasa-vinotinto leading-none mb-1">

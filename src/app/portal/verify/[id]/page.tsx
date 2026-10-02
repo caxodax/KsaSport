@@ -104,7 +104,7 @@ export default async function VerifyAthletePage(props: { params: Promise<{ id: s
                   className="w-4 h-4 rounded-full object-cover shrink-0" 
                 />
               ) : (
-                <Trophy className="w-3.5 h-3.5 text-kasa-dorado shrink-0" />
+                <Trophy className="w-3.5 h-3.5 text-kasa-dorado-dark shrink-0" />
               )}
               <span>{team?.name || 'Sin equipo asignado'}</span>
               {team?.category && (
@@ -155,8 +155,8 @@ export default async function VerifyAthletePage(props: { params: Promise<{ id: s
         
         {/* Footer Brand */}
         <div className="bg-gray-50 py-4 text-center border-t border-gray-100">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-center gap-1">
-            <Trophy className="w-3 h-3 text-kasa-dorado" /> Kasa Sports System
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center justify-center gap-1">
+            <Trophy className="w-3.5 h-3.5 text-kasa-dorado-dark" /> Kasa Sports System
           </p>
         </div>
       </div>

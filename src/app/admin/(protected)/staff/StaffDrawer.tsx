@@ -166,7 +166,7 @@ export default function StaffDrawer({
           {/* Nombre Completo */}
           <div className="space-y-1.5">
             <label className="text-xs font-black uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5 text-kasa-dorado" />
+              <User className="w-3.5 h-3.5 text-kasa-dorado-dark" />
               Nombre Completo <span className="text-red-500">*</span>
             </label>
             <input 
@@ -183,7 +183,7 @@ export default function StaffDrawer({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-black uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
-                <IdCard className="w-3.5 h-3.5 text-kasa-dorado" />
+                <IdCard className="w-3.5 h-3.5 text-kasa-dorado-dark" />
                 Cédula <span className="text-red-500">*</span>
               </label>
               <input 
@@ -198,7 +198,7 @@ export default function StaffDrawer({
 
             <div className="space-y-1.5">
               <label className="text-xs font-black uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
-                <Phone className="w-3.5 h-3.5 text-kasa-dorado" />
+                <Phone className="w-3.5 h-3.5 text-kasa-dorado-dark" />
                 Teléfono
               </label>
               <input 
@@ -214,7 +214,7 @@ export default function StaffDrawer({
           {/* Rol / Cargo */}
           <div className="space-y-1.5">
             <label className="text-xs font-black uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
-              <Briefcase className="w-3.5 h-3.5 text-kasa-dorado" />
+              <Briefcase className="w-3.5 h-3.5 text-kasa-dorado-dark" />
               Rol / Cargo Técnico <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -242,7 +242,7 @@ export default function StaffDrawer({
           {/* Asignación de Equipo */}
           <div className="space-y-1.5 pt-2">
             <label className="text-xs font-black uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
-              <Trophy className="w-3.5 h-3.5 text-kasa-dorado" />
+              <Trophy className="w-3.5 h-3.5 text-kasa-dorado-dark" />
               Equipo Asignado
             </label>
             <select

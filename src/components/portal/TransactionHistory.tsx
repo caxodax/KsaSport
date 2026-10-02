@@ -70,9 +70,9 @@ export default function TransactionHistory({ payments }: { payments: Payment[] }
                     </p>
                   ) : null}
                   <span className={`text-[10px] font-black px-2 py-0.5 rounded-full inline-block mt-1 uppercase tracking-widest
-                    ${payment.status === 'Completado' ? 'bg-green-100 text-green-700' : 
-                      payment.status === 'Pendiente' ? 'bg-yellow-100 text-yellow-700' : 
-                      'bg-red-100 text-red-700'}`}>
+                    ${payment.status === 'Completado' ? 'bg-emerald-100 text-emerald-900 border border-emerald-200' : 
+                      payment.status === 'Pendiente' ? 'bg-amber-100 text-amber-900 border border-amber-200' : 
+                      'bg-rose-100 text-rose-900 border border-rose-200'}`}>
                     {payment.status}
                   </span>
                 </div>

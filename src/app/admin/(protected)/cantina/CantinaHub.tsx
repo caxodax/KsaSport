@@ -703,7 +703,7 @@ export default function CantinaHub({
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 space-y-5">
               <div className="flex items-center justify-between border-b border-gray-100 pb-4">
                 <div className="flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5 text-kasa-dorado" />
+                  <ShoppingCart className="w-5 h-5 text-kasa-dorado-dark" />
                   <h3 className="font-black text-gray-900 text-lg">Comanda Actual</h3>
                 </div>
                 {cartItemsArray.length > 0 && (
@@ -854,7 +854,7 @@ export default function CantinaHub({
               <div className="bg-white rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto space-y-4 shadow-2xl">
                 <div className="flex justify-between items-center border-b pb-3">
                   <h3 className="font-black text-gray-900 text-lg flex items-center gap-2">
-                    <ShoppingCart className="w-5 h-5 text-kasa-dorado" />
+                    <ShoppingCart className="w-5 h-5 text-kasa-dorado-dark" />
                     Resumen de Venta
                   </h3>
                   <button onClick={() => setIsMobileCartOpen(false)} className="p-1 text-gray-400 hover:text-gray-600">

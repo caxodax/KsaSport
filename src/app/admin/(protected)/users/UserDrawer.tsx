@@ -209,7 +209,7 @@ export default function UserDrawer({
               {/* Nombre */}
               <div>
                 <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-kasa-dorado" />
+                  <User className="w-3.5 h-3.5 text-kasa-dorado-dark" />
                   Nombre Completo
                 </label>
                 <input
@@ -225,7 +225,7 @@ export default function UserDrawer({
               {/* Correo Electrónico */}
               <div>
                 <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                  <Mail className="w-3.5 h-3.5 text-kasa-dorado" />
+                  <Mail className="w-3.5 h-3.5 text-kasa-dorado-dark" />
                   Correo Electrónico
                 </label>
                 <input
@@ -250,7 +250,7 @@ export default function UserDrawer({
               {!isEditing && (
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                    <Key className="w-3.5 h-3.5 text-kasa-dorado" />
+                    <Key className="w-3.5 h-3.5 text-kasa-dorado-dark" />
                     Contraseña Inicial
                   </label>
                   <input
@@ -269,7 +269,7 @@ export default function UserDrawer({
               {/* Selector de Rol */}
               <div>
                 <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                  <Shield className="w-3.5 h-3.5 text-kasa-dorado" />
+                  <Shield className="w-3.5 h-3.5 text-kasa-dorado-dark" />
                   Rol Administrativo
                 </label>
                 <select
@@ -335,7 +335,7 @@ export default function UserDrawer({
                   <form onSubmit={handleResetPassword} className="bg-gray-50 p-3.5 rounded-xl border border-gray-200 space-y-2.5">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
-                        <Key className="w-3.5 h-3.5 text-kasa-dorado" />
+                        <Key className="w-3.5 h-3.5 text-kasa-dorado-dark" />
                         Nueva Contraseña
                       </span>
                       <button
