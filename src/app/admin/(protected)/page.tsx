@@ -27,9 +27,13 @@ export default async function DashboardPage({
   const to = from + pageSize - 1;
 
   // Consulta de Atletas con Filtros y Paginación (para la tabla)
+  const athletesSelect = categoryFilter
+    ? 'id, name, cedula, status, team_id, teams!inner(id, name, category)'
+    : 'id, name, cedula, status, team_id, teams(id, name, category)';
+
   let athletesQuery = supabase
     .from('athletes')
-    .select('id, name, cedula, status, team_id, teams!inner(id, name, category)', { count: 'exact' });
+    .select(athletesSelect, { count: 'exact' });
 
   if (query) {
     const cleanQ = cleanCedula(query);
@@ -64,9 +68,13 @@ export default async function DashboardPage({
 
   // ========== ANÁLISIS FINANCIERO ==========
   // 1. Todos los atletas activos (sin paginación) para KPIs
+  const allAthletesSelect = categoryFilter
+    ? 'id, status, paid_until, team_id, has_alliance, teams!inner(category)'
+    : 'id, status, paid_until, team_id, has_alliance, teams(category)';
+
   let allAthletesQuery = supabase
     .from('athletes')
-    .select('id, status, paid_until, team_id, has_alliance, teams!inner(category)')
+    .select(allAthletesSelect)
     .in('status', ['Solvente', 'Moroso']);
   if (teamFilter) allAthletesQuery = allAthletesQuery.eq('team_id', teamFilter);
   if (categoryFilter) allAthletesQuery = allAthletesQuery.eq('teams.category', categoryFilter);

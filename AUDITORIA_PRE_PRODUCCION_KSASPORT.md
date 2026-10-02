@@ -485,7 +485,7 @@ Reemplazar por notificaciones flotantes (*toasts*) no intrusivas o modales de co
 │  [X] 5. Reemplazar getSession() por getUser() en todo el portal (1.6).      │
 │  [X] 6. Proteger rutas cron con obligatoriedad de CRON_SECRET (1.5).        │
 │  [X] 7. Crear función SQL atómica para balance de cantina (2.1).            │
-│  [ ] 8. Corregir teams!inner por join opcional en admin/page.tsx (2.5).     │
+│  [X] 8. Corregir teams!inner por join opcional en admin/page.tsx (2.5).     │
 │  [X] 9. Corregir bug de zona horaria de toLocaleDateString en paid_until (2.4).│
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ DÍA 2: ESTABILIDAD, PERFORMANCE Y REFINAMIENTO UX                           │
