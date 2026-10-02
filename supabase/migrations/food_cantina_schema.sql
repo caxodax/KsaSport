@@ -111,24 +111,10 @@ CREATE POLICY "Athletes view own food_payments" ON public.food_payments FOR SELE
     athlete_id IN (SELECT id FROM public.athletes WHERE user_id = auth.uid())
 );
 
--- Service Role (Backend/Admin) tiene acceso total a todas las tablas
-DROP POLICY IF EXISTS "Service role full access food_categories" ON public.food_categories;
-CREATE POLICY "Service role full access food_categories" ON public.food_categories FOR ALL USING (true);
+-- Nota de Seguridad:
+-- El Service Role (Backend/Server Actions) bypasséa RLS de forma nativa en PostgreSQL/Supabase.
+-- No se deben crear políticas 'FOR ALL USING (true)' sin restringir rol, ya que abrirían acceso total a PUBLIC/anon.
 
-DROP POLICY IF EXISTS "Service role full access food_products" ON public.food_products;
-CREATE POLICY "Service role full access food_products" ON public.food_products FOR ALL USING (true);
-
-DROP POLICY IF EXISTS "Service role full access food_credit_accounts" ON public.food_credit_accounts;
-CREATE POLICY "Service role full access food_credit_accounts" ON public.food_credit_accounts FOR ALL USING (true);
-
-DROP POLICY IF EXISTS "Service role full access food_orders" ON public.food_orders;
-CREATE POLICY "Service role full access food_orders" ON public.food_orders FOR ALL USING (true);
-
-DROP POLICY IF EXISTS "Service role full access food_order_items" ON public.food_order_items;
-CREATE POLICY "Service role full access food_order_items" ON public.food_order_items FOR ALL USING (true);
-
-DROP POLICY IF EXISTS "Service role full access food_payments" ON public.food_payments;
-CREATE POLICY "Service role full access food_payments" ON public.food_payments FOR ALL USING (true);
 
 -- Semilla de Categorías Iniciales
 INSERT INTO public.food_categories (name) VALUES 
