@@ -6,13 +6,12 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   try {
-    // 1. Verificación básica de seguridad para Cron Jobs
+    // 1. Verificación estricta de seguridad para Cron Jobs
     const authHeader = request.headers.get('authorization')
     const cronSecret = process.env.CRON_SECRET
 
-    // Si hay un secreto configurado, exigimos que venga en el header
-    // (Útil para proteger la ruta en producción)
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    // Se exige obligatoriamente un secreto de cron válido
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
