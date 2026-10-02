@@ -141,7 +141,7 @@ export async function fetchAlCambioRates(): Promise<{ usd: number; eur: number; 
     const eur = eurOfficial ? Number(eurOfficial.baseValue) : null;
 
     // 3. Tasa USDT Promedio (Binance P2P)
-    let usdt = 960.00;
+    let usdt: number = usd ? Number(usd.toFixed(4)) : 0;
     if (binance?.buyAverage && binance?.sellAverage) {
       const buy = Number(binance.buyAverage);
       const sell = Number(binance.sellAverage);
@@ -345,7 +345,7 @@ export async function getTodayRates(): Promise<ExchangeRateResult> {
 
   const fallbackUsdt = settings?.usdt_promedio 
     ? Number(settings.usdt_promedio) 
-    : (settings?.last_usdt_promedio ? Number(settings.last_usdt_promedio) : 960.00);
+    : (settings?.last_usdt_promedio ? Number(settings.last_usdt_promedio) : (settings?.last_bcv_usd ? Number(settings.last_bcv_usd) : 0));
 
   if (latestRates && latestRates.length > 0) {
     const latestDate = latestRates[0].date_rate;
@@ -367,8 +367,8 @@ export async function getTodayRates(): Promise<ExchangeRateResult> {
   }
 
   return {
-    usd: settings?.last_bcv_usd ? Number(settings.last_bcv_usd) : 842.2067,
-    eur: settings?.last_bcv_eur ? Number(settings.last_bcv_eur) : 977.8778,
+    usd: settings?.last_bcv_usd ? Number(settings.last_bcv_usd) : 0,
+    eur: settings?.last_bcv_eur ? Number(settings.last_bcv_eur) : 0,
     usdt: fallbackUsdt,
     usdt_promedio: fallbackUsdt,
     date: settings?.bcv_updated_at ? settings.bcv_updated_at.split('T')[0] : todayStr,

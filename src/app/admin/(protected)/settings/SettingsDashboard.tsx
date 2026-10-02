@@ -329,7 +329,7 @@ export default function SettingsDashboard({
 
       {activeTab === 'rates' ? (
         <ExchangeRateSettings 
-          currentRates={currentRates || { usd: 842.2067, eur: 977.8778, date: new Date().toISOString().split('T')[0], source: 'settings' }}
+          currentRates={currentRates || { usd: 0, eur: 0, date: new Date().toISOString().split('T')[0], source: 'settings' }}
           history={ratesHistory}
         />
       ) : (

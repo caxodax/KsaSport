@@ -25,7 +25,7 @@ export default function ExchangeRateSettings({
   const [manualUsd, setManualUsd] = useState(currentRates.usd ? String(currentRates.usd) : '');
   const [manualEur, setManualEur] = useState(currentRates.eur ? String(currentRates.eur) : '');
   const [manualUsdt, setManualUsdt] = useState(
-    currentRates.usdt_promedio ? String(currentRates.usdt_promedio) : (currentRates.usdt ? String(currentRates.usdt) : '960.00')
+    currentRates.usdt_promedio ? String(currentRates.usdt_promedio) : (currentRates.usdt ? String(currentRates.usdt) : '')
   );
   const [savingManual, setSavingManual] = useState(false);
   const [manualMessage, setManualMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);

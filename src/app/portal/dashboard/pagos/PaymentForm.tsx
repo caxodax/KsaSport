@@ -59,8 +59,8 @@ export default function PaymentForm({
   const [splits, setSplits] = useState<PaymentSplit[]>([])
 
   const getRateForProduct = (rateType?: string) => {
-    if (rateType === 'EUR') return Number(rates?.eur) || 968.0673;
-    return Number(rates?.usd) || 832.4883;
+    if (rateType === 'EUR') return Number(rates?.eur) || 0;
+    return Number(rates?.usd) || 0;
   };
 
   const handleSelect = (product: Product) => {
@@ -146,7 +146,7 @@ export default function PaymentForm({
           transferred = numAmount.toFixed(2)
         } else if (isEurCash) {
           currency = 'EUR'
-          rate = (Number(rates?.eur) || 968.0673).toFixed(4)
+          rate = (Number(rates?.eur) || 0).toFixed(4)
           transferred = numAmount.toFixed(2)
         } else {
           currency = selectedProduct?.rate_type || 'USD'
@@ -197,12 +197,20 @@ export default function PaymentForm({
       return
     }
 
-    // Validar campos vacíos
+    // Validar campos vacíos y disponibilidad de tasas oficiales
     for (const split of splits) {
       if (!split.method) return setError('Selecciona el método de pago para todos los abonos.')
       if (!split.reference_number) return setError('Ingresa el número de referencia para todos los abonos.')
       if (!split.file) return setError('Sube el comprobante para todos los abonos.')
       if (Number(split.amount) <= 0) return setError('El monto de cada abono debe ser mayor a 0.')
+
+      const isBs = split.method.toLowerCase().includes('pago móvil') || 
+                   split.method.toLowerCase().includes('transferencia') || 
+                   split.method.toLowerCase().includes('bs') || 
+                   split.payment_currency === 'VES';
+      if (isBs && (!split.exchange_rate || Number(split.exchange_rate) <= 0)) {
+        return setError('No se puede procesar el abono en Bolívares porque la tasa oficial del día aún no está disponible en el sistema. Por favor contacta a administración.')
+      }
     }
 
     setLoading(true)
@@ -220,7 +228,7 @@ export default function PaymentForm({
       reference: s.reference_number,
       rate_type: s.rate_type || selectedProduct.rate_type || 'USD',
       exchange_rate: s.exchange_rate || '1.0000',
-      usdt_promedio: rates?.usdt_promedio || rates?.usdt || 960.00,
+      usdt_promedio: rates?.usdt_promedio || rates?.usdt || (rates?.usd ? Number(rates.usd) : 0),
       transferred_amount: s.transferred_amount || s.amount,
       payment_currency: s.payment_currency || 'USD',
       date_rate: s.date_rate || rates?.date || new Date().toISOString().split('T')[0]
