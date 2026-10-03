@@ -16,7 +16,7 @@ export default function PwaInstallPrompt() {
   const [isIos, setIsIos] = useState(false);
   const [showIosGuide, setShowIosGuide] = useState(false);
   const [isSubscribingPush, setIsSubscribingPush] = useState(false);
-  const [minimized, setMinimized] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -66,8 +66,9 @@ export default function PwaInstallPrompt() {
     };
   }, []);
 
-  // Si ambos ya están activos o aún no está montado en cliente, no mostrar nada
+  // Si ambos ya están activos, o aún no está montado en cliente, o el usuario cerró el aviso en esta sesión
   if (!mounted) return null;
+  if (isDismissed) return null;
   if (isStandalone && pushGranted) return null;
 
   // Manejar instalación en Android / Chrome
@@ -146,69 +147,45 @@ export default function PwaInstallPrompt() {
 
   return (
     <>
-      {/* 1. BARRA FLOTANTE FIJA INFERIOR (Siempre visible si falta instalar o activar push) */}
+      {/* 1. BARRA FLOTANTE FIJA INFERIOR (Visible si falta instalar o activar push, hasta que se cierre) */}
       <aside 
         aria-label="Configuración de la Aplicación KsaSport"
-        className={`fixed bottom-4 inset-x-3 sm:inset-x-auto sm:right-6 sm:w-[440px] z-50 transition-all duration-300 ${
-          minimized ? 'translate-y-1' : 'translate-y-0'
-        }`}
+        className="fixed bottom-4 inset-x-3 sm:inset-x-auto sm:right-6 sm:w-[440px] z-50 transition-all duration-300 animate-in fade-in slide-in-from-bottom-5"
       >
         <div className="bg-gradient-to-r from-[#3B0711] via-kasa-vinotinto to-[#250309] text-white rounded-3xl p-4 sm:p-5 shadow-[0_12px_40px_rgba(0,0,0,0.45)] border border-white/20 backdrop-blur-xl relative overflow-hidden">
           {/* Acento decorativo */}
           <div className="absolute top-0 right-0 w-36 h-36 bg-kasa-dorado/15 rounded-full blur-2xl pointer-events-none" />
 
-          {/* Versión minimizada */}
-          {minimized ? (
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-kasa-dorado text-kasa-vinotinto flex items-center justify-center font-black text-xs shrink-0 shadow-md">
-                  KS
+          <div className="space-y-3.5 relative z-10">
+            {/* Encabezado con logo y botón de cerrar */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-white p-1 shadow-md flex items-center justify-center shrink-0">
+                  <img src="/icon-192.png" alt="KsaSport" className="w-full h-full object-contain rounded-xl" />
                 </div>
-                <p className="text-xs font-bold text-white truncate">
-                  {!isStandalone ? 'Instalar App KsaSport' : 'Activar Alertas Push'}
-                </p>
+                <div>
+                  <h3 className="font-extrabold text-sm text-white flex items-center gap-1.5">
+                    <span>KsaSport</span>
+                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-kasa-dorado text-kasa-vinotinto">
+                      App Oficial
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-white/70">
+                    Configura tu dispositivo para la mejor experiencia deportiva.
+                  </p>
+                </div>
               </div>
+
               <button
                 type="button"
-                onClick={() => setMinimized(false)}
-                className="min-h-[44px] min-w-[44px] p-2 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1 transition-colors cursor-pointer"
-                aria-label="Expandir aviso de KsaSport"
+                onClick={() => setIsDismissed(true)}
+                className="min-h-[44px] min-w-[44px] text-white/60 hover:text-white p-1.5 hover:bg-white/10 rounded-xl transition-colors cursor-pointer flex items-center justify-center"
+                title="Cerrar aviso hasta recargar"
+                aria-label="Cerrar aviso"
               >
-                <ChevronUp className="w-4 h-4 text-kasa-dorado" />
-                <span>Ver</span>
+                <X className="w-5 h-5" />
               </button>
             </div>
-          ) : (
-            <div className="space-y-3.5">
-              {/* Encabezado con logo y botón de minimizar */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-2xl bg-white p-1 shadow-md flex items-center justify-center shrink-0">
-                    <img src="/icon-192.png" alt="KsaSport" className="w-full h-full object-contain rounded-xl" />
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-sm text-white flex items-center gap-1.5">
-                      <span>KsaSport</span>
-                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-kasa-dorado text-kasa-vinotinto">
-                        App Oficial
-                      </span>
-                    </h3>
-                    <p className="text-[11px] text-white/70">
-                      Configura tu dispositivo para la mejor experiencia deportiva.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setMinimized(true)}
-                  className="min-h-[44px] min-w-[44px] text-white/60 hover:text-white p-1.5 hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
-                  title="Minimizar"
-                  aria-label="Minimizar aviso"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
 
               {/* Botones de Acción (Instalar y Push) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
@@ -259,7 +236,6 @@ export default function PwaInstallPrompt() {
 
               </div>
             </div>
-          )}
         </div>
       </aside>
 
