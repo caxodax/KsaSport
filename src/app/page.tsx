@@ -22,10 +22,10 @@ export default async function PublicLandingPage() {
     .single();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col font-sans selection:bg-kasa-dorado selection:text-kasa-vinotinto">
+    <div className="min-h-screen bg-background flex flex-col font-sans selection:bg-kasa-dorado selection:text-kasa-vinotinto w-full max-w-full overflow-x-clip">
       <Navbar settings={settings} />
       
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col w-full max-w-full min-w-0 overflow-x-clip">
         <Hero settings={settings} />
         <SocialProof />
         <BentoFeatures />

@@ -49,18 +49,18 @@ export default function TransactionHistory({ payments }: { payments: Payment[] }
             const currSymbol = isEur ? '€' : (payment.rate_type === 'VES' ? 'Bs. ' : '$');
 
             return (
-              <div key={payment.id} className="p-4 sm:px-6 flex items-center justify-between hover:bg-gray-50 transition-colors group">
-                <div>
-                  <p className="font-bold text-sm text-gray-900 group-hover:text-kasa-vinotinto transition-colors">
+              <div key={payment.id} className="p-4 sm:px-6 flex items-center justify-between gap-3 hover:bg-gray-50 transition-colors group">
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-sm text-gray-900 group-hover:text-kasa-vinotinto transition-colors truncate">
                     {payment.concept || payment.products?.name || 'Pago'}
                   </p>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-xs text-gray-500 mt-0.5 truncate">
                     {formatLocalDate(payment.created_at, { day: '2-digit', month: 'short', year: 'numeric' })} 
                     <span className="mx-1.5 opacity-50">•</span> 
                     Ref: <span className="font-mono">{payment.reference_number || 'N/A'}</span>
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="text-right shrink-0">
                   <p className="font-black text-sm text-gray-900">
                     {currSymbol}{Number(payment.amount).toFixed(2)}
                     {isEur && <span className="text-[10px] text-slate-400 font-bold ml-1">EUR</span>}

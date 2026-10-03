@@ -11,7 +11,7 @@ export default function SocialProof() {
   ];
 
   return (
-    <section className="bg-white border-b border-gray-100 py-12 sm:py-16">
+    <section className="bg-white border-b border-gray-100 py-12 sm:py-16 overflow-hidden w-full max-w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-10">
           <p className="text-sm font-bold tracking-widest text-gray-400 uppercase">La familia Kasa Sports sigue creciendo</p>

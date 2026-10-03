@@ -45,7 +45,7 @@ export default async function AdminLayout({
     .single()
 
   return (
-    <div className="min-h-screen bg-background flex flex-col md:flex-row">
+    <div className="min-h-screen bg-background flex flex-col md:flex-row w-full max-w-full overflow-x-clip">
       <Sidebar 
         permissions={permissions} 
         roleName={roleName} 
@@ -54,8 +54,8 @@ export default async function AdminLayout({
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col h-screen overflow-y-auto bg-gray-50">
-        <div className="w-full flex-1 flex flex-col h-full">
+      <main className="flex-1 min-w-0 max-w-full flex flex-col h-screen overflow-y-auto overflow-x-hidden bg-gray-50">
+        <div className="w-full max-w-full min-w-0 flex-1 flex flex-col h-full">
           {children}
         </div>
       </main>

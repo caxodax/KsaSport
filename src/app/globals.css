@@ -28,6 +28,13 @@
 
 /* Forzar modo claro siempre (Eliminar pre-fers-color-scheme dark) */
 
+html,
+body {
+  max-width: 100%;
+  width: 100%;
+  overflow-x: clip;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

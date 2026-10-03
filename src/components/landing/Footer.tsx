@@ -20,7 +20,7 @@ export default function Footer({ settings }: FooterProps) {
   const whatsappUrl = rawWhatsapp ? `https://wa.me/${rawWhatsapp}?text=${encodeURIComponent('Hola KsaSport, deseo realizar una consulta.')}` : null;
 
   return (
-    <footer className="bg-gray-900 pt-20 pb-10 border-t border-gray-800">
+    <footer className="bg-gray-900 pt-20 pb-10 border-t border-gray-800 overflow-hidden w-full max-w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
@@ -145,7 +145,7 @@ export default function Footer({ settings }: FooterProps) {
         {/* Bottom */}
         <div className="pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500">
           <p>
-            © {new Date().getFullYear()} Kasa Sports. Todos los derechos reservados.
+            © {new Date().getFullYear()} Foxbyte. Todos los derechos reservados.
           </p>
           <div className="flex items-center gap-1">
             <span>Desarrollado para alta competencia</span>

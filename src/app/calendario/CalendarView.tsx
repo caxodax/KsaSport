@@ -92,7 +92,7 @@ export default function CalendarView({ settings }: CalendarViewProps) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col font-sans selection:bg-kasa-dorado selection:text-kasa-vinotinto">
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col font-sans selection:bg-kasa-dorado selection:text-kasa-vinotinto w-full max-w-full overflow-x-clip">
       
       {/* HEADER DE NAVEGACIÓN SUPERIOR */}
       <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-white/10 px-4 sm:px-6 lg:px-8 py-3.5">
@@ -134,7 +134,7 @@ export default function CalendarView({ settings }: CalendarViewProps) {
       </header>
 
       {/* HERO SECTION DE LA LIGA */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8">
+      <main className="flex-1 max-w-7xl w-full min-w-0 mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8">
         
         {/* Banner de Cabecera */}
         <div className="relative rounded-3xl bg-gradient-to-br from-kasa-vinotinto via-red-950 to-slate-950 border border-white/15 p-6 sm:p-8 shadow-2xl overflow-hidden">

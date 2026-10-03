@@ -170,8 +170,8 @@ export default function UserDrawer({
         onClick={onClose} 
       />
 
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-white shadow-2xl border-l border-gray-200 flex flex-col">
+      <div className="fixed inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10">
+        <div className="w-full max-w-md bg-white shadow-2xl border-l border-gray-200 flex flex-col">
           
           {/* Header */}
           <div className="px-6 py-5 bg-gradient-to-r from-kasa-vinotinto to-vinotinto-dark text-white flex items-center justify-between shadow-sm">

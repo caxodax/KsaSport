@@ -42,16 +42,16 @@ export default function Hero({ settings }: HeroProps) {
   };
 
   return (
-    <section className="relative min-h-[90vh] bg-kasa-vinotinto flex items-center pt-20 overflow-hidden">
+    <section className="relative min-h-[90vh] bg-kasa-vinotinto flex items-center pt-20 overflow-hidden w-full max-w-full">
       {/* Background Decor */}
-      <div className="absolute inset-0 w-full h-full">
+      <div className="absolute inset-0 w-full h-full overflow-hidden">
         <div className="absolute top-[-10%] right-[-5%] w-[40rem] h-[40rem] bg-red-900/40 rounded-full blur-3xl" />
         <div className="absolute bottom-[-20%] left-[-10%] w-[30rem] h-[30rem] bg-kasa-dorado/10 rounded-full blur-3xl" />
         {/* Subtle grid pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:64px_64px]" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-12 lg:gap-8 w-full z-10 py-12">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-12 lg:gap-8 w-full min-w-0 z-10 py-12">
         
         {/* Left Column - Copy */}
         <div className="flex-1 text-center lg:text-left">
@@ -245,14 +245,14 @@ export default function Hero({ settings }: HeroProps) {
 
           {/* Decorative Floating 3D Elements */}
           <motion.div 
-            className="absolute top-1/4 -left-6 sm:-left-8 w-14 h-14 bg-white/10 border border-white/20 rounded-2xl backdrop-blur-md flex items-center justify-center text-2xl shadow-xl z-20"
+            className="hidden sm:flex absolute top-1/4 -left-6 sm:-left-8 w-14 h-14 bg-white/10 border border-white/20 rounded-2xl backdrop-blur-md items-center justify-center text-2xl shadow-xl z-20"
             animate={{ y: [0, -12, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           >
             ⚾
           </motion.div>
           <motion.div 
-            className="absolute bottom-1/6 -right-4 sm:-right-6 w-12 h-12 bg-kasa-dorado/20 border border-kasa-dorado/30 rounded-full backdrop-blur-md flex items-center justify-center text-xl shadow-xl z-20"
+            className="hidden sm:flex absolute bottom-1/6 -right-4 sm:-right-6 w-12 h-12 bg-kasa-dorado/20 border border-kasa-dorado/30 rounded-full backdrop-blur-md items-center justify-center text-xl shadow-xl z-20"
             animate={{ y: [0, 16, 0] }}
             transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
           >

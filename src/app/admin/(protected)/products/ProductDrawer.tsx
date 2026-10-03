@@ -187,7 +187,7 @@ export default function ProductDrawer({
       />
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10">
-        <div className="w-screen max-w-lg bg-white shadow-2xl flex flex-col border-l border-slate-200/90 animate-in slide-in-from-right duration-300">
+        <div className="w-full max-w-lg bg-white shadow-2xl flex flex-col border-l border-slate-200/90 animate-in slide-in-from-right duration-300">
           
           {/* Cabecera del Drawer */}
           <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">

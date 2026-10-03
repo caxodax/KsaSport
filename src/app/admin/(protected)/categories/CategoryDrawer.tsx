@@ -116,8 +116,8 @@ export default function CategoryDrawer({
         onClick={onClose}
       />
 
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10">
-        <div className="w-screen max-w-lg bg-white shadow-2xl flex flex-col transform transition-transform ease-in-out duration-300">
+      <div className="fixed inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10">
+        <div className="w-full max-w-lg bg-white shadow-2xl flex flex-col transform transition-transform ease-in-out duration-300">
           
           {/* Header del Drawer */}
           <div className="p-6 bg-gradient-to-r from-kasa-vinotinto via-red-950 to-kasa-vinotinto text-white flex items-center justify-between shadow-md">

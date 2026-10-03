@@ -46,7 +46,7 @@ export default async function PortalDashboard() {
   // Si el atleta está inactivo, mostrar pantalla de bloqueo
   if (athlete.status === 'Inactivo') {
     return (
-      <div className="flex-1 w-full max-w-2xl mx-auto p-4 sm:p-6 lg:p-8 flex flex-col items-center justify-center min-h-[80vh]">
+      <div className="flex-1 w-full max-w-2xl min-w-0 mx-auto p-4 sm:p-6 lg:p-8 flex flex-col items-center justify-center min-h-[80vh]">
         <div className="w-full bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden text-center relative">
           
           {/* Header con gradiente de advertencia */}
@@ -227,7 +227,7 @@ export default async function PortalDashboard() {
     .maybeSingle()
 
   return (
-    <div className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+    <div className="flex-1 w-full max-w-7xl min-w-0 mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
       
       {/* HEADER / HERO SECTION (Modern Glassmorphism) */}
       <div className="relative z-10 rounded-3xl overflow-hidden shadow-lg border border-gray-100">
@@ -284,8 +284,8 @@ export default async function PortalDashboard() {
             )}
           </div>
 
-          <div className="flex-1 text-center md:text-left">
-            <h1 className="text-3xl sm:text-5xl md:text-6xl font-display uppercase text-white leading-tight tracking-wide drop-shadow-md mb-2">
+          <div className="flex-1 text-center md:text-left min-w-0">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-display uppercase text-white leading-tight tracking-wide drop-shadow-md mb-2 break-words">
               {athlete.name}
             </h1>
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5 mt-1">
