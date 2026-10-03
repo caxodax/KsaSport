@@ -8,6 +8,6 @@ export default async function PortalIndex() {
   if (user) {
     redirect('/portal/dashboard')
   } else {
-    redirect('/portal/login')
+    redirect('/login')
   }
 }

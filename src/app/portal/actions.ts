@@ -66,7 +66,7 @@ export async function signup(formData: FormData) {
 export async function logout() {
   const supabase = await createClient()
   await supabase.auth.signOut()
-  redirect('/portal/login')
+  redirect('/login')
 }
 
 export async function linkProfile(formData: FormData) {

@@ -61,20 +61,10 @@ export default function Navbar({ settings }: NavbarProps = {}) {
             
             <div className="flex items-center gap-3">
               <Link 
-                href="/portal" 
-                className={`text-sm font-bold px-5 py-2.5 rounded-full transition-all border ${
-                  isScrolled 
-                    ? "bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300"
-                    : "bg-white/10 text-white border-white/20 hover:bg-white/20"
-                }`}
+                href="/login" 
+                className="text-sm font-black bg-kasa-dorado text-kasa-vinotinto hover:bg-yellow-400 px-6 py-2.5 rounded-full transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-95 flex items-center gap-2"
               >
-                Soy Atleta
-              </Link>
-              <Link 
-                href="/admin" 
-                className="text-sm font-bold bg-kasa-dorado text-kasa-vinotinto hover:bg-yellow-400 px-5 py-2.5 rounded-full transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
-              >
-                Admin
+                <span>Ingresar</span>
               </Link>
             </div>
           </div>
@@ -109,20 +99,13 @@ export default function Navbar({ settings }: NavbarProps = {}) {
               <a href="#tecnologia" onClick={() => setMobileMenuOpen(false)} className="border-b border-gray-100 pb-4">Tecnología</a>
             </div>
             
-            <div className="mt-auto mb-12 flex flex-col gap-4">
+            <div className="mt-auto mb-12 flex flex-col gap-3">
               <Link 
-                href="/portal" 
+                href="/login" 
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full text-center py-4 rounded-xl font-bold bg-gray-50 text-gray-900 border border-gray-200"
+                className="w-full text-center py-4 rounded-2xl font-black bg-kasa-vinotinto text-white shadow-lg active:scale-95 transition-all text-base"
               >
-                Ingresar al Portal
-              </Link>
-              <Link 
-                href="/admin" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full text-center py-4 rounded-xl font-bold bg-kasa-dorado text-kasa-vinotinto shadow-md"
-              >
-                Acceso Administrativo
+                Ingresar al Ecosistema
               </Link>
             </div>
           </motion.div>

@@ -12,7 +12,7 @@ export default async function AdminLayout({
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/admin/login')
+    redirect('/login')
   }
 
   // Verificar si es un admin registrado y obtener sus permisos
@@ -30,7 +30,7 @@ export default async function AdminLayout({
   if (!adminUser) {
     // Si entró con una cuenta normal de atleta a la fuerza, lo botamos
     await supabase.auth.signOut()
-    redirect('/admin/login')
+    redirect('/login')
   }
 
   // Extraer permisos para inyectarlos en el Sidebar

@@ -7,7 +7,7 @@ export async function checkAdminPermission(requiredPermission?: string) {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/admin/login')
+    redirect('/login')
   }
 
   const adminSupabase = getServiceSupabase()
@@ -22,7 +22,7 @@ export async function checkAdminPermission(requiredPermission?: string) {
 
   if (!adminUser) {
     await supabase.auth.signOut()
-    redirect('/admin/login')
+    redirect('/login')
   }
 
   const permissions = (adminUser.admin_roles as any)?.permissions || []

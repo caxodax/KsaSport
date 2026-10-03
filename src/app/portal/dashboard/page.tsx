@@ -19,7 +19,7 @@ export default async function PortalDashboard() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/portal/login')
+    redirect('/login')
   }
 
   const adminSupabase = getServiceSupabase()

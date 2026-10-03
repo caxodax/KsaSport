@@ -134,8 +134,8 @@ export default function Footer({ settings }: FooterProps) {
                 </Link>
               </li>
               <li>
-                <Link href="/admin/login" className="text-gray-400 hover:text-white transition-colors">
-                  Acceso Administrativo
+                <Link href="/login" className="text-gray-400 hover:text-white transition-colors">
+                  Iniciar Sesión
                 </Link>
               </li>
             </ul>

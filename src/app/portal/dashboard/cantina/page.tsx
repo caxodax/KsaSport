@@ -11,7 +11,7 @@ export default async function CantinaPortalPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect("/portal/login")
+    redirect("/login")
   }
 
   const adminSupabase = getServiceSupabase()

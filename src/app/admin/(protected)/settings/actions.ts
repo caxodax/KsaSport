@@ -200,6 +200,7 @@ export async function updatePortalAndCalendarSettings(formData: FormData) {
     revalidatePath('/admin')
     revalidatePath('/calendario')
     revalidatePath('/portal')
+    revalidatePath('/login')
     revalidatePath('/portal/login')
     revalidatePath('/')
     return { success: true, settings: updatedSettings }

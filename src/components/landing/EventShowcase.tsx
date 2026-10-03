@@ -24,7 +24,7 @@ export default function EventShowcase({ settings }: EventShowcaseProps) {
   const rawWhatsapp = (settings?.whatsapp_number || '').replace(/[^0-9]/g, '')
   const tryoutsWhatsappUrl = rawWhatsapp
     ? `https://wa.me/${rawWhatsapp}?text=${encodeURIComponent('Hola KsaSport, deseo información sobre las fechas de los próximos tryouts y pruebas de talento.')}`
-    : '/portal/login?tab=signup'
+    : '/login?tab=signup'
 
   return (
     <section id="eventos" className="py-24 bg-white relative overflow-hidden">
