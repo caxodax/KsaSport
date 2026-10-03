@@ -3,9 +3,8 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Calendar, Users, ChevronRight, ChevronLeft, 
-  Trophy, Sparkles, ExternalLink, Download, 
-  QrCode, ShieldCheck, MapPin, Clock
+  ChevronRight, ChevronLeft, Trophy, Sparkles, 
+  ExternalLink, QrCode, ShieldCheck, Clock
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -180,44 +179,21 @@ export default function Hero({ settings }: HeroProps) {
             </div>
           </motion.div>
 
-          {/* Botones de acción inmediata */}
+          {/* Botón de acción principal: Simulador Carnet QR */}
           <motion.div 
-            className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 justify-center lg:justify-start"
+            className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
           >
-            {/* CTA 1: Ver Calendario Completo */}
-            <Link 
-              href="/calendario" 
-              className="group relative flex items-center justify-center gap-2.5 bg-gradient-to-r from-kasa-dorado via-yellow-400 to-amber-500 text-kasa-vinotinto px-7 py-3.5 rounded-xl text-base font-black transition-all hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.02] active:scale-95 shadow-lg"
-            >
-              <Calendar className="w-5 h-5 stroke-[2.5]" />
-              <span>Ver Rol de Juegos Completo</span>
-              <ChevronRight className="w-4 h-4 stroke-[3] group-hover:translate-x-1 transition-transform" />
-            </Link>
-
-            {/* CTA 2: Simulador Carnet QR (Parte E) */}
             <Link 
               href="/demo-carnet" 
-              className="group flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white border border-white/20 hover:border-amber-400/50 px-6 py-3.5 rounded-xl text-base font-bold transition-all backdrop-blur-sm hover:scale-[1.02] active:scale-95"
+              className="w-full sm:w-auto group relative inline-flex items-center justify-center gap-3 bg-gradient-to-r from-kasa-dorado via-yellow-400 to-amber-500 text-kasa-vinotinto px-8 py-4 rounded-2xl text-base sm:text-lg font-black transition-all hover:shadow-[0_0_35px_rgba(212,175,55,0.45)] hover:scale-[1.02] active:scale-95 shadow-xl"
             >
-              <QrCode className="w-5 h-5 text-kasa-dorado group-hover:rotate-6 transition-transform" />
-              <span>Simulador Carnet QR</span>
+              <QrCode className="w-5 h-5 stroke-[2.5] group-hover:rotate-6 transition-transform" />
+              <span>Probar Simulador Carnet QR</span>
+              <ChevronRight className="w-4 h-4 stroke-[3] group-hover:translate-x-1 transition-transform" />
             </Link>
-
-            {/* CTA 3: Descargar PDF directo si existe */}
-            {settings?.calendar_pdf_url && (
-              <a
-                href={settings.calendar_pdf_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hidden xl:flex items-center justify-center gap-1.5 text-xs text-amber-200/80 hover:text-amber-200 underline underline-offset-4 py-2 px-1 transition-colors"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Descargar PDF</span>
-              </a>
-            )}
           </motion.div>
         </div>
 
@@ -294,18 +270,9 @@ export default function Hero({ settings }: HeroProps) {
                 <div className="absolute bottom-2.5 inset-x-2.5 bg-black/85 backdrop-blur-md text-white py-2 px-3.5 rounded-xl border border-white/20 flex items-center justify-between text-xs font-bold shadow-xl">
                   <span className="text-gray-300">Rol Oficial de Partidos</span>
                   <span className="text-kasa-dorado inline-flex items-center gap-1 font-black group-hover:underline">
-                    Ver Jornadas <ExternalLink className="w-3.5 h-3.5" />
+                    Ver en Pantalla Completa <ExternalLink className="w-3.5 h-3.5" />
                   </span>
                 </div>
-              </Link>
-
-              {/* Botón Inferior de Acceso Directo */}
-              <Link
-                href="/calendario"
-                className="mt-3 w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-kasa-dorado to-amber-400 hover:from-yellow-400 hover:to-amber-500 text-kasa-vinotinto font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-95"
-              >
-                <span>Explorar Calendario Completo ({images.length} Jornadas)</span>
-                <ChevronRight className="w-4 h-4 stroke-[3]" />
               </Link>
 
             </div>
