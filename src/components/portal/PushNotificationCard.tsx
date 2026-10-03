@@ -28,6 +28,9 @@ export default function PushNotificationCard({ athleteId }: PushNotificationCard
           if (sub) {
             setIsSubscribed(true);
             setSubscription(sub);
+            try {
+              localStorage.setItem('ksasport_push_active', 'true');
+            } catch (e) {}
           }
         });
       });
@@ -83,6 +86,9 @@ export default function PushNotificationCard({ athleteId }: PushNotificationCard
 
       setIsSubscribed(true);
       setSubscription(sub);
+      try {
+        localStorage.setItem('ksasport_push_active', 'true');
+      } catch (e) {}
       toast.success('¡Dispositivo conectado! Ahora recibirás alertas de KsaSport.');
     } catch (err: any) {
       console.error(err);
@@ -100,6 +106,9 @@ export default function PushNotificationCard({ athleteId }: PushNotificationCard
       await subscription.unsubscribe();
       setIsSubscribed(false);
       setSubscription(null);
+      try {
+        localStorage.removeItem('ksasport_push_active');
+      } catch (e) {}
       toast.info('Has desactivado las notificaciones en este dispositivo.');
     } catch (err: any) {
       toast.error('No se pudo desactivar la suscripción.');

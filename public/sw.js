@@ -34,7 +34,7 @@ self.addEventListener('push', (event) => {
 
   const notificationOptions = {
     body: payload.body || 'Actualización en el ecosistema deportivo.',
-    icon: payload.icon || '/icon.png',
+    icon: payload.icon || '/icon-192.png',
     badge: payload.badge || '/apple-touch-icon.png',
     vibrate: [200, 100, 200],
     tag: payload.tag || 'ksasport-notification',
