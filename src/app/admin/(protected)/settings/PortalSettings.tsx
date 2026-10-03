@@ -51,22 +51,6 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
   const [calendarDescription, setCalendarDescription] = useState(settings?.calendar_description || '')
   const [calendarIsActive, setCalendarIsActive] = useState(settings?.calendar_is_active !== false)
 
-  // Sincronizar estado si cambian las props del servidor (por router.refresh())
-  useEffect(() => {
-    if (settings) {
-      setCurrentLogoUrl(settings.logo_url || DEFAULT_BRAND_LOGO)
-      setInstagramUrl(settings.instagram_url || '')
-      setFacebookUrl(settings.facebook_url || '')
-      setWhatsappNumber(settings.whatsapp_number || '')
-      setCalendarTitle(settings.calendar_title || 'Calendario Oficial de Ligas Activas')
-      setCalendarSeason(settings.calendar_season || 'Temporada 2026')
-      setCalendarDescription(settings.calendar_description || '')
-      setCalendarIsActive(settings.calendar_is_active !== false)
-      setRetainedImages(Array.isArray(settings.calendar_images) ? settings.calendar_images : [])
-      setCurrentPdfUrl(settings.calendar_pdf_url || null)
-    }
-  }, [settings])
-
   // Imágenes existentes y nuevas
   const [retainedImages, setRetainedImages] = useState<string[]>(
     Array.isArray(settings?.calendar_images) ? settings.calendar_images : []
@@ -82,6 +66,22 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Sincronizar estado si cambian las props del servidor (por router.refresh())
+  useEffect(() => {
+    if (settings) {
+      setCurrentLogoUrl(settings.logo_url || DEFAULT_BRAND_LOGO)
+      setInstagramUrl(settings.instagram_url || '')
+      setFacebookUrl(settings.facebook_url || '')
+      setWhatsappNumber(settings.whatsapp_number || '')
+      setCalendarTitle(settings.calendar_title || 'Calendario Oficial de Ligas Activas')
+      setCalendarSeason(settings.calendar_season || 'Temporada 2026')
+      setCalendarDescription(settings.calendar_description || '')
+      setCalendarIsActive(settings.calendar_is_active !== false)
+      setRetainedImages(Array.isArray(settings.calendar_images) ? settings.calendar_images : [])
+      setCurrentPdfUrl(settings.calendar_pdf_url || null)
+    }
+  }, [settings])
 
   const imageInputRef = useRef<HTMLInputElement>(null)
   const pdfInputRef = useRef<HTMLInputElement>(null)
