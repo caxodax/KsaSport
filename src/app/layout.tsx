@@ -1,7 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bebas_Neue, Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import PwaInstallPrompt from "@/components/pwa/PwaInstallPrompt";
 
 const bebasNeue = Bebas_Neue({
   weight: "400",
@@ -19,21 +21,34 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#5A0F1D",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
+};
+
 export const metadata: Metadata = {
-  title: "Kasa Sports | Dashboard",
+  title: "KsaSport | Ecosistema Deportivo Inteligente",
   description: "Ecosistema Web de Gestión Deportiva y Conciliación",
+  applicationName: "KsaSport",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "KsaSport",
+  },
   icons: {
     icon: [
       { url: "/favicon.ico" },
-      { url: "/icon.png", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [
       { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
   },
 };
-
-import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -45,6 +60,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         <Toaster position="top-right" richColors closeButton />
         <ServiceWorkerRegister />
+        <PwaInstallPrompt />
       </body>
     </html>
   );
