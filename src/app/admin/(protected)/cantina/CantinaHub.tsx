@@ -354,7 +354,7 @@ export default function CantinaHub({
         <div className="mt-6 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar snap-x border-t border-white/10 pt-4">
           <button
             onClick={() => setActiveTab("pos")}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all snap-start ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all duration-200 ease-out snap-start ${
               activeTab === "pos"
                 ? "bg-kasa-dorado text-kasa-vinotinto shadow-lg scale-105"
                 : "bg-white/10 text-white/90 hover:bg-white/20"
@@ -366,7 +366,7 @@ export default function CantinaHub({
 
           <button
             onClick={() => setActiveTab("catalog")}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all snap-start ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all duration-200 ease-out snap-start ${
               activeTab === "catalog"
                 ? "bg-kasa-dorado text-kasa-vinotinto shadow-lg scale-105"
                 : "bg-white/10 text-white/90 hover:bg-white/20"
@@ -378,7 +378,7 @@ export default function CantinaHub({
 
           <button
             onClick={() => setActiveTab("credit")}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all snap-start ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all duration-200 ease-out snap-start ${
               activeTab === "credit"
                 ? "bg-kasa-dorado text-kasa-vinotinto shadow-lg scale-105"
                 : "bg-white/10 text-white/90 hover:bg-white/20"
@@ -397,7 +397,7 @@ export default function CantinaHub({
 
           <button
             onClick={() => setActiveTab("verification")}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all snap-start ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all duration-200 ease-out snap-start ${
               activeTab === "verification"
                 ? "bg-kasa-dorado text-kasa-vinotinto shadow-lg scale-105"
                 : "bg-white/10 text-white/90 hover:bg-white/20"
@@ -416,7 +416,7 @@ export default function CantinaHub({
 
           <button
             onClick={() => setActiveTab("reports")}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all snap-start ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all duration-200 ease-out snap-start ${
               activeTab === "reports"
                 ? "bg-kasa-dorado text-kasa-vinotinto shadow-lg scale-105"
                 : "bg-white/10 text-white/90 hover:bg-white/20"
@@ -430,7 +430,7 @@ export default function CantinaHub({
 
       {/* TAB 1: POS */}
       {activeTab === "pos" && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pb-20 lg:pb-0">
+        <div key="pos" className="animate-tab-enter grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pb-20 lg:pb-0">
           <div className="lg:col-span-8 space-y-6">
             {/* SELECCIÓN DE ATLETA */}
             <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-gray-100">
@@ -589,7 +589,7 @@ export default function CantinaHub({
                 <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
                   <button
                     onClick={() => setFoodCatFilter("")}
-                    className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-colors ${
+                    className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 ease-out ${
                       foodCatFilter === "" ? "bg-kasa-vinotinto text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                     }`}
                   >
@@ -599,7 +599,7 @@ export default function CantinaHub({
                     <button
                       key={cat.id}
                       onClick={() => setFoodCatFilter(cat.id)}
-                      className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-colors ${
+                      className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 ease-out ${
                         foodCatFilter === cat.id ? "bg-kasa-vinotinto text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                       }`}
                     >
@@ -616,7 +616,7 @@ export default function CantinaHub({
                   <p className="text-xs text-gray-400 mt-1">Puedes agregarlos en la pestaña <b>Catálogo</b>.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div key={foodCatFilter} className="animate-tab-enter grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {filteredFoodProducts.map(product => {
                     const cartItem = cart[product.id]
                     const qty = cartItem ? cartItem.quantity : 0
@@ -915,7 +915,7 @@ export default function CantinaHub({
 
       {/* TAB 2: CATÁLOGO */}
       {activeTab === "catalog" && (
-        <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-gray-100 space-y-5">
+        <div key="catalog" className="animate-tab-enter bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-gray-100 space-y-5">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
               <h2 className="text-xl font-black text-gray-900">Catálogo de Productos y Consumo</h2>
@@ -1364,7 +1364,7 @@ export default function CantinaHub({
 
       {/* TAB 3: CUENTAS POR COBRAR */}
       {activeTab === "credit" && (
-        <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-gray-100 space-y-5">
+        <div key="credit" className="animate-tab-enter bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-gray-100 space-y-5">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
               <h2 className="text-xl font-black text-gray-900">Cuentas por Cobrar de Créditos</h2>
@@ -1748,7 +1748,7 @@ export default function CantinaHub({
 
       {/* TAB 4: VERIFICAR PAGOS */}
       {activeTab === "verification" && (
-        <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-gray-100 space-y-5">
+        <div key="verification" className="animate-tab-enter bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-gray-100 space-y-5">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
               <h2 className="text-xl font-black text-gray-900">Verificar Pagos Reportados</h2>
@@ -1760,7 +1760,7 @@ export default function CantinaHub({
                 <button
                   key={status}
                   onClick={() => setVerificationStatusFilter(status)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ease-out ${
                     verificationStatusFilter === status
                       ? "bg-white text-kasa-vinotinto shadow-xs"
                       : "text-gray-500 hover:text-gray-900"
@@ -2074,7 +2074,7 @@ export default function CantinaHub({
 
       {/* TAB 5: REPORTES FINANCIEROS */}
       {activeTab === "reports" && (
-        <div className="space-y-6">
+        <div key="reports" className="animate-tab-enter space-y-6">
           <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h2 className="text-xl font-black text-gray-900">Finanzas de Créditos</h2>

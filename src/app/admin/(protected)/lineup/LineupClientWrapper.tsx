@@ -14,9 +14,9 @@ export default function LineupClientWrapper({ athletes }: { athletes: any[] }) {
       <div className="bg-white border-b border-gray-200 px-4 md:px-8 py-3 flex gap-2 overflow-x-auto hide-scrollbar z-40 shadow-sm relative">
         <button
           onClick={() => setActiveTab('defensiva')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-colors whitespace-nowrap
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200 ease-out whitespace-nowrap
             ${activeTab === 'defensiva' 
-              ? 'bg-kasa-vinotinto text-white' 
+              ? 'bg-kasa-vinotinto text-white shadow-sm scale-102' 
               : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
         >
           <Shield className="w-4 h-4" />
@@ -24,9 +24,9 @@ export default function LineupClientWrapper({ athletes }: { athletes: any[] }) {
         </button>
         <button
           onClick={() => setActiveTab('ofensiva')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-colors whitespace-nowrap
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200 ease-out whitespace-nowrap
             ${activeTab === 'ofensiva' 
-              ? 'bg-blue-600 text-white' 
+              ? 'bg-blue-600 text-white shadow-sm scale-102' 
               : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
         >
           <Target className="w-4 h-4" />
@@ -36,10 +36,10 @@ export default function LineupClientWrapper({ athletes }: { athletes: any[] }) {
 
       {/* Content Area */}
       <div className="flex-1 relative overflow-hidden bg-gray-50 h-full w-full min-h-[600px]">
-        <div className={`absolute inset-0 transition-opacity duration-300 ${activeTab === 'defensiva' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
+        <div className={`absolute inset-0 transition-all duration-200 ease-out ${activeTab === 'defensiva' ? 'opacity-100 translate-y-0 z-10 pointer-events-auto' : 'opacity-0 translate-y-1 z-0 pointer-events-none'}`}>
           <LineupField athletes={athletes} />
         </div>
-        <div className={`absolute inset-0 transition-opacity duration-300 ${activeTab === 'ofensiva' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
+        <div className={`absolute inset-0 transition-all duration-200 ease-out ${activeTab === 'ofensiva' ? 'opacity-100 translate-y-0 z-10 pointer-events-auto' : 'opacity-0 translate-y-1 z-0 pointer-events-none'}`}>
           <BattingOrderView athletes={athletes} />
         </div>
       </div>

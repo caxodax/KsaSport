@@ -154,7 +154,7 @@ export default function ProductDashboard({
           <div className="inline-flex p-1 bg-slate-100 rounded-2xl border border-slate-200/80 shadow-2xs">
             <button
               onClick={() => setSelectedStatus('all')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-200 ease-out ${
                 selectedStatus === 'all'
                   ? 'bg-white text-gray-900 shadow-2xs'
                   : 'text-slate-500 hover:text-gray-900'
@@ -164,7 +164,7 @@ export default function ProductDashboard({
             </button>
             <button
               onClick={() => setSelectedStatus('active')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-200 ease-out ${
                 selectedStatus === 'active'
                   ? 'bg-emerald-600 text-white shadow-2xs'
                   : 'text-slate-500 hover:text-emerald-700'
@@ -174,7 +174,7 @@ export default function ProductDashboard({
             </button>
             <button
               onClick={() => setSelectedStatus('inactive')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-200 ease-out ${
                 selectedStatus === 'inactive'
                   ? 'bg-slate-800 text-white shadow-2xs'
                   : 'text-slate-500 hover:text-slate-900'
@@ -189,7 +189,7 @@ export default function ProductDashboard({
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-kasa-vinotinto/20 focus:border-kasa-vinotinto transition-all shadow-2xs"
+              className="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-kasa-vinotinto/20 focus:border-kasa-vinotinto transition-all duration-200 ease-out shadow-2xs"
             >
               <option value="all">Todas las Categorías</option>
               {categories.map((c) => (
@@ -204,7 +204,7 @@ export default function ProductDashboard({
           <div className="inline-flex p-1 bg-slate-100 rounded-2xl border border-slate-200/80 shadow-2xs ml-auto lg:ml-0">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-xl transition-all ${
+              className={`p-2 rounded-xl transition-all duration-200 ease-out ${
                 viewMode === 'grid'
                   ? 'bg-white text-kasa-vinotinto shadow-2xs'
                   : 'text-slate-400 hover:text-slate-700'
@@ -215,7 +215,7 @@ export default function ProductDashboard({
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`p-2 rounded-xl transition-all ${
+              className={`p-2 rounded-xl transition-all duration-200 ease-out ${
                 viewMode === 'table'
                   ? 'bg-white text-kasa-vinotinto shadow-2xs'
                   : 'text-slate-400 hover:text-slate-700'
@@ -260,7 +260,7 @@ export default function ProductDashboard({
         </div>
       ) : viewMode === 'grid' ? (
         /* VISTA DE TARJETAS (Grid First-Mobile) */
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div key={`grid-${selectedStatus}-${selectedCategory}`} className="animate-tab-enter grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {filteredProducts.map((p) => {
             const expired = isProductExpired(p);
             const ribbonBorder = p.is_active 
@@ -410,7 +410,7 @@ export default function ProductDashboard({
         </div>
       ) : (
         /* VISTA DE TABLA (Linear / Stripe style) */
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] overflow-hidden">
+        <div key={`table-${selectedStatus}-${selectedCategory}`} className="animate-tab-enter bg-white rounded-3xl border border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[720px]">
               <thead>

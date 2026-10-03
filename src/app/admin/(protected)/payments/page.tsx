@@ -1,10 +1,10 @@
 import { getServiceSupabase } from '@/lib/supabase'
-import { Wallet, Clock, Check, Calendar, CheckCircle2, XCircle } from 'lucide-react'
-import PaymentRow, { PaymentCard } from './PaymentRow'
+import { Calendar } from 'lucide-react'
 import { checkAdminPermission } from '@/lib/auth-admin'
 import DateRangeFilter from '../DateRangeFilter'
 import { parseDateRange } from '@/lib/dateRange'
 import ExportPaymentsButton from './ExportPaymentsButton'
+import PaymentsClientView from './PaymentsClientView'
 import type { PaymentsExportData } from '@/lib/exportExcel'
 
 export const revalidate = 0
@@ -161,126 +161,16 @@ export default async function PaymentsPage({
         </div>
       </div>
 
-      {/* 3. Resumen Superior (Tarjetas KPI Big number / Small label) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs hover:shadow-md transition-all relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-amber-500 rounded-l-2xl"></div>
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Por Revisar</p>
-              <div className="flex items-baseline gap-2 mt-1">
-                <h3 className="text-4xl sm:text-5xl font-display tracking-wide text-gray-900">{pendingCount}</h3>
-                <span className="text-sm font-display tracking-wider text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200">
-                  {formatPaymentsTotal(pendingPayments)}
-                </span>
-              </div>
-              <p className="text-[11px] font-medium text-amber-700 mt-1.5">Pagos en espera de verificación</p>
-            </div>
-            <div className="p-3 bg-amber-50 rounded-2xl text-amber-600 shrink-0">
-              <Clock className="w-6 h-6" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs hover:shadow-md transition-all relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500 rounded-l-2xl"></div>
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Validados</p>
-              <div className="flex items-baseline gap-2 mt-1">
-                <h3 className="text-4xl sm:text-5xl font-display tracking-wide text-gray-900">{completedCount}</h3>
-                <span className="text-sm font-display tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
-                  {formatPaymentsTotal(completedPayments)}
-                </span>
-              </div>
-              <p className="text-[11px] font-medium text-emerald-700 mt-1.5">Aprobados y conciliados</p>
-            </div>
-            <div className="p-3 bg-emerald-50 rounded-2xl text-emerald-600 shrink-0">
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs hover:shadow-md transition-all relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-red-500 rounded-l-2xl"></div>
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Rechazados</p>
-              <div className="flex items-baseline gap-2 mt-1">
-                <h3 className="text-4xl sm:text-5xl font-display tracking-wide text-gray-900">{rejectedCount}</h3>
-                <span className="text-sm font-display tracking-wider text-red-800 bg-red-50 px-2.5 py-0.5 rounded-lg border border-red-200">
-                  {formatPaymentsTotal(rejectedPayments)}
-                </span>
-              </div>
-              <p className="text-[11px] font-medium text-red-700 mt-1.5">No coinciden o inválidos</p>
-            </div>
-            <div className="p-3 bg-red-50 rounded-2xl text-red-600 shrink-0">
-              <XCircle className="w-6 h-6" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-        {/* Lista de Pagos */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 w-full overflow-hidden">
-          <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-            <h3 className="text-xl font-bold text-kasa-gris flex items-center gap-2">
-              <Wallet className="w-6 h-6 text-amber-600" />
-              Historial de Reportes
-            </h3>
-            <span className="bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm">
-              {payments?.length || 0} Total
-            </span>
-          </div>
-
-          {/* VISTA MÓVIL (Tarjetas) */}
-          <div className="md:hidden flex flex-col p-4 gap-4 bg-gray-50/30">
-            {payments && payments.length > 0 ? (
-              payments.map((p) => (
-                <PaymentCard key={p.id} payment={p as any} />
-              ))
-            ) : (
-              <div className="text-center p-8 bg-white border border-gray-100 rounded-xl">
-                <Wallet className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-                <h3 className="text-base font-bold text-gray-900">Bandeja Limpia</h3>
-                <p className="text-sm text-gray-500 mt-1">No hay pagos reportados en este momento.</p>
-              </div>
-            )}
-          </div>
-
-          {/* VISTA DESKTOP (Tabla Ampliada) */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-white">
-                <tr>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Atleta</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Concepto y Fecha</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Método y Ref.</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Monto</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Estado</th>
-                  <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
-                {payments && payments.length > 0 ? (
-                  payments.map((p) => (
-                    <PaymentRow key={p.id} payment={p as any} />
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="px-8 py-16 text-center">
-                      <Check className="mx-auto h-16 w-16 text-green-200 mb-4" />
-                      <h3 className="text-lg font-bold text-gray-900">Bandeja Limpia</h3>
-                      <p className="mt-1 text-base text-gray-500">
-                        No hay pagos reportados en este momento.
-                      </p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+      {/* 3. Vista Interactiva de Pagos (Filtros por estatus, búsqueda y transiciones de 200ms) */}
+      <PaymentsClientView
+        payments={payments || []}
+        pendingCount={pendingCount}
+        completedCount={completedCount}
+        rejectedCount={rejectedCount}
+        formattedPendingTotal={formatPaymentsTotal(pendingPayments)}
+        formattedCompletedTotal={formatPaymentsTotal(completedPayments)}
+        formattedRejectedTotal={formatPaymentsTotal(rejectedPayments)}
+      />
     </div>
   )
 }

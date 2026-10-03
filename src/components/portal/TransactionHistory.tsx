@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Receipt } from 'lucide-react'
+import { formatLocalDate } from '@/lib/dateUtils'
 
 type Payment = {
   id: string
@@ -41,7 +42,7 @@ export default function TransactionHistory({ payments }: { payments: Payment[] }
         </h3>
       </div>
       
-      <div className="divide-y divide-gray-100 flex-1">
+      <div key={currentPage} className="animate-tab-enter divide-y divide-gray-100 flex-1">
         {payments && payments.length > 0 ? (
           currentPayments.map((payment) => {
             const isEur = payment.rate_type === 'EUR' || payment.products?.rate_type === 'EUR';
@@ -54,7 +55,7 @@ export default function TransactionHistory({ payments }: { payments: Payment[] }
                     {payment.concept || payment.products?.name || 'Pago'}
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {new Date(payment.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })} 
+                    {formatLocalDate(payment.created_at, { day: '2-digit', month: 'short', year: 'numeric' })} 
                     <span className="mx-1.5 opacity-50">•</span> 
                     Ref: <span className="font-mono">{payment.reference_number || 'N/A'}</span>
                   </p>
@@ -97,7 +98,7 @@ export default function TransactionHistory({ payments }: { payments: Payment[] }
             <button 
               onClick={handlePrev}
               disabled={currentPage === 1}
-              className="p-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-kasa-vinotinto disabled:opacity-50 disabled:pointer-events-none transition-colors shadow-sm"
+              className="p-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-kasa-vinotinto disabled:opacity-50 disabled:pointer-events-none transition-all duration-200 ease-out active:scale-95 shadow-sm"
               title="Anterior"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -105,7 +106,7 @@ export default function TransactionHistory({ payments }: { payments: Payment[] }
             <button 
               onClick={handleNext}
               disabled={currentPage === totalPages}
-              className="p-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-kasa-vinotinto disabled:opacity-50 disabled:pointer-events-none transition-colors shadow-sm"
+              className="p-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-kasa-vinotinto disabled:opacity-50 disabled:pointer-events-none transition-all duration-200 ease-out active:scale-95 shadow-sm"
               title="Siguiente"
             >
               <ChevronRight className="w-4 h-4" />

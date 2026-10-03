@@ -144,10 +144,10 @@ Fase 3: Tipografía y Personalidad Atlética [✅ COMPLETADA]
   ├── 3.2 Refactor visual de tarjetas métricas (Big number / Small label) [✅]
   └── 3.3 Homogeneización estética entre el Portal de Atleta y el Admin [✅]
 
-Fase 4: Micro-interacciones y Pulido de Experiencia [⚪ PRÓXIMAMENTE]
-  ├── 4.1 Transiciones suaves de 200ms en cambios de tabs y filtros
-  ├── 4.2 Soporte formal para prefers-reduced-motion
-  └── 4.3 Feedback de carga optimizado (Skeleton loaders en lugar de spinners planos)
+Fase 4: Micro-interacciones y Pulido de Experiencia [🟡 EN PROCESO]
+  ├── 4.1 Transiciones suaves de 200ms en cambios de tabs y filtros [✅]
+  ├── 4.2 Soporte formal para prefers-reduced-motion [✅]
+  └── 4.3 Feedback de carga optimizado (Skeleton loaders en lugar de spinners planos) [⚪ PRÓXIMAMENTE]
 ```
 
 ---
