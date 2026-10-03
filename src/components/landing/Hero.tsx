@@ -1,8 +1,12 @@
 'use client'
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Users, ChevronRight, ChevronLeft, Trophy, Sparkles, ExternalLink } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { 
+  Calendar, Users, ChevronRight, ChevronLeft, 
+  Trophy, Sparkles, ExternalLink, Download, 
+  QrCode, ShieldCheck, MapPin, Clock
+} from 'lucide-react';
 import Link from 'next/link';
 
 interface HeroProps {
@@ -42,105 +46,209 @@ export default function Hero({ settings }: HeroProps) {
   };
 
   return (
-    <section className="relative min-h-[90vh] bg-kasa-vinotinto flex items-center pt-20 overflow-hidden w-full max-w-full">
-      {/* Background Decor */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden">
-        <div className="absolute top-[-10%] right-[-5%] w-[40rem] h-[40rem] bg-red-900/40 rounded-full blur-3xl" />
-        <div className="absolute bottom-[-20%] left-[-10%] w-[30rem] h-[30rem] bg-kasa-dorado/10 rounded-full blur-3xl" />
-        {/* Subtle grid pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:64px_64px]" />
+    <section className="relative min-h-[92vh] bg-gradient-to-b from-[#180206] via-[#2A050E] to-[#120104] flex items-center pt-24 sm:pt-28 pb-16 overflow-hidden w-full max-w-full">
+      
+      {/* =========================================================================
+          ATMÓSFERA STADIUM LIGHTS EFFECT & TEXTURAS VECTORIALES (PARTE A)
+          ========================================================================= */}
+      <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none select-none">
+        {/* Reflectores de Estadio Superiores (Stadium Floodlights) */}
+        <div className="absolute -top-32 left-1/4 -translate-x-1/2 w-[35rem] h-[35rem] bg-gradient-to-b from-amber-300/20 via-kasa-dorado/10 to-transparent rounded-full blur-3xl transform -rotate-12" />
+        <div className="absolute -top-32 right-1/4 translate-x-1/2 w-[35rem] h-[35rem] bg-gradient-to-b from-amber-200/20 via-kasa-dorado/10 to-transparent rounded-full blur-3xl transform rotate-12" />
+        <div className="absolute top-1/3 -left-36 w-[30rem] h-[30rem] bg-red-950/60 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-[40rem] h-[25rem] bg-kasa-dorado/5 rounded-full blur-3xl" />
+
+        {/* Focos de reflector estéreo en el techo */}
+        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-amber-300/40 to-transparent" />
+        <div className="absolute top-2 left-12 w-2 h-2 rounded-full bg-amber-200 shadow-[0_0_20px_6px_rgba(251,191,36,0.6)]" />
+        <div className="absolute top-2 left-24 w-2 h-2 rounded-full bg-amber-200 shadow-[0_0_20px_6px_rgba(251,191,36,0.6)] hidden sm:block" />
+        <div className="absolute top-2 right-12 w-2 h-2 rounded-full bg-amber-200 shadow-[0_0_20px_6px_rgba(251,191,36,0.6)]" />
+        <div className="absolute top-2 right-24 w-2 h-2 rounded-full bg-amber-200 shadow-[0_0_20px_6px_rgba(251,191,36,0.6)] hidden sm:block" />
+
+        {/* Costuras vectoriales de béisbol/sóftbol en los laterales */}
+        <svg 
+          className="absolute -left-16 top-1/4 w-44 sm:w-64 h-96 opacity-15 text-kasa-dorado" 
+          viewBox="0 0 100 200" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="1.5"
+        >
+          <path d="M 90,0 Q 10,100 90,200" strokeDasharray="3 5" />
+          <path d="M 85,20 L 95,28 M 75,40 L 87,46 M 68,60 L 80,64 M 64,80 L 76,82 M 63,100 L 75,100 M 64,120 L 76,118 M 68,140 L 80,136 M 75,160 L 87,154 M 85,180 L 95,172" strokeWidth="1.8" />
+        </svg>
+
+        <svg 
+          className="absolute -right-16 bottom-10 w-44 sm:w-64 h-96 opacity-15 text-kasa-dorado" 
+          viewBox="0 0 100 200" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="1.5"
+        >
+          <path d="M 10,0 Q 90,100 10,200" strokeDasharray="3 5" />
+          <path d="M 15,20 L 5,28 M 25,40 L 13,46 M 32,60 L 20,64 M 36,80 L 24,82 M 37,100 L 25,100 M 36,120 L 24,118 M 32,140 L 20,136 M 25,160 L 13,154 M 15,180 L 5,172" strokeWidth="1.8" />
+        </svg>
+
+        {/* Trama sutil deportiva */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(212,175,55,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(212,175,55,0.03)_1px,transparent_1px)] bg-[size:48px_48px]" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-12 lg:gap-8 w-full min-w-0 z-10 py-12">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-12 lg:gap-10 w-full min-w-0 z-10">
         
-        {/* Left Column - Copy */}
-        <div className="flex-1 text-center lg:text-left">
+        {/* =========================================================================
+            LEFT COLUMN: IDENTIDAD ATLETICA & CRONOGRAMA DE JUEGOS (PARTES A + C)
+            ========================================================================= */}
+        <div className="flex-1 text-center lg:text-left w-full min-w-0">
+          
+          {/* Badge en vivo inaugural */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
+            className="flex justify-center lg:justify-start"
           >
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-kasa-dorado text-sm font-semibold mb-6">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-kasa-dorado opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-kasa-dorado"></span>
+            <span className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/10 border border-amber-400/30 text-kasa-dorado text-xs sm:text-sm font-semibold mb-6 backdrop-blur-md shadow-[0_0_15px_rgba(212,175,55,0.2)]">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-80" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
               </span>
-              Inscripciones Abiertas 2026
+              <span className="font-bold tracking-wide uppercase text-[11px] sm:text-xs">
+                {settings?.calendar_season || 'Temporada Oficial 2026'} • En Directo
+              </span>
             </span>
           </motion.div>
 
+          {/* Titular Masivo en BEBAS NEUE (Tipografía dominante) */}
           <motion.h1 
-            className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.1] mb-6"
+            className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-7xl xl:text-8xl text-white tracking-wider leading-[0.92] mb-5 uppercase"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
           >
-            El Ecosistema <br className="hidden sm:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-kasa-dorado via-yellow-200 to-kasa-dorado">
-              Inteligente
+            CRONOGRAMA OFICIAL <br className="hidden sm:inline" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-100 to-kasa-dorado drop-shadow-[0_2px_12px_rgba(212,175,55,0.3)]">
+              ROL DE JUEGOS
             </span><br />
-            del Deporte.
+            DEL DIAMANTE.
           </motion.h1>
 
+          {/* Copia persuasiva y deportiva */}
           <motion.p 
-            className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto lg:mx-0 mb-8"
+            className="text-base sm:text-lg lg:text-xl text-gray-300 max-w-2xl mx-auto lg:mx-0 mb-8 leading-relaxed font-normal"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
           >
-            Únete a la liga de béisbol, sóftbol y kickingball mejor organizada. 
-            Estadísticas en vivo, autogestión para atletas y un proceso de scouting 100% digital.
+            Consulta en vivo las jornadas, horarios, sedes oficiales y cruces de la liga. 
+            El fixture oficial de béisbol, sóftbol y kickingball está disponible para atletas, técnicos y fanaticada.
           </motion.p>
 
+          {/* Chips informativos de partido / matchday */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.25, ease: "easeOut" }}
+            className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-lg mx-auto lg:mx-0 mb-8"
+          >
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-3 backdrop-blur-sm text-left">
+              <div className="flex items-center gap-1.5 text-kasa-dorado text-xs font-bold uppercase mb-0.5">
+                <Clock className="w-3.5 h-3.5" />
+                <span>Jornadas</span>
+              </div>
+              <p className="text-white font-extrabold text-sm sm:text-base">
+                {images.length > 0 ? `${images.length} Programadas` : 'Fase Regular'}
+              </p>
+            </div>
+
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-3 backdrop-blur-sm text-left">
+              <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold uppercase mb-0.5">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Verificación</span>
+              </div>
+              <p className="text-white font-extrabold text-sm sm:text-base">
+                Mesa Técnica QR
+              </p>
+            </div>
+
+            <div className="col-span-2 sm:col-span-1 bg-white/5 border border-white/10 rounded-2xl p-3 backdrop-blur-sm text-left">
+              <div className="flex items-center gap-1.5 text-amber-300 text-xs font-bold uppercase mb-0.5">
+                <Trophy className="w-3.5 h-3.5" />
+                <span>Formato</span>
+              </div>
+              <p className="text-white font-extrabold text-sm sm:text-base truncate">
+                Alta Competencia
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Botones de acción inmediata */}
           <motion.div 
-            className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start"
+            className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 justify-center lg:justify-start"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
           >
-            <Link 
-              href="#tryouts" 
-              className="w-full sm:w-auto group relative flex items-center justify-center gap-2 bg-kasa-dorado text-kasa-vinotinto px-8 py-4 rounded-xl text-lg font-bold transition-all hover:bg-yellow-400 hover:shadow-[0_0_20px_rgba(212,175,55,0.4)]"
-            >
-              <Users className="w-5 h-5" />
-              Ver Próximos Tryouts
-            </Link>
+            {/* CTA 1: Ver Calendario Completo */}
             <Link 
               href="/calendario" 
-              className="w-full sm:w-auto group flex items-center justify-center gap-2 bg-transparent text-white border border-white/30 hover:bg-white/10 px-8 py-4 rounded-xl text-lg font-bold transition-all"
+              className="group relative flex items-center justify-center gap-2.5 bg-gradient-to-r from-kasa-dorado via-yellow-400 to-amber-500 text-kasa-vinotinto px-7 py-3.5 rounded-xl text-base font-black transition-all hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.02] active:scale-95 shadow-lg"
             >
-              <Calendar className="w-5 h-5 opacity-70 group-hover:opacity-100" />
-              Explorar Ligas Activas
+              <Calendar className="w-5 h-5 stroke-[2.5]" />
+              <span>Ver Rol de Juegos Completo</span>
+              <ChevronRight className="w-4 h-4 stroke-[3] group-hover:translate-x-1 transition-transform" />
             </Link>
+
+            {/* CTA 2: Simulador Carnet QR (Parte E) */}
+            <Link 
+              href="/demo-carnet" 
+              className="group flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white border border-white/20 hover:border-amber-400/50 px-6 py-3.5 rounded-xl text-base font-bold transition-all backdrop-blur-sm hover:scale-[1.02] active:scale-95"
+            >
+              <QrCode className="w-5 h-5 text-kasa-dorado group-hover:rotate-6 transition-transform" />
+              <span>Simulador Carnet QR</span>
+            </Link>
+
+            {/* CTA 3: Descargar PDF directo si existe */}
+            {settings?.calendar_pdf_url && (
+              <a
+                href={settings.calendar_pdf_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden xl:flex items-center justify-center gap-1.5 text-xs text-amber-200/80 hover:text-amber-200 underline underline-offset-4 py-2 px-1 transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Descargar PDF</span>
+              </a>
+            )}
           </motion.div>
         </div>
 
-        {/* Right Column - Interactive Matchday Showcase Slider or Brand Carnet */}
+        {/* =========================================================================
+            RIGHT COLUMN: MATCHDAY LIVE SHOWCASE SLIDER / FIXTURE (PARTE C EN HERO)
+            ========================================================================= */}
         <motion.div 
-          className="flex-1 w-full max-w-lg mx-auto lg:max-w-none relative perspective-1000"
-          initial={{ opacity: 0, x: 40, rotateY: 10 }}
-          animate={{ opacity: 1, x: 0, rotateY: 0 }}
-          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+          className="flex-1 w-full max-w-md sm:max-w-lg lg:max-w-none relative perspective-1000"
+          initial={{ opacity: 0, x: 30, scale: 0.95 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
         >
           {images.length > 0 ? (
-            /* MATCHDAY LIVE FIXTURE CARD (REAL DATA) */
-            <div className="relative w-full aspect-[4/5] sm:aspect-square lg:aspect-[4/5] bg-gradient-to-br from-white/15 to-white/5 rounded-3xl border border-white/20 shadow-2xl backdrop-blur-md overflow-hidden flex flex-col p-4 sm:p-5 transform transition-transform hover:-translate-y-1.5 duration-500 group">
+            /* MATCHDAY LIVE FIXTURE CARD DE ALTA CATEGORÍA */
+            <div className="relative w-full aspect-[4/5] sm:aspect-square lg:aspect-[4/5] bg-gradient-to-b from-white/15 via-[#23040B]/80 to-black/90 rounded-3xl border border-amber-400/30 shadow-[0_0_40px_rgba(212,175,55,0.2)] backdrop-blur-xl overflow-hidden flex flex-col p-4 sm:p-5 transform transition-all hover:border-amber-400/50 duration-500 group">
               
-              {/* Card Header */}
+              {/* Card Header Deportivo */}
               <div className="flex items-center justify-between gap-2 mb-3">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="relative flex h-2.5 w-2.5 shrink-0">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-80" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
                   </span>
-                  <span className="text-xs font-black uppercase tracking-wider text-emerald-300 truncate">
+                  <span className="text-xs font-black uppercase tracking-wider text-amber-300 truncate">
                     {settings?.calendar_season || 'Liga Activa 2026'}
                   </span>
                 </div>
 
                 {/* Controles de Slide */}
                 {images.length > 1 && (
-                  <div className="flex items-center gap-1 bg-black/40 backdrop-blur-md p-1 rounded-xl border border-white/15">
+                  <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md p-1 rounded-xl border border-white/15 shadow-inner">
                     <button
                       type="button"
                       onClick={prevSlide}
@@ -149,7 +257,7 @@ export default function Hero({ settings }: HeroProps) {
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
-                    <span className="text-[11px] font-bold text-gray-200 px-1 font-mono">
+                    <span className="text-[11px] font-bold text-amber-200 px-1.5 font-mono">
                       {heroIndex + 1}/{images.length}
                     </span>
                     <button
@@ -164,11 +272,11 @@ export default function Hero({ settings }: HeroProps) {
                 )}
               </div>
 
-              {/* Poster Display Contained */}
+              {/* Visor de Afiche de la Jornada */}
               <Link 
                 href="/calendario" 
-                className="relative flex-1 w-full bg-slate-950/70 rounded-2xl border border-white/10 overflow-hidden flex items-center justify-center p-2 group-hover:border-kasa-dorado/40 transition-colors"
-                title="Ver calendario oficial en pantalla completa"
+                className="relative flex-1 w-full bg-slate-950/80 rounded-2xl border border-white/10 overflow-hidden flex items-center justify-center p-2 group-hover:border-kasa-dorado/50 transition-colors shadow-inner"
+                title="Abrir rol oficial en pantalla completa"
               >
                 <img
                   src={images[heroIndex]}
@@ -176,84 +284,87 @@ export default function Hero({ settings }: HeroProps) {
                   className="h-full w-full object-contain rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
                 />
 
-                {/* Badge Flotante Superior */}
-                <div className="absolute top-3 left-3 bg-black/80 backdrop-blur-md text-white text-[10px] font-black px-2.5 py-1 rounded-lg border border-white/20 shadow-md flex items-center gap-1.5">
-                  <Sparkles className="w-3 h-3 text-kasa-dorado" />
-                  <span>{getHeroJornadaLabel(heroIndex, images.length)}</span>
+                {/* Badge Flotante Superior: Jornada */}
+                <div className="absolute top-3 left-3 bg-black/85 backdrop-blur-md text-white text-[11px] font-black px-3 py-1 rounded-lg border border-amber-400/30 shadow-lg flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-kasa-dorado" />
+                  <span className="tracking-wide">{getHeroJornadaLabel(heroIndex, images.length)}</span>
                 </div>
 
-                {/* Badge Flotante Inferior */}
-                <div className="absolute bottom-2.5 inset-x-2.5 bg-black/80 backdrop-blur-md text-white py-1.5 px-3 rounded-xl border border-white/15 flex items-center justify-between text-[11px] font-bold shadow-lg">
-                  <span className="text-gray-300">Rol de Juegos Oficial</span>
-                  <span className="text-kasa-dorado inline-flex items-center gap-1 group-hover:underline">
-                    Ver más <ExternalLink className="w-3 h-3" />
+                {/* Badge Flotante Inferior: Ver Detalles */}
+                <div className="absolute bottom-2.5 inset-x-2.5 bg-black/85 backdrop-blur-md text-white py-2 px-3.5 rounded-xl border border-white/20 flex items-center justify-between text-xs font-bold shadow-xl">
+                  <span className="text-gray-300">Rol Oficial de Partidos</span>
+                  <span className="text-kasa-dorado inline-flex items-center gap-1 font-black group-hover:underline">
+                    Ver Jornadas <ExternalLink className="w-3.5 h-3.5" />
                   </span>
                 </div>
               </Link>
 
-              {/* Botón Inferior Acceso Rápido */}
+              {/* Botón Inferior de Acceso Directo */}
               <Link
                 href="/calendario"
-                className="mt-3 w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-kasa-dorado to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-kasa-vinotinto font-black text-xs flex items-center justify-center gap-1.5 shadow-md transition-all active:scale-95"
+                className="mt-3 w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-kasa-dorado to-amber-400 hover:from-yellow-400 hover:to-amber-500 text-kasa-vinotinto font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-95"
               >
                 <span>Explorar Calendario Completo ({images.length} Jornadas)</span>
-                <ChevronRight className="w-4 h-4 stroke-[2.5]" />
+                <ChevronRight className="w-4 h-4 stroke-[3]" />
               </Link>
 
             </div>
           ) : (
-            /* BRAND CARNET FALLBACK (SI NO HAY IMÁGENES CARGADAS) */
-            <div className="relative w-full aspect-[4/5] sm:aspect-square lg:aspect-[4/5] bg-gradient-to-br from-white/10 to-white/5 rounded-3xl border border-white/20 shadow-2xl backdrop-blur-md overflow-hidden flex flex-col p-6 sm:p-8 transform transition-transform hover:-translate-y-2 duration-500">
-              {/* Mock Header */}
-              <div className="flex justify-between items-start mb-8">
-                <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+            /* BRAND MATCHDAY CARD (FALLBACK ELEGANTE SI NO HAY IMÁGENES CARGADAS) */
+            <div className="relative w-full aspect-[4/5] sm:aspect-square lg:aspect-[4/5] bg-gradient-to-b from-white/15 via-[#23040B]/80 to-black/90 rounded-3xl border border-amber-400/30 shadow-[0_0_40px_rgba(212,175,55,0.2)] backdrop-blur-xl overflow-hidden flex flex-col p-6 sm:p-8 transform transition-transform hover:-translate-y-1.5 duration-500">
+              
+              <div className="flex justify-between items-start mb-6">
+                <div className="w-16 h-16 rounded-2xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center backdrop-blur-sm">
                   <Trophy className="w-8 h-8 text-kasa-dorado" />
                 </div>
-                <div className="px-3 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/30 text-xs font-bold flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
-                  Solvente
+                <div className="px-3.5 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  Temporada Inaugural
                 </div>
               </div>
 
-              {/* Mock Profile Info */}
-              <div className="space-y-4 mb-auto">
-                <div className="w-1/3 h-4 bg-white/20 rounded-full"></div>
-                <div className="w-2/3 h-8 bg-white/30 rounded-full"></div>
-                <div className="w-1/2 h-4 bg-white/10 rounded-full"></div>
+              <div className="space-y-3 mb-6">
+                <span className="text-kasa-dorado text-xs font-mono font-bold tracking-widest uppercase">Match Center KsaSport</span>
+                <h3 className="font-display text-3xl sm:text-4xl text-white tracking-wide">
+                  FIXTURE OFICIAL 2026
+                </h3>
+                <p className="text-gray-300 text-sm">
+                  El rol de juegos se encuentra activo para la categoría libre y de ascenso. Consulta partidos y campos de juego.
+                </p>
               </div>
 
-              {/* Mock Stats Cards */}
-              <div className="grid grid-cols-2 gap-4 mt-8">
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-sm">
-                  <div className="text-white/50 text-sm mb-1">AVG</div>
-                  <div className="text-2xl font-bold text-white">.450</div>
+              <div className="grid grid-cols-2 gap-3 mb-6 mt-auto">
+                <div className="bg-white/5 border border-white/10 rounded-xl p-3">
+                  <div className="text-gray-400 text-xs">Jornadas</div>
+                  <div className="text-xl font-bold text-white">Oficiales</div>
                 </div>
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-sm">
-                  <div className="text-white/50 text-sm mb-1">HITS</div>
-                  <div className="text-2xl font-bold text-white">12</div>
+                <div className="bg-white/5 border border-white/10 rounded-xl p-3">
+                  <div className="text-gray-400 text-xs">Mesa Técnica</div>
+                  <div className="text-xl font-bold text-emerald-400">QR Activo</div>
                 </div>
               </div>
 
-              {/* QR Mockup */}
-              <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-white rounded-2xl p-3 shadow-2xl rotate-12 opacity-90 group-hover:rotate-6 transition-all duration-500">
-                <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
-                  <div className="w-2/3 h-2/3 bg-gray-400 rounded-sm"></div>
-                </div>
-              </div>
+              <Link
+                href="/calendario"
+                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-kasa-dorado to-amber-400 text-kasa-vinotinto font-black text-sm text-center flex items-center justify-center gap-2 shadow-md hover:brightness-105 transition-all"
+              >
+                <span>Abrir Calendario Oficial</span>
+                <ChevronRight className="w-4 h-4 stroke-[3]" />
+              </Link>
             </div>
           )}
 
-          {/* Decorative Floating 3D Elements */}
+          {/* Elementos flotantes de estética beisbolera */}
           <motion.div 
-            className="hidden sm:flex absolute top-1/4 -left-6 sm:-left-8 w-14 h-14 bg-white/10 border border-white/20 rounded-2xl backdrop-blur-md items-center justify-center text-2xl shadow-xl z-20"
-            animate={{ y: [0, -12, 0] }}
+            className="hidden sm:flex absolute -top-4 -left-6 w-14 h-14 bg-white/10 border border-amber-400/30 rounded-2xl backdrop-blur-md items-center justify-center text-2xl shadow-xl z-20"
+            animate={{ y: [0, -10, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           >
             ⚾
           </motion.div>
           <motion.div 
-            className="hidden sm:flex absolute bottom-1/6 -right-4 sm:-right-6 w-12 h-12 bg-kasa-dorado/20 border border-kasa-dorado/30 rounded-full backdrop-blur-md items-center justify-center text-xl shadow-xl z-20"
-            animate={{ y: [0, 16, 0] }}
+            className="hidden sm:flex absolute -bottom-3 -right-4 w-12 h-12 bg-kasa-dorado/20 border border-kasa-dorado/40 rounded-full backdrop-blur-md items-center justify-center text-xl shadow-xl z-20"
+            animate={{ y: [0, 12, 0] }}
             transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
           >
             🏆

@@ -99,6 +99,12 @@ export default function Footer({ settings }: FooterProps) {
                 </Link>
               </li>
               <li>
+                <Link href="/demo-carnet" className="text-amber-400 hover:text-amber-300 font-semibold transition-colors flex items-center gap-1.5">
+                  <span>Simulador de Carnet QR</span>
+                  <span className="text-[10px] bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded font-bold uppercase">Demo</span>
+                </Link>
+              </li>
+              <li>
                 <a href="#tryouts" className="text-gray-400 hover:text-white transition-colors">
                   Scouting & Pruebas
                 </a>

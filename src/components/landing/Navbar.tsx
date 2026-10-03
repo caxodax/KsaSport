@@ -50,11 +50,12 @@ export default function Navbar({ settings }: NavbarProps = {}) {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            <div className={`flex gap-6 font-semibold text-sm transition-colors ${
+          <div className="hidden md:flex items-center gap-7">
+            <div className={`flex gap-5 font-semibold text-sm transition-colors ${
               isScrolled ? "text-gray-600" : "text-white/90"
             }`}>
-              <Link href="/calendario" className={`transition-colors ${isScrolled ? "hover:text-kasa-dorado-dark" : "hover:text-kasa-dorado"}`}>Ligas Activas</Link>
+              <Link href="/calendario" className={`transition-colors ${isScrolled ? "hover:text-kasa-dorado-dark" : "hover:text-kasa-dorado"}`}>Calendario Oficial</Link>
+              <Link href="/demo-carnet" className={`transition-colors font-bold ${isScrolled ? "text-amber-600 hover:text-amber-700" : "text-amber-300 hover:text-amber-200"}`}>Simulador QR</Link>
               <a href="#tryouts" className={`transition-colors ${isScrolled ? "hover:text-kasa-dorado-dark" : "hover:text-kasa-dorado"}`}>Scouting</a>
               <a href="#tecnologia" className={`transition-colors ${isScrolled ? "hover:text-kasa-dorado-dark" : "hover:text-kasa-dorado"}`}>Plataforma</a>
             </div>
@@ -94,7 +95,11 @@ export default function Navbar({ settings }: NavbarProps = {}) {
             className="fixed inset-0 z-40 bg-white pt-24 px-6 md:hidden flex flex-col"
           >
             <div className="flex flex-col gap-6 text-xl font-bold text-gray-900">
-              <Link href="/calendario" onClick={() => setMobileMenuOpen(false)} className="border-b border-gray-100 pb-4">Ligas Activas & Calendario</Link>
+              <Link href="/calendario" onClick={() => setMobileMenuOpen(false)} className="border-b border-gray-100 pb-4">Calendario Oficial de Juegos</Link>
+              <Link href="/demo-carnet" onClick={() => setMobileMenuOpen(false)} className="border-b border-gray-100 pb-4 text-amber-600 flex items-center justify-between">
+                <span>Simulador de Carnet QR</span>
+                <span className="text-xs bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full font-bold uppercase">Demo</span>
+              </Link>
               <a href="#tryouts" onClick={() => setMobileMenuOpen(false)} className="border-b border-gray-100 pb-4">Scouting y Tryouts</a>
               <a href="#tecnologia" onClick={() => setMobileMenuOpen(false)} className="border-b border-gray-100 pb-4">Tecnología</a>
             </div>
