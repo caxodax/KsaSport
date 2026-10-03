@@ -228,23 +228,57 @@ export default async function PortalDashboard() {
     .maybeSingle()
 
   return (
-    <div className="flex-1 w-full max-w-7xl min-w-0 mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+    <div className="relative flex-1 w-full max-w-7xl min-w-0 mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
       
-      {/* HEADER / HERO SECTION (Modern Glassmorphism) */}
-      <div className="relative z-10 rounded-3xl overflow-hidden shadow-lg border border-gray-100">
-        <div className="absolute inset-0 bg-gradient-to-br from-kasa-vinotinto via-red-950 to-black z-0"></div>
-        <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] z-0 mix-blend-overlay"></div>
+      {/* MARCA DE AGUA AMBIENTAL FIJA DEL EQUIPO (Móvil y Desktop) */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden flex items-center justify-center">
+        <div className="absolute -right-8 md:right-8 bottom-6 md:bottom-12 w-72 h-72 sm:w-96 sm:h-96 md:w-[500px] md:h-[500px] opacity-[0.04] md:opacity-[0.06] select-none transform rotate-12 filter grayscale contrast-125 transition-all">
+          <img 
+            src={team?.logo_url || '/images/ksasport-emblem.png'} 
+            alt="" 
+            className="w-full h-full object-contain" 
+          />
+        </div>
+      </div>
+
+      {/* HEADER / HERO SECTION (Sentido de Pertenencia & Franquicia Pro) */}
+      <div className="relative z-10 rounded-3xl overflow-hidden shadow-xl border border-white/20">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#2C040B] via-kasa-vinotinto to-[#140105] z-0"></div>
+        <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:20px_20px] z-0 mix-blend-overlay"></div>
         
-        <div className="relative z-10 flex justify-end p-4">
+        {/* ESCUDO DE FONDO DEL EQUIPO (Sentido de Pertenencia & Franquicia Pro) */}
+        <div className="absolute right-[-10%] sm:right-[-2%] md:right-4 top-1/2 -translate-y-1/2 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 pointer-events-none select-none z-0 overflow-hidden flex items-center justify-center">
+          <img 
+            src={team?.logo_url || '/images/ksasport-emblem.png'} 
+            alt={team?.name || 'KsaSport'} 
+            className="w-full h-full object-contain opacity-20 sm:opacity-25 filter drop-shadow-[0_0_35px_rgba(212,175,55,0.35)] transform rotate-[-6deg]" 
+          />
+          <div className="absolute inset-0 bg-gradient-to-tr from-kasa-dorado/20 via-transparent to-transparent blur-3xl pointer-events-none" />
+        </div>
+
+        {/* CINTILLO SUPERIOR: FRANQUICIA OFICIAL & LOGOUT */}
+        <div className="relative z-10 px-6 pt-4.5 pb-3 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 bg-black/25 backdrop-blur-md">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-kasa-dorado animate-pulse shrink-0" />
+            <span className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-kasa-dorado font-display">
+              {team?.name ? `Franquicia Oficial • ${team.name}` : 'Atleta Oficial • KsaSport'}
+            </span>
+            {team?.category && (
+              <span className="text-[10px] uppercase font-bold text-white/80 bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15">
+                {team.category}
+              </span>
+            )}
+          </div>
+
           <form action={logout}>
-            <button type="submit" className="flex items-center gap-2 text-xs font-bold text-white/80 hover:text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full transition-all border border-white/10">
-              <LogOut className="w-4 h-4" />
-              Cerrar Sesión
+            <button type="submit" className="flex items-center gap-1.5 text-xs font-bold text-white/80 hover:text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3.5 py-1.5 rounded-full transition-all border border-white/15 active:scale-95 cursor-pointer">
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Cerrar Sesión</span>
             </button>
           </form>
         </div>
 
-        <div className="relative z-10 px-6 pb-8 md:px-10 md:pb-10 pt-2 flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-10">
+        <div className="relative z-10 px-6 pb-8 md:px-10 md:pb-10 pt-4 flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-10">
           
           <div className="shrink-0 relative">
             <div className="w-28 h-28 md:w-36 md:h-36 rounded-full shadow-2xl overflow-hidden ring-4 ring-white/15">
@@ -328,7 +362,10 @@ export default async function PortalDashboard() {
             <QRModal 
               athleteId={athlete.id} 
               status={athlete.status} 
-              triggerClassName="w-full sm:w-auto flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 font-bold py-3 px-6 rounded-2xl transition-all shadow-xl"
+              teamName={team?.name}
+              teamLogoUrl={team?.logo_url}
+              athleteName={athlete.name}
+              triggerClassName="w-full sm:w-auto flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 font-bold py-3 px-6 rounded-2xl transition-all shadow-xl active:scale-95 cursor-pointer"
             />
             <Link href="/portal/dashboard/pagos" className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-kasa-dorado to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-kasa-vinotinto font-black py-3 px-6 rounded-2xl transition-all shadow-lg hover:shadow-yellow-500/20 transform hover:-translate-y-0.5">
               <ShoppingCart className="w-5 h-5" />

@@ -3,7 +3,15 @@
 import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useState } from 'react';
 
-export default function QRCodeDisplay({ athleteId, status }: { athleteId: string, status: string }) {
+export default function QRCodeDisplay({ 
+  athleteId, 
+  status,
+  teamLogoUrl,
+}: { 
+  athleteId: string;
+  status: string;
+  teamLogoUrl?: string | null;
+}) {
   const [url, setUrl] = useState('');
 
   useEffect(() => {
@@ -20,6 +28,14 @@ export default function QRCodeDisplay({ athleteId, status }: { athleteId: string
         size={180} 
         level="H"
         fgColor={status === 'Solvente' ? '#0f5132' : '#842029'}
+        imageSettings={teamLogoUrl ? {
+          src: teamLogoUrl,
+          x: undefined,
+          y: undefined,
+          height: 38,
+          width: 38,
+          excavate: true,
+        } : undefined}
       />
       {/* Decorative corners */}
       <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-gray-300 rounded-tl-sm"></div>
