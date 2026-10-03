@@ -9,6 +9,7 @@ import { deleteCategory } from './actions';
 import CategoryDrawer from './CategoryDrawer';
 import PositionsModal from './PositionsModal';
 import { PositionItem, normalizePositions } from '@/lib/positions';
+import { toast } from 'sonner';
 
 interface CategoryData {
   id: string;
@@ -94,7 +95,12 @@ export default function CategoryDashboard({
       : `¿Seguro que deseas eliminar la disciplina "${cat.name}"?`;
 
     if (confirm(promptMessage)) {
-      await deleteCategory(cat.id);
+      const res = await deleteCategory(cat.id);
+      if (res?.error) {
+        toast.error(`Error al eliminar categoría: ${res.error}`);
+      } else {
+        toast.success(`Categoría "${cat.name}" eliminada exitosamente.`);
+      }
     }
   };
 

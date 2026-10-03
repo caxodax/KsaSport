@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { deleteTeam } from './actions';
 import TeamDrawer from './TeamDrawer';
+import { toast } from 'sonner';
 
 interface TeamData {
   id: string;
@@ -73,7 +74,12 @@ export default function TeamDashboard({
       : `¿Seguro que deseas eliminar el equipo "${team.name}"?`;
 
     if (confirm(msg)) {
-      await deleteTeam(team.id);
+      const res = await deleteTeam(team.id);
+      if (res?.error) {
+        toast.error(`Error al eliminar equipo: ${res.error}`);
+      } else {
+        toast.success(`Equipo "${team.name}" eliminado exitosamente.`);
+      }
     }
   };
 

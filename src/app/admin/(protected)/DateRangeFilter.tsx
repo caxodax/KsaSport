@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Calendar, Filter, RotateCcw } from 'lucide-react';
+import { toast } from 'sonner';
 
 function toLocalDateString(d: Date): string {
   const year = d.getFullYear();
@@ -67,7 +68,7 @@ export default function DateRangeFilter() {
     e.preventDefault();
     if (!from || !to) return;
     if (from > to) {
-      alert('La fecha "Desde" no puede ser posterior a la fecha "Hasta".');
+      toast.error('La fecha "Desde" no puede ser posterior a la fecha "Hasta".');
       return;
     }
     applyRange(from, to);

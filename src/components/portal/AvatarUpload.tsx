@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { Camera, Loader2, Upload, X, User } from 'lucide-react';
 import { updateAvatar } from '@/app/portal/dashboard/actions';
 import { compressImageClient } from '@/lib/clientImageCompressor';
+import { toast } from 'sonner';
 
 export default function AvatarUpload({ 
   athleteId, 
@@ -50,10 +51,11 @@ export default function AvatarUpload({
     const res = await updateAvatar(athleteId, formData);
     
     if (res.error) {
-      alert(`Error al subir la imagen: ${res.error}`);
+      toast.error(`Error al subir la imagen: ${res.error}`);
       setAvatar(currentAvatar || null);
     } else if (res.avatar_url) {
       setAvatar(res.avatar_url);
+      toast.success('Foto de perfil actualizada exitosamente.');
     }
 
     setIsUploading(false);

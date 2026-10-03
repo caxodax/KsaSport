@@ -13,6 +13,7 @@ import AthleteDrawer from './AthleteDrawer';
 import Pagination from '../Pagination';
 import { formatCedula } from '@/lib/cedula';
 import { formatLocalDateShort } from '@/lib/dateUtils';
+import { toast } from 'sonner';
 
 interface TeamItem {
   id: string;
@@ -96,12 +97,12 @@ export default function AthleteDashboard({
       });
 
       if (res.error) {
-        alert(`Error al obtener datos: ${res.error}`);
+        toast.error(`Error al obtener datos: ${res.error}`);
         return;
       }
 
       if (!res.athletes || res.athletes.length === 0) {
-        alert('No hay atletas que coincidan con los filtros seleccionados para exportar.');
+        toast.info('No hay atletas que coincidan con los filtros seleccionados para exportar.');
         return;
       }
 
@@ -118,9 +119,10 @@ export default function AthleteDashboard({
 
       const { exportAthletesToExcel } = await import('@/lib/exportExcel');
       await exportAthletesToExcel(res.athletes, label);
+      toast.success('Roster de atletas exportado a Excel exitosamente.');
     } catch (err: any) {
       console.error('Error exportando a Excel:', err);
-      alert('Ocurrió un error al generar el archivo Excel.');
+      toast.error('Ocurrió un error al generar el archivo Excel.');
     } finally {
       setExporting(false);
     }
@@ -188,7 +190,12 @@ export default function AthleteDashboard({
 
   const handleDelete = async (athlete: AthleteData) => {
     if (confirm(`¿Seguro que deseas eliminar a la atleta "${athlete.name}" (C.I. ${formatCedula(athlete.cedula)})?`)) {
-      await deleteAthlete(athlete.id);
+      const res = await deleteAthlete(athlete.id);
+      if (res?.error) {
+        toast.error(`Error al eliminar atleta: ${res.error}`);
+      } else {
+        toast.success(`Atleta "${athlete.name}" eliminada exitosamente.`);
+      }
     }
   };
 

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import UserDrawer, { AdminUserData, AdminRoleItem } from './UserDrawer';
 import { revokeAdminUser } from './actions';
+import { toast } from 'sonner';
 
 export default function UsersDashboard({
   initialUsers,
@@ -70,7 +71,7 @@ export default function UsersDashboard({
 
   const handleRevoke = async (targetUser: AdminUserData) => {
     if (targetUser.id === currentUserId) {
-      alert('Por seguridad no puedes revocar tu propio acceso.');
+      toast.error('Por seguridad no puedes revocar tu propio acceso administrativo.');
       return;
     }
 
@@ -84,11 +85,15 @@ export default function UsersDashboard({
       const res = await revokeAdminUser(targetUser.id);
       if (res?.error) {
         setActionError(res.error);
+        toast.error(res.error);
       } else {
         setUsers((prev) => prev.filter((u) => u.id !== targetUser.id));
+        toast.success(`Acceso administrativo de ${targetUser.email} revocado.`);
       }
     } catch (err: any) {
-      setActionError(err?.message || 'Error al revocar acceso.');
+      const errorMsg = err?.message || 'Error al revocar acceso.';
+      setActionError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setRevokingId(null);
     }

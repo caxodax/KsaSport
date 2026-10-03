@@ -9,6 +9,7 @@ import {
 import { toggleProductStatus, deleteProduct } from './actions';
 import ProductDrawer, { ProductData, CategoryOption } from './ProductDrawer';
 import { formatDateRangeText } from '@/lib/dateUtils';
+import { toast } from 'sonner';
 
 export default function ProductDashboard({
   initialProducts = [],
@@ -72,12 +73,22 @@ export default function ProductDashboard({
   };
 
   const handleToggleStatus = async (product: ProductData) => {
-    await toggleProductStatus(product.id, product.is_active);
+    const res = await toggleProductStatus(product.id, product.is_active);
+    if (res?.error) {
+      toast.error(`Error al cambiar estado: ${res.error}`);
+    } else {
+      toast.success(product.is_active ? `"${product.name}" desactivado.` : `"${product.name}" activado.`);
+    }
   };
 
   const handleDelete = async (product: ProductData) => {
     if (confirm(`¿Estás seguro de eliminar el producto "${product.name}"? Si ya posee pagos asociados quedará registrado en el historial contable.`)) {
-      await deleteProduct(product.id);
+      const res = await deleteProduct(product.id);
+      if (res?.error) {
+        toast.error(`Error al eliminar producto: ${res.error}`);
+      } else {
+        toast.success(`Producto "${product.name}" eliminado exitosamente.`);
+      }
     }
   };
 

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { FileSpreadsheet, Loader2 } from 'lucide-react';
 import type { PaymentsExportData } from '@/lib/exportExcel';
+import { toast } from 'sonner';
 
 export default function ExportPaymentsButton({ data }: { data: PaymentsExportData }) {
   const [exporting, setExporting] = useState(false);
@@ -12,9 +13,10 @@ export default function ExportPaymentsButton({ data }: { data: PaymentsExportDat
       setExporting(true);
       const { exportPaymentsToExcel } = await import('@/lib/exportExcel');
       await exportPaymentsToExcel(data);
+      toast.success('Reporte de Finanzas y Pagos exportado exitosamente.');
     } catch (err: any) {
       console.error('Error al exportar Finanzas y Pagos a Excel:', err);
-      alert('Ocurrió un error al generar el archivo Excel.');
+      toast.error('Ocurrió un error al generar el archivo Excel.');
     } finally {
       setExporting(false);
     }

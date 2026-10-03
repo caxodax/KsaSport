@@ -5,6 +5,7 @@ import { approvePayment, rejectPayment } from './actions'
 import { useState } from 'react'
 import { formatCedula } from '@/lib/cedula'
 import { formatLocalDateShort } from '@/lib/dateUtils'
+import { toast } from 'sonner'
 
 type Payment = {
   id: string
@@ -95,14 +96,24 @@ export default function PaymentRow({ payment }: { payment: Payment }) {
   const handleApprove = async () => {
     if (!confirm('¿Aprobar este pago?')) return;
     setLoading(true)
-    await approvePayment(payment.id, payment.athlete_id, payment.concept)
+    const res = await approvePayment(payment.id, payment.athlete_id, payment.concept)
+    if (res?.error) {
+      toast.error(`Error al aprobar pago: ${res.error}`)
+    } else {
+      toast.success('Pago aprobado exitosamente.')
+    }
     setLoading(false)
   }
 
   const handleReject = async () => {
     if (!confirm('¿Rechazar este pago?')) return;
     setLoading(true)
-    await rejectPayment(payment.id)
+    const res = await rejectPayment(payment.id)
+    if (res?.error) {
+      toast.error(`Error al rechazar pago: ${res.error}`)
+    } else {
+      toast.info('Pago rechazado.')
+    }
     setLoading(false)
   }
 
@@ -212,14 +223,24 @@ export function PaymentCard({ payment }: { payment: Payment }) {
   const handleApprove = async () => {
     if (!confirm('¿Aprobar este pago?')) return;
     setLoading(true)
-    await approvePayment(payment.id, payment.athlete_id, payment.concept)
+    const res = await approvePayment(payment.id, payment.athlete_id, payment.concept)
+    if (res?.error) {
+      toast.error(`Error al aprobar pago: ${res.error}`)
+    } else {
+      toast.success('Pago aprobado exitosamente.')
+    }
     setLoading(false)
   }
 
   const handleReject = async () => {
     if (!confirm('¿Rechazar este pago?')) return;
     setLoading(true)
-    await rejectPayment(payment.id)
+    const res = await rejectPayment(payment.id)
+    if (res?.error) {
+      toast.error(`Error al rechazar pago: ${res.error}`)
+    } else {
+      toast.info('Pago rechazado.')
+    }
     setLoading(false)
   }
 

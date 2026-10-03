@@ -9,6 +9,7 @@ import {
 import { deleteStaff } from './actions';
 import StaffDrawer, { StaffData, TeamOption, STAFF_ROLES } from './StaffDrawer';
 import { formatCedula, cleanCedula } from '@/lib/cedula';
+import { toast } from 'sonner';
 
 export default function StaffDashboard({
   initialStaff = [],
@@ -119,7 +120,12 @@ export default function StaffDashboard({
 
   const handleDelete = async (staff: StaffData) => {
     if (confirm(`¿Seguro que deseas eliminar a "${staff.name}" (${staff.role}) del staff técnico?`)) {
-      await deleteStaff(staff.id);
+      const res = await deleteStaff(staff.id);
+      if (res?.error) {
+        toast.error(`Error al eliminar miembro del staff: ${res.error}`);
+      } else {
+        toast.success(`"${staff.name}" eliminado del staff técnico.`);
+      }
     }
   };
 

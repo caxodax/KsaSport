@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { FileSpreadsheet, Loader2 } from 'lucide-react';
 import type { LedgerExportData } from '@/lib/exportExcel';
+import { toast } from 'sonner';
 
 export default function ExportLedgerButton({ data }: { data: LedgerExportData }) {
   const [exporting, setExporting] = useState(false);
@@ -12,9 +13,10 @@ export default function ExportLedgerButton({ data }: { data: LedgerExportData })
       setExporting(true);
       const { exportLedgerToExcel } = await import('@/lib/exportExcel');
       await exportLedgerToExcel(data);
+      toast.success('Reporte del Libro Mayor exportado exitosamente.');
     } catch (err: any) {
       console.error('Error al exportar el Libro Mayor a Excel:', err);
-      alert('Ocurrió un error al generar el archivo Excel.');
+      toast.error('Ocurrió un error al generar el archivo Excel.');
     } finally {
       setExporting(false);
     }

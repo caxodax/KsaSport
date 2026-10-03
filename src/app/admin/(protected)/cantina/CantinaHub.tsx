@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { toast as sonnerToast } from "sonner"
 import {
   UtensilsCrossed,
   ShoppingCart,
@@ -65,10 +66,12 @@ export default function CantinaHub({
 }: CantinaHubProps) {
   const [activeTab, setActiveTab] = useState<"pos" | "catalog" | "credit" | "verification" | "reports">("pos")
 
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null)
   const showToast = (message: string, type: "success" | "error" = "success") => {
-    setToast({ message, type })
-    setTimeout(() => setToast(null), 4000)
+    if (type === "error") {
+      sonnerToast.error(message)
+    } else {
+      sonnerToast.success(message)
+    }
   }
 
   const creditMap = useMemo(() => {
@@ -319,15 +322,6 @@ export default function CantinaHub({
 
   return (
     <div className="space-y-6">
-      {/* Toast Alert */}
-      {toast && (
-        <div className={`fixed top-5 right-5 z-50 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-sm font-bold transition-all ${
-          toast.type === "success" ? "bg-emerald-600 text-white" : "bg-red-600 text-white"
-        }`}>
-          {toast.type === "success" ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-          <span>{toast.message}</span>
-        </div>
-      )}
 
       {/* Header Principal de Cantina */}
       <div className="bg-gradient-to-r from-kasa-vinotinto via-red-900 to-kasa-vinotinto text-white p-5 sm:p-7 rounded-3xl shadow-xl border border-red-950/40 relative overflow-hidden">

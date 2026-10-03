@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { User, X, Plus, Minus, Activity, ShieldAlert } from 'lucide-react';
 import { assignPosition, unassignPosition, addDefensiveStat } from './actions';
+import { toast } from 'sonner';
 
 interface Athlete {
   id: string;
@@ -53,7 +54,7 @@ export default function LineupField({ athletes }: { athletes: Athlete[] }) {
   const handleDefensiveOut = async (athleteId: string) => {
     // Para UX rápida podríamos hacer optimistic update, pero mantengamos simple.
     await addDefensiveStat(athleteId);
-    alert('Out Defensivo registrado exitosamente.');
+    toast.success('Out Defensivo registrado exitosamente.');
   };
 
   return (

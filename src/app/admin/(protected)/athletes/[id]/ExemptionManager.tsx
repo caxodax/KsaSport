@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { toggleExemption, toggleAthleteAlliance } from './actions'
 import { ShieldCheck, ShieldAlert, Sparkles, Check } from 'lucide-react'
+import { toast } from 'sonner'
 
 type Product = {
   id: string
@@ -34,7 +35,9 @@ export default function ExemptionManager({
     const res = await toggleAthleteAlliance(athleteId, active)
     if (res?.error) {
       setHasAlliance(!active)
-      alert('Error al actualizar alianza: ' + res.error)
+      toast.error('Error al actualizar alianza: ' + res.error)
+    } else {
+      toast.success(active ? 'Alianza / Beca activada exitosamente.' : 'Alianza / Beca desactivada.');
     }
     setIsTogglingAlliance(false)
   }
@@ -56,7 +59,9 @@ export default function ExemptionManager({
     if (result.error) {
       // Revert on error
       setExemptions(new Set(initialExemptions))
-      alert('Error: ' + result.error)
+      toast.error('Error: ' + result.error)
+    } else {
+      toast.success(isExempt ? 'Concepto exonerado exitosamente.' : 'Exoneración removida.');
     }
 
     setLoadingIds(prev => {

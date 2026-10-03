@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { User, Target, ShieldX, Check } from 'lucide-react';
 import { addOffensiveStat, updateBattingOrder } from './actions';
+import { toast } from 'sonner';
 
 interface Athlete {
   id: string;
@@ -31,7 +32,7 @@ export default function BattingOrderView({ athletes }: { athletes: Athlete[] }) 
       next.delete(athleteId);
       return next;
     });
-    alert(type === 'hit' ? '¡Hit registrado exitosamente!' : 'Out Ofensivo registrado exitosamente.');
+    toast.success(type === 'hit' ? '¡Hit registrado exitosamente!' : 'Out Ofensivo registrado exitosamente.');
   };
 
   const handleOrderChange = async (athleteId: string, order: number | null) => {
