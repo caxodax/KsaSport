@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   ChevronRight, ChevronLeft, Trophy, Sparkles, 
-  ExternalLink, QrCode, ShieldCheck, Clock
+  ExternalLink, QrCode, Clock
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -141,59 +141,54 @@ export default function Hero({ settings }: HeroProps) {
             El fixture oficial de béisbol, sóftbol y kickingball está disponible para atletas, técnicos y fanaticada.
           </motion.p>
 
-          {/* Chips informativos de partido / matchday */}
+          {/* Paneles Informativos de Alta Competencia (Simétricos y Proporcionales) */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.25, ease: "easeOut" }}
-            className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-lg mx-auto lg:mx-0 mb-8"
+            className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full max-w-xl mx-auto lg:mx-0"
           >
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-3 backdrop-blur-sm text-left">
-              <div className="flex items-center gap-1.5 text-kasa-dorado text-xs font-bold uppercase mb-0.5">
-                <Clock className="w-3.5 h-3.5" />
+            {/* Panel 1: Jornadas */}
+            <div className="bg-gradient-to-b from-white/10 to-white/[0.03] border border-amber-400/20 hover:border-amber-400/40 rounded-2xl p-4 backdrop-blur-md text-left transition-colors shadow-lg">
+              <div className="flex items-center gap-1.5 text-amber-300 text-xs font-bold uppercase tracking-wider mb-1.5">
+                <Clock className="w-4 h-4 text-kasa-dorado" />
                 <span>Jornadas</span>
               </div>
-              <p className="text-white font-extrabold text-sm sm:text-base">
-                {images.length > 0 ? `${images.length} Programadas` : 'Fase Regular'}
+              <p className="text-white font-extrabold text-base sm:text-lg leading-tight">
+                {images.length > 0 ? `${images.length} Oficiales` : 'Fase Regular'}
               </p>
+              <span className="text-[11px] text-gray-300 font-medium block mt-1">
+                Rol de Partidos
+              </span>
             </div>
 
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-3 backdrop-blur-sm text-left">
-              <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold uppercase mb-0.5">
-                <ShieldCheck className="w-3.5 h-3.5" />
+            {/* Panel 2: Verificación */}
+            <div className="bg-gradient-to-b from-white/10 to-white/[0.03] border border-emerald-400/20 hover:border-emerald-400/40 rounded-2xl p-4 backdrop-blur-md text-left transition-colors shadow-lg">
+              <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1.5">
+                <QrCode className="w-4 h-4" />
                 <span>Verificación</span>
               </div>
-              <p className="text-white font-extrabold text-sm sm:text-base">
-                Mesa Técnica QR
+              <p className="text-white font-extrabold text-base sm:text-lg leading-tight">
+                Mesa Técnica
               </p>
+              <span className="text-[11px] text-emerald-300/80 font-medium block mt-1">
+                Estatus QR Digital
+              </span>
             </div>
 
-            <div className="col-span-2 sm:col-span-1 bg-white/5 border border-white/10 rounded-2xl p-3 backdrop-blur-sm text-left">
-              <div className="flex items-center gap-1.5 text-amber-300 text-xs font-bold uppercase mb-0.5">
-                <Trophy className="w-3.5 h-3.5" />
+            {/* Panel 3: Formato */}
+            <div className="bg-gradient-to-b from-white/10 to-white/[0.03] border border-amber-400/20 hover:border-amber-400/40 rounded-2xl p-4 backdrop-blur-md text-left transition-colors shadow-lg">
+              <div className="flex items-center gap-1.5 text-amber-300 text-xs font-bold uppercase tracking-wider mb-1.5">
+                <Trophy className="w-4 h-4 text-kasa-dorado" />
                 <span>Formato</span>
               </div>
-              <p className="text-white font-extrabold text-sm sm:text-base truncate">
-                Alta Competencia
+              <p className="text-white font-extrabold text-base sm:text-lg leading-tight">
+                Competencia
               </p>
+              <span className="text-[11px] text-gray-300 font-medium block mt-1">
+                Oficial 2026
+              </span>
             </div>
-          </motion.div>
-
-          {/* Botón de acción principal: Simulador Carnet QR */}
-          <motion.div 
-            className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
-          >
-            <Link 
-              href="/demo-carnet" 
-              className="w-full sm:w-auto group relative inline-flex items-center justify-center gap-3 bg-gradient-to-r from-kasa-dorado via-yellow-400 to-amber-500 text-kasa-vinotinto px-8 py-4 rounded-2xl text-base sm:text-lg font-black transition-all hover:shadow-[0_0_35px_rgba(212,175,55,0.45)] hover:scale-[1.02] active:scale-95 shadow-xl"
-            >
-              <QrCode className="w-5 h-5 stroke-[2.5] group-hover:rotate-6 transition-transform" />
-              <span>Probar Simulador Carnet QR</span>
-              <ChevronRight className="w-4 h-4 stroke-[3] group-hover:translate-x-1 transition-transform" />
-            </Link>
           </motion.div>
         </div>
 
@@ -321,21 +316,7 @@ export default function Hero({ settings }: HeroProps) {
             </div>
           )}
 
-          {/* Elementos flotantes de estética beisbolera */}
-          <motion.div 
-            className="hidden sm:flex absolute -top-4 -left-6 w-14 h-14 bg-white/10 border border-amber-400/30 rounded-2xl backdrop-blur-md items-center justify-center text-2xl shadow-xl z-20"
-            animate={{ y: [0, -10, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          >
-            ⚾
-          </motion.div>
-          <motion.div 
-            className="hidden sm:flex absolute -bottom-3 -right-4 w-12 h-12 bg-kasa-dorado/20 border border-kasa-dorado/40 rounded-full backdrop-blur-md items-center justify-center text-xl shadow-xl z-20"
-            animate={{ y: [0, 12, 0] }}
-            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          >
-            🏆
-          </motion.div>
+          {/* Fin columna derecha */}
         </motion.div>
 
       </div>
