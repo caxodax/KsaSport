@@ -3,6 +3,7 @@
 import { getServiceSupabase } from '@/lib/supabase'
 import { checkAdminPermission } from '@/lib/auth-admin'
 import { revalidatePath } from 'next/cache'
+import { sendAthletePush } from '@/lib/pushNotifications'
 
 export async function approvePayment(paymentId: string, athleteId: string, concept: string) {
   await checkAdminPermission('view_finances')
@@ -82,6 +83,13 @@ export async function approvePayment(paymentId: string, athleteId: string, conce
     if (athleteError) console.error('Error actualizando estatus del atleta', athleteError)
   }
 
+  // Notificación Push Automática al Atleta
+  sendAthletePush(athleteId, {
+    title: '¡Pago Aprobado! ✅',
+    body: `Tu pago de "${concept}" por $${Number(payment.amount).toFixed(2)} ha sido validado exitosamente.`,
+    url: '/portal/dashboard',
+  }).catch((err) => console.error('Error enviando push de aprobación:', err));
+
   revalidatePath('/admin/payments')
   revalidatePath('/admin/athletes')
   revalidatePath('/admin/ledger')
@@ -93,6 +101,13 @@ export async function rejectPayment(paymentId: string) {
   await checkAdminPermission('view_finances')
   const supabase = getServiceSupabase()
   
+  // Obtener atleta_id antes de actualizar
+  const { data: payment } = await supabase
+    .from('payments')
+    .select('athlete_id, amount')
+    .eq('id', paymentId)
+    .single()
+
   const { data: updatedPayment, error } = await supabase
     .from('payments')
     .update({ status: 'Rechazado' })
@@ -103,6 +118,15 @@ export async function rejectPayment(paymentId: string) {
 
   if (error || !updatedPayment) {
     return { error: 'El pago ya fue procesado o no se encuentra en estado Pendiente.' }
+  }
+
+  // Notificación Push Automática de Rechazo
+  if (payment?.athlete_id) {
+    sendAthletePush(payment.athlete_id, {
+      title: 'Aviso sobre tu reporte de pago ⚠️',
+      body: 'Tu reporte de pago ha sido revisado y no pudo ser validado. Revisa tu portal o contacta a administración.',
+      url: '/portal/dashboard/pagos',
+    }).catch((err) => console.error('Error enviando push de rechazo:', err));
   }
 
   revalidatePath('/admin/payments')

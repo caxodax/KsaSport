@@ -33,6 +33,8 @@ export const metadata: Metadata = {
   },
 };
 
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
@@ -42,6 +44,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col w-full max-w-full overflow-x-clip">
         {children}
         <Toaster position="top-right" richColors closeButton />
+        <ServiceWorkerRegister />
       </body>
     </html>
   );

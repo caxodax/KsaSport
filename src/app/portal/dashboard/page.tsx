@@ -8,6 +8,7 @@ import QRModal from '@/components/portal/QRModal'
 import AvatarUpload from '@/components/portal/AvatarUpload'
 import OptInCard from '@/components/portal/OptInCard'
 import TransactionHistory from '@/components/portal/TransactionHistory'
+import PushNotificationCard from '@/components/portal/PushNotificationCard'
 import { formatCedula } from '@/lib/cedula'
 import { formatLocalDate } from '@/lib/dateUtils'
 
@@ -336,6 +337,9 @@ export default async function PortalDashboard() {
           </div>
         </div>
       </div>
+
+      {/* TARJETA DE CONEXIÓN PUSH / ALERTAS NATIVAS */}
+      <PushNotificationCard athleteId={athlete.id} />
 
       {/* GRID PRINCIPAL */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

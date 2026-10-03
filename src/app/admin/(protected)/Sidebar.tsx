@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Shield, Trophy, Menu, Tags, X, ShoppingBag, Wallet, Settings, LogOut, BarChart3, UserCog, Landmark, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, Trophy, Menu, Tags, X, ShoppingBag, Wallet, Settings, LogOut, BarChart3, UserCog, Landmark, CreditCard, Bell } from 'lucide-react';
 import { logoutAdmin } from '../login/actions';
 import BrandLogo from '@/components/ui/BrandLogo';
 
@@ -30,6 +30,7 @@ export default function Sidebar({
     { href: '/admin/ledger', label: 'Reportes Financieros', icon: BarChart3, permission: 'view_finances', group: 'finance' },
     { href: '/admin/cantina', label: 'Créditos', icon: CreditCard, permission: ['manage_catalog', 'view_finances'], group: 'finance' },
     { href: '/admin/rates', label: 'Tasa de Cambio (BCV)', icon: Landmark, permission: 'manage_settings', group: 'finance' },
+    { href: '/admin/notifications', label: 'Notificaciones Push', icon: Bell, permission: 'manage_settings', group: 'config' },
     { href: '/admin/products', label: 'Catálogo de Tienda', icon: ShoppingBag, permission: 'manage_catalog', group: 'config' },
     { href: '/admin/staff', label: 'Staff Técnico', icon: Shield, permission: 'manage_catalog', group: 'config' },
     { href: '/admin/users', label: 'Usuarios y Roles', icon: UserCog, permission: 'manage_roles', group: 'config' },
