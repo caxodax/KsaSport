@@ -230,31 +230,23 @@ export default async function PortalDashboard() {
   return (
     <div className="relative flex-1 w-full max-w-7xl min-w-0 mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
       
-      {/* MARCA DE AGUA AMBIENTAL FIJA DEL EQUIPO (Móvil y Desktop) */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden flex items-center justify-center">
-        <div className="absolute -right-8 md:right-8 bottom-6 md:bottom-12 w-72 h-72 sm:w-96 sm:h-96 md:w-[500px] md:h-[500px] opacity-[0.04] md:opacity-[0.06] select-none transform rotate-12 filter grayscale contrast-125 transition-all">
-          <img 
-            src={team?.logo_url || '/images/ksasport-emblem.png'} 
-            alt="" 
-            className="w-full h-full object-contain" 
-          />
+      {/* MARCA DE AGUA OFICIAL DEL EQUIPO EN EL FONDO CLARO (Móvil y Desktop) */}
+      {team?.logo_url && (
+        <div className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center select-none overflow-hidden">
+          <div className="w-[300px] sm:w-[420px] md:w-[500px] h-[300px] sm:h-[420px] md:h-[500px] opacity-[0.045] mix-blend-multiply flex items-center justify-center">
+            <img 
+              src={team.logo_url} 
+              alt="" 
+              className="w-full h-full object-contain filter contrast-125" 
+            />
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* HEADER / HERO SECTION (Sentido de Pertenencia & Franquicia Pro) */}
+      {/* HEADER / HERO SECTION (Modern Glassmorphism & Limpio) */}
       <div className="relative z-10 rounded-3xl overflow-hidden shadow-xl border border-white/20">
         <div className="absolute inset-0 bg-gradient-to-br from-[#2C040B] via-kasa-vinotinto to-[#140105] z-0"></div>
         <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:20px_20px] z-0 mix-blend-overlay"></div>
-        
-        {/* ESCUDO DE FONDO DEL EQUIPO (Sentido de Pertenencia & Franquicia Pro) */}
-        <div className="absolute right-[-10%] sm:right-[-2%] md:right-4 top-1/2 -translate-y-1/2 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 pointer-events-none select-none z-0 overflow-hidden flex items-center justify-center">
-          <img 
-            src={team?.logo_url || '/images/ksasport-emblem.png'} 
-            alt={team?.name || 'KsaSport'} 
-            className="w-full h-full object-contain opacity-20 sm:opacity-25 filter drop-shadow-[0_0_35px_rgba(212,175,55,0.35)] transform rotate-[-6deg]" 
-          />
-          <div className="absolute inset-0 bg-gradient-to-tr from-kasa-dorado/20 via-transparent to-transparent blur-3xl pointer-events-none" />
-        </div>
 
         {/* CINTILLO SUPERIOR: FRANQUICIA OFICIAL & LOGOUT */}
         <div className="relative z-10 px-6 pt-4.5 pb-3 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 bg-black/25 backdrop-blur-md">
