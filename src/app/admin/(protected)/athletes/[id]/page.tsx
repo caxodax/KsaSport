@@ -1,8 +1,10 @@
 import { getServiceSupabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, User, Calendar, CreditCard, ShieldCheck, Activity, Trophy, MessageCircle, ExternalLink, Receipt, UtensilsCrossed } from 'lucide-react'
+import { ArrowLeft, User, Calendar, CreditCard, ShieldCheck, Activity, Trophy, MessageCircle, ExternalLink, Receipt, UtensilsCrossed, PlusCircle } from 'lucide-react'
 import ExemptionManager from './ExemptionManager'
+import TournamentEnrollmentManager from './TournamentEnrollmentManager'
+import ManualPaymentModal from './ManualPaymentModal'
 import { formatCedula } from '@/lib/cedula'
 import { formatLocalDate } from '@/lib/dateUtils'
 import { findParentProduct, getEffectiveOptInProductId } from '@/lib/productHierarchy'
@@ -28,10 +30,10 @@ export default async function AthleteProfilePage({
     notFound()
   }
 
-  // 2. Fetch Active Products (for Exemption Manager)
+  // 2. Fetch Active Products (for Exemption, Tournaments and Payment Modal)
   const { data: products } = await supabase
     .from('products')
-    .select('id, name, price, allows_installments, requires_opt_in, description')
+    .select('id, name, price, allows_installments, requires_opt_in, description, categories, parent_product_id, start_date, end_date')
     .eq('is_active', true)
     .order('created_at', { ascending: false })
 
@@ -101,6 +103,38 @@ export default async function AthleteProfilePage({
       })
     }
   }
+
+  // 6.1 Torneos activos para el gestor de inscripciones
+  const tournamentProducts = (products || []).filter(p => Boolean(p.requires_opt_in))
+
+  // 6.2 Preparar lista de productos para el Modal de Pagos y Abonos
+  const productsForPaymentModal = (products || []).map(p => {
+    const parentProd = findParentProduct(p, products || [])
+    const isExempt = Boolean(exemptionSet.has(p.id) || (parentProd && exemptionSet.has(parentProd.id)))
+
+    const productPayments = payments?.filter(pay => pay.product_id === p.id) || []
+    const amountPaid = productPayments
+      .filter(pay => pay.status === 'Completado')
+      .reduce((sum, pay) => sum + Number(pay.amount), 0)
+
+    const basePrice = Number(p.price)
+    const amountPending = isExempt ? 0 : Math.max(0, basePrice - amountPaid)
+
+    const effOptInId = getEffectiveOptInProductId(p, products || [])
+    const isEnrolled = effOptInId ? optInIds.has(effOptInId) : (p.requires_opt_in ? optInIds.has(p.id) : true)
+
+    return {
+      id: p.id,
+      name: p.name,
+      price: basePrice,
+      requires_opt_in: Boolean(p.requires_opt_in) || Boolean(effOptInId),
+      allows_installments: Boolean(p.allows_installments),
+      isEnrolled,
+      amountPaid,
+      amountPending,
+      isExempt
+    }
+  })
 
   // 7. Totales Financieros
   const totalFacturado = statement.reduce((sum, item) => sum + item.facturado, 0)
@@ -310,8 +344,14 @@ export default async function AthleteProfilePage({
         {/* CUERPO PRINCIPAL */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          {/* Columna Izquierda: Alianzas Comerciales y Exoneraciones */}
-          <div className="lg:col-span-1">
+          {/* Columna Izquierda: Convocatorias a Ligas y Exoneraciones */}
+          <div className="lg:col-span-1 space-y-6">
+            <TournamentEnrollmentManager 
+              athleteId={athlete.id} 
+              tournamentProducts={tournamentProducts}
+              initialEnrolledIds={Array.from(optInIds)}
+            />
+
             <ExemptionManager 
               athleteId={athlete.id} 
               products={products || []} 
@@ -325,28 +365,37 @@ export default async function AthleteProfilePage({
             
             {/* Estado de Cuenta */}
             <div className="bg-white rounded-3xl border border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] overflow-hidden">
-              <div className="p-5 sm:p-6 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70">
-                <h3 className="font-black text-gray-900 text-lg flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-kasa-vinotinto" />
-                  Estado de Cuenta
-                </h3>
+              <div className="p-5 sm:p-6 border-b border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/70">
+                <div className="space-y-1.5">
+                  <h3 className="font-black text-gray-900 text-lg flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-kasa-vinotinto" />
+                    Estado de Cuenta
+                  </h3>
 
-                {/* Resumen financiero integrado y limpio */}
-                <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
-                  <span className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-600 shadow-2xs">
-                    Facturado: <strong className="text-gray-900 font-mono">${totalFacturado.toFixed(2)}</strong>
-                  </span>
-                  <span className="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 shadow-2xs">
-                    Abonado: <strong className="font-mono">${totalPagado.toFixed(2)}</strong>
-                  </span>
-                  <span className={`px-2.5 py-1 rounded-lg border shadow-2xs ${
-                    saldoTotal > 0 
-                      ? 'bg-rose-50 border-rose-200 text-rose-800' 
-                      : 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                  }`}>
-                    Saldo: <strong className="font-mono">${saldoTotal.toFixed(2)}</strong> {saldoTotal === 0 && '• Al día'}
-                  </span>
+                  {/* Resumen financiero integrado y limpio */}
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-bold pt-0.5">
+                    <span className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-600 shadow-2xs">
+                      Facturado: <strong className="text-gray-900 font-mono">${totalFacturado.toFixed(2)}</strong>
+                    </span>
+                    <span className="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 shadow-2xs">
+                      Abonado: <strong className="font-mono">${totalPagado.toFixed(2)}</strong>
+                    </span>
+                    <span className={`px-2.5 py-1 rounded-lg border shadow-2xs ${
+                      saldoTotal > 0 
+                        ? 'bg-rose-50 border-rose-200 text-rose-800' 
+                        : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                    }`}>
+                      Saldo: <strong className="font-mono">${saldoTotal.toFixed(2)}</strong> {saldoTotal === 0 && '• Al día'}
+                    </span>
+                  </div>
                 </div>
+
+                {/* Botón de Modal para Registrar Abono / Pago Manual */}
+                <ManualPaymentModal
+                  athleteId={athlete.id}
+                  athleteName={athlete.name}
+                  products={productsForPaymentModal}
+                />
               </div>
               
               <div className="overflow-x-auto">
@@ -363,11 +412,16 @@ export default async function AthleteProfilePage({
                     {statement.map(item => (
                       <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
                         <td className="py-4 px-6 font-bold text-gray-900 text-sm">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span>{item.name}</span>
                             {item.isExempt && (
                               <span className="bg-amber-100/80 text-amber-900 border border-amber-300 text-[10px] px-2 py-0.5 rounded-md font-black uppercase tracking-wider shadow-2xs">
                                 🤝 Exonerado
+                              </span>
+                            )}
+                            {item.pagado > 0 && item.saldo > 0 && (
+                              <span className="bg-sky-50 text-sky-800 border border-sky-200 text-[10px] px-2 py-0.5 rounded-md font-black uppercase tracking-wider shadow-2xs">
+                                Abono parcial
                               </span>
                             )}
                           </div>
