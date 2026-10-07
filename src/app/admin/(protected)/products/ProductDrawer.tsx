@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { 
   X, ShoppingBag, DollarSign, Calendar, Tag, FileText, 
-  Check, AlertCircle, Loader2, Layers, CheckCircle2 
+  Check, AlertCircle, Loader2, Layers, CheckCircle2, Trophy 
 } from 'lucide-react';
 import { createProduct, updateProduct } from './actions';
+import { findParentProduct } from '@/lib/productHierarchy';
 
 export interface ProductData {
   id: string;
@@ -17,6 +18,7 @@ export interface ProductData {
   categories: string[];
   allows_installments: boolean;
   requires_opt_in: boolean;
+  parent_product_id?: string | null;
   start_date?: string | null;
   end_date?: string | null;
 }
@@ -31,12 +33,14 @@ export default function ProductDrawer({
   onClose,
   product = null,
   categories = [],
+  allProducts = [],
   onSuccess
 }: {
   isOpen: boolean;
   onClose: () => void;
   product?: ProductData | null;
   categories: CategoryOption[];
+  allProducts?: ProductData[];
   onSuccess?: () => void;
 }) {
   const isEditing = Boolean(product);
@@ -49,6 +53,7 @@ export default function ProductDrawer({
   const [description, setDescription] = useState('');
   const [allowsInstallments, setAllowsInstallments] = useState(false);
   const [requiresOptIn, setRequiresOptIn] = useState(false);
+  const [parentProductId, setParentProductId] = useState<string>('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>(['Global']);
 
   const [loading, setLoading] = useState(false);
@@ -65,6 +70,9 @@ export default function ProductDrawer({
       setAllowsInstallments(Boolean(product.allows_installments));
       setRequiresOptIn(Boolean(product.requires_opt_in));
       
+      const detectedParent = findParentProduct(product, allProducts || []);
+      setParentProductId(product.parent_product_id || detectedParent?.id || '');
+
       if (!product.categories || product.categories.length === 0 || product.categories.includes('Global')) {
         setSelectedCategories(['Global']);
       } else {
@@ -89,10 +97,30 @@ export default function ProductDrawer({
       setDescription('');
       setAllowsInstallments(false);
       setRequiresOptIn(false);
+      setParentProductId('');
       setSelectedCategories(['Global']);
     }
     setErrorMsg(null);
-  }, [product, isOpen]);
+  }, [product, isOpen, allProducts]);
+
+  const handleNameChange = (val: string) => {
+    setName(val);
+    // Sugerencia y auto-vinculación con torneo padre si el nombre coincide
+    if (!isEditing && !parentProductId && allProducts && allProducts.length > 0) {
+      const valNorm = val.trim().toLowerCase();
+      const match = allProducts.find(
+        (p) => Boolean(p.requires_opt_in) && valNorm.startsWith(p.name.trim().toLowerCase()) && valNorm.length > p.name.trim().length
+      );
+      if (match) {
+        setParentProductId(match.id);
+        setRequiresOptIn(false);
+        // Si el padre tiene categorías específicas, heredarlas
+        if (match.categories && match.categories.length > 0 && !match.categories.includes('Global')) {
+          setSelectedCategories(match.categories);
+        }
+      }
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -155,10 +183,14 @@ export default function ProductDrawer({
     formData.append('end_date', endDate);
     formData.append('description', description.trim());
     
+    if (parentProductId) {
+      formData.append('parent_product_id', parentProductId);
+    }
+
     if (allowsInstallments) {
       formData.append('allows_installments', 'true');
     }
-    if (requiresOptIn) {
+    if (requiresOptIn && !parentProductId) {
       formData.append('requires_opt_in', 'true');
     }
 
@@ -236,7 +268,7 @@ export default function ProductDrawer({
                   <input
                     type="text"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => handleNameChange(e.target.value)}
                     placeholder="Ej: Mensualidad Septiembre, Tryout, Uniforme"
                     required
                     className="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl border border-slate-300 text-sm font-bold text-gray-900 placeholder:font-normal placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-kasa-vinotinto/20 focus:border-kasa-vinotinto transition-all shadow-2xs"
@@ -374,8 +406,57 @@ export default function ProductDrawer({
               </div>
             </div>
 
+            {/* Vinculación con Torneo Principal (Producto Derivado / Jornada Semanal) */}
+            <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/90 space-y-3">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-amber-700" />
+                <span className="text-xs font-black uppercase text-amber-950 tracking-wider">
+                  ¿Deriva de un Torneo o Liga Principal?
+                </span>
+              </div>
+              <p className="text-[11px] text-amber-900/80 font-medium leading-relaxed">
+                Si esta es una cuota semanal o arbitraje derivado de un torneo, selecciónalo aquí. Las atletas que ya aceptaron la liga padre serán convocadas automáticamente a esta jornada sin tener que volver a pedirles confirmación.
+              </p>
+
+              <div>
+                <select
+                  value={parentProductId}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setParentProductId(val);
+                    if (val) {
+                      setRequiresOptIn(false);
+                      const parentProd = allProducts.find((p) => p.id === val);
+                      if (parentProd?.categories && parentProd.categories.length > 0 && !parentProd.categories.includes('Global')) {
+                        setSelectedCategories(parentProd.categories);
+                      }
+                    }
+                  }}
+                  className="w-full px-3.5 py-2.5 bg-white rounded-xl border border-amber-300 text-xs font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-600 transition-all shadow-2xs"
+                >
+                  <option value="">Ninguno (Producto independiente o Torneo Principal)</option>
+                  {(allProducts || [])
+                    .filter((p) => p.id !== product?.id && Boolean(p.requires_opt_in))
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        🏆 {p.name} (${Number(p.price).toFixed(2)})
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              {parentProductId && (
+                <div className="p-2.5 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center gap-2 text-emerald-900 text-xs font-semibold">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>
+                    Hereda automáticamente el roster de atletas confirmadas en el torneo padre.
+                  </span>
+                </div>
+              )}
+            </div>
+
             {/* Switches de Políticas Comerciales (iOS style) */}
-            <div className="space-y-3 pt-2">
+            <div className="space-y-3 pt-1">
               <span className="block text-xs font-black uppercase text-slate-500 tracking-wider">
                 Condiciones Especiales
               </span>
@@ -407,32 +488,41 @@ export default function ProductDrawer({
                 </div>
               </label>
 
-              {/* Requiere Confirmación (Opt-in) */}
-              <label 
-                className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between cursor-pointer shadow-2xs ${
-                  requiresOptIn 
-                    ? 'bg-amber-50/70 border-amber-400 ring-1 ring-amber-300' 
-                    : 'bg-white border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <div className="pr-3">
-                  <p className="text-xs font-black text-gray-900">
-                    Requiere Confirmación (Opt-in)
-                  </p>
-                  <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-snug">
-                    Ideal para Torneos o Ligas donde la jugadora debe inscribirse antes de generar la obligación.
-                  </p>
+              {/* Requiere Confirmación (Opt-in) - Solo si no es producto derivado */}
+              {!parentProductId ? (
+                <label 
+                  className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between cursor-pointer shadow-2xs ${
+                    requiresOptIn 
+                      ? 'bg-amber-50/70 border-amber-400 ring-1 ring-amber-300' 
+                      : 'bg-white border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="pr-3">
+                    <p className="text-xs font-black text-gray-900">
+                      Requiere Confirmación (Opt-in)
+                    </p>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-snug">
+                      Ideal para Torneos o Ligas donde la jugadora debe inscribirse antes de generar la obligación.
+                    </p>
+                  </div>
+                  <div className="relative inline-flex items-center shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={requiresOptIn}
+                      onChange={(e) => setRequiresOptIn(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-kasa-dorado shadow-inner"></div>
+                  </div>
+                </label>
+              ) : (
+                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between text-xs font-medium text-slate-600">
+                  <span>Confirmación (Opt-in)</span>
+                  <span className="text-[11px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200">
+                    Heredada del Torneo Padre
+                  </span>
                 </div>
-                <div className="relative inline-flex items-center shrink-0">
-                  <input
-                    type="checkbox"
-                    checked={requiresOptIn}
-                    onChange={(e) => setRequiresOptIn(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-kasa-dorado shadow-inner"></div>
-                </div>
-              </label>
+              )}
             </div>
 
             {/* Descripción Opcional */}

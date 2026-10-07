@@ -4,6 +4,7 @@ import DateRangeFilter from '../DateRangeFilter';
 import { parseDateRange } from '@/lib/dateRange';
 import ExportLedgerButton from './ExportLedgerButton';
 import type { LedgerExportData } from '@/lib/exportExcel';
+import { findParentProduct, getEffectiveOptInProductId } from '@/lib/productHierarchy';
 
 export const revalidate = 0;
 
@@ -32,7 +33,7 @@ export default async function LedgerPage({
   // Fetch all active installment products (to show debt)
   const { data: installmentProducts } = await supabase
     .from('products')
-    .select('id, name, price, rate_type, requires_opt_in')
+    .select('id, name, price, rate_type, requires_opt_in, description')
     .eq('is_active', true)
     .eq('allows_installments', true);
 
@@ -115,10 +116,12 @@ export default async function LedgerPage({
     const exemptionsForProduct = new Set(allExemptions?.filter(e => e.product_id === prod.id).map(e => e.athlete_id) || []);
     let enrolledAthletes: string[] = [];
 
-    if (prod.requires_opt_in) {
-      // Para torneos, la deuda esperada se basa SOLO en los inscritos explícitamente
-      const optIns = allOptIns?.filter(o => o.product_id === prod.id) || [];
-      // Excluir a los exonerados
+    const effOptInId = getEffectiveOptInProductId(prod, installmentProducts || []);
+
+    if (effOptInId) {
+      // Para torneos o productos derivados, la deuda esperada se basa SOLO en los inscritos explícitamente en el torneo
+      const optIns = allOptIns?.filter(o => o.product_id === effOptInId) || [];
+      // Excluir a los exonerados (del producto o del padre)
       const validOptIns = optIns.filter(o => !exemptionsForProduct.has(o.athlete_id));
       expectedAthleteCount = validOptIns.length;
       enrolledAthletes = validOptIns.map(o => (o.athletes as any)?.name).filter(Boolean);

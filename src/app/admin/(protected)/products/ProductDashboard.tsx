@@ -567,6 +567,7 @@ export default function ProductDashboard({
         }}
         product={selectedProduct}
         categories={categories}
+        allProducts={initialProducts}
       />
 
     </div>

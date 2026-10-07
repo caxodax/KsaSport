@@ -5,6 +5,7 @@ import { ArrowLeft, User, Calendar, CreditCard, ShieldCheck, Activity, Trophy, M
 import ExemptionManager from './ExemptionManager'
 import { formatCedula } from '@/lib/cedula'
 import { formatLocalDate } from '@/lib/dateUtils'
+import { findParentProduct, getEffectiveOptInProductId } from '@/lib/productHierarchy'
 
 export const revalidate = 0
 
@@ -30,7 +31,7 @@ export default async function AthleteProfilePage({
   // 2. Fetch Active Products (for Exemption Manager)
   const { data: products } = await supabase
     .from('products')
-    .select('id, name, price, allows_installments, requires_opt_in')
+    .select('id, name, price, allows_installments, requires_opt_in, description')
     .eq('is_active', true)
     .order('created_at', { ascending: false })
 
@@ -69,13 +70,15 @@ export default async function AthleteProfilePage({
   const statement = []
   
   for (const product of (products || [])) {
-    // Si es producto con opt-in y la jugadora NO opt-in, ignorar
-    if (product.requires_opt_in && !optInIds.has(product.id)) {
+    // Si es producto con opt-in (o derivado) y la jugadora NO aceptó la convocatoria, ignorar
+    const effOptInId = getEffectiveOptInProductId(product, products || [])
+    if (effOptInId && !optInIds.has(effOptInId)) {
       continue
     }
     
-    // Si la jugadora está exonerada, su deuda es 0
-    const isExempt = exemptionSet.has(product.id)
+    // Si la jugadora está exonerada (directo o del torneo padre), su deuda es 0
+    const parentProd = findParentProduct(product, products || [])
+    const isExempt = exemptionSet.has(product.id) || (parentProd && exemptionSet.has(parentProd.id))
     
     // Calcular pagos válidos
     const productPayments = payments?.filter(p => p.product_id === product.id) || []

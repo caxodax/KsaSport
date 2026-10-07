@@ -3,6 +3,7 @@ import { getServiceSupabase } from '@/lib/supabase'
 import PaymentForm from './PaymentForm'
 import { redirect } from 'next/navigation'
 import { getTodayRates } from '@/lib/exchangeRate'
+import { findParentProduct, getEffectiveOptInProductId } from '@/lib/productHierarchy'
 
 export const revalidate = 0
 
@@ -155,12 +156,17 @@ export default async function PagosPage() {
 
   // Filtrar productos
   const filteredProducts = allProducts.filter(p => {
-    if (exemptIds.has(p.id)) return false
-    if (p.requires_opt_in && !optedInIds.has(p.id)) return false
+    // 1. Exoneración (directa o del torneo padre)
+    const parentProd = findParentProduct(p, allProducts);
+    if (exemptIds.has(p.id) || (parentProd && exemptIds.has(parentProd.id))) return false;
+
+    // 2. Opt-in (directo o del torneo padre)
+    const effOptInId = getEffectiveOptInProductId(p, allProducts);
+    if (effOptInId && !optedInIds.has(effOptInId)) return false;
     
-    if (!p.categories || p.categories.length === 0) return true
-    if (categoryName && p.categories.includes(categoryName)) return true
-    return false
+    if (!p.categories || p.categories.length === 0) return true;
+    if (categoryName && p.categories.includes(categoryName)) return true;
+    return false;
   }).map(p => {
     const basePrice = Number(p.price)
 

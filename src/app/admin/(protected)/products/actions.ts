@@ -15,6 +15,7 @@ export async function createProduct(formData: FormData) {
   const start_date = formData.get('start_date') as string
   const end_date = formData.get('end_date') as string
   const rate_type = (formData.get('rate_type') as string) || 'USD'
+  const parent_product_id = (formData.get('parent_product_id') as string) || null
   
   // Extraer múltiples categorías si el usuario selecciona varias (usando un select multiple o checkboxes)
   // Como en NextJS formData.getAll funciona si hay múltiples inputs con el mismo nombre.
@@ -27,19 +28,38 @@ export async function createProduct(formData: FormData) {
 
   const supabase = getServiceSupabase()
   
-  const { error } = await supabase
-    .from('products')
-    .insert([{ 
-      name, 
-      description, 
-      price, 
-      rate_type,
-      categories: finalCategories,
-      allows_installments,
-      requires_opt_in,
-      start_date: start_date ? new Date(start_date).toISOString() : null,
-      end_date: end_date ? new Date(end_date).toISOString() : null
-    }])
+  // Si hay producto padre, aseguramos el tag en la descripción por redundancia
+  let finalDescription = description || ''
+  if (parent_product_id && !finalDescription.includes('[parent_product_id:')) {
+    finalDescription = finalDescription.trim() 
+      ? `${finalDescription.trim()}\n[parent_product_id: ${parent_product_id}]`
+      : `[parent_product_id: ${parent_product_id}]`
+  }
+
+  const payload: any = { 
+    name, 
+    description: finalDescription, 
+    price, 
+    rate_type,
+    categories: finalCategories,
+    allows_installments,
+    requires_opt_in,
+    start_date: start_date ? new Date(start_date).toISOString() : null,
+    end_date: end_date ? new Date(end_date).toISOString() : null
+  }
+
+  if (parent_product_id) {
+    payload.parent_product_id = parent_product_id
+  }
+
+  let { error } = await supabase.from('products').insert([payload])
+
+  // Fallback si la columna parent_product_id aún no existe en Postgres
+  if (error && error.code === '42703' && payload.parent_product_id) {
+    delete payload.parent_product_id
+    const retry = await supabase.from('products').insert([payload])
+    error = retry.error
+  }
 
   if (error) {
     console.error('Error creating product:', error)
@@ -98,6 +118,7 @@ export async function updateProduct(formData: FormData) {
   const start_date = formData.get('start_date') as string
   const end_date = formData.get('end_date') as string
   const rate_type = (formData.get('rate_type') as string) || 'USD'
+  const parent_product_id = (formData.get('parent_product_id') as string) || null
 
   const categories = formData.getAll('categories') as string[]
   const finalCategories = categories.includes('Global') || categories.length === 0 
@@ -106,20 +127,39 @@ export async function updateProduct(formData: FormData) {
 
   const supabase = getServiceSupabase()
   
-  const { error } = await supabase
+  // Limpiar tags previos de parent_product_id en la descripción si cambia
+  let cleanDesc = (description || '').replace(/\[parent_product_id:\s*[a-f0-9\-]+\]/gi, '').trim()
+  if (parent_product_id) {
+    cleanDesc = cleanDesc ? `${cleanDesc}\n[parent_product_id: ${parent_product_id}]` : `[parent_product_id: ${parent_product_id}]`
+  }
+
+  const payload: any = { 
+    name, 
+    description: cleanDesc, 
+    price, 
+    rate_type,
+    categories: finalCategories,
+    allows_installments,
+    requires_opt_in,
+    start_date: start_date ? new Date(start_date).toISOString() : null,
+    end_date: end_date ? new Date(end_date).toISOString() : null
+  }
+
+  if (parent_product_id !== undefined) {
+    payload.parent_product_id = parent_product_id
+  }
+
+  let { error } = await supabase
     .from('products')
-    .update({ 
-      name, 
-      description, 
-      price, 
-      rate_type,
-      categories: finalCategories,
-      allows_installments,
-      requires_opt_in,
-      start_date: start_date ? new Date(start_date).toISOString() : null,
-      end_date: end_date ? new Date(end_date).toISOString() : null
-    })
+    .update(payload)
     .eq('id', id)
+
+  // Fallback si la columna parent_product_id aún no existe en Postgres
+  if (error && error.code === '42703' && payload.parent_product_id !== undefined) {
+    delete payload.parent_product_id
+    const retry = await supabase.from('products').update(payload).eq('id', id)
+    error = retry.error
+  }
 
   if (error) {
     console.error('Error updating product:', error)

@@ -10,6 +10,7 @@ import DateRangeFilter from './DateRangeFilter';
 import { parseDateRange } from '@/lib/dateRange';
 import { cleanCedula, formatCedula } from '@/lib/cedula';
 import { ProductFilterItem } from './MultiSelectProductFilter';
+import { findParentProduct, getEffectiveOptInProductId } from '@/lib/productHierarchy';
 
 export const revalidate = 0;
 
@@ -49,7 +50,7 @@ export default async function DashboardPage({
   const { data: categoriesData } = await supabase.from('categories').select('*').order('name');
   const { data: allProductsData } = await supabase
     .from('products')
-    .select('id, name, price, categories')
+    .select('id, name, price, categories, requires_opt_in, description')
     .eq('is_active', true)
     .order('name');
 
@@ -109,7 +110,33 @@ export default async function DashboardPage({
     // MODO PRODUCTOS ESPECÍFICOS / SEMANALES (EXECUTIVE PRODUCT ANALYTICS)
     // =========================================================================
 
-    // 1. Consultar todos los pagos para los productos seleccionados en el rango de fechas
+    // 1. Detectar productos con opt-in (directo o derivado del torneo padre)
+    const optInProductIds = new Set<string>();
+    selectedProducts.forEach((p) => {
+      const effId = getEffectiveOptInProductId(p, allProductsData || []);
+      if (effId) optInProductIds.add(effId);
+    });
+
+    // 2. Consultar inscripciones (opt-ins) y exoneraciones correspondientes
+    const { data: optInsData } = optInProductIds.size > 0
+      ? await supabase
+          .from('athlete_product_opt_ins')
+          .select('athlete_id, product_id')
+          .in('product_id', Array.from(optInProductIds))
+      : { data: [] };
+
+    const { data: allExemptionsData } = await supabase
+      .from('athlete_exemptions')
+      .select('athlete_id, product_id');
+
+    const athleteOptInSet = new Set(
+      optInsData?.map((o) => `${o.athlete_id}_${o.product_id}`) || []
+    );
+    const athleteExemptionSet = new Set(
+      allExemptionsData?.map((e) => `${e.athlete_id}_${e.product_id}`) || []
+    );
+
+    // 3. Consultar todos los pagos para los productos seleccionados en el rango de fechas
     const { data: productPayments } = await supabase
       .from('payments')
       .select('id, athlete_id, product_id, amount, status, created_at, reference_number')
@@ -117,7 +144,7 @@ export default async function DashboardPage({
       .gte('created_at', startDate.toISOString())
       .lte('created_at', endDate.toISOString());
 
-    // 2. Analizar cada atleta
+    // 4. Inicializar mapa de estadísticas individuales por producto
     const productStatsMap = new Map<
       string,
       { name: string; category: string; price: number; solventes: number; morosos: number; recibido: number; pendiente: number }
@@ -139,69 +166,129 @@ export default async function DashboardPage({
       const athleteCat = (athlete.teams as any)?.category || 'Sin categoría';
 
       // Productos seleccionados que aplican a la categoría de esta atleta
-      const applicableProducts = selectedProducts.filter((p) => {
+      const categoryProducts = selectedProducts.filter((p) => {
         if (!p.categories || p.categories.length === 0 || p.categories.includes('Global')) return true;
         return p.categories.includes(athleteCat);
       });
 
-      // Si ningún producto seleccionado aplica a su categoría, no se le exige
+      if (categoryProducts.length === 0) return;
+
+      // Filtrar productos según Opt-in / Convocatoria (Torneo padre o directo)
+      const applicableProducts = categoryProducts.filter((p) => {
+        const effOptInId = getEffectiveOptInProductId(p, allProductsData || []);
+        
+        // Si no requiere confirmación previa (ej. cuota regular), aplica a toda la categoría
+        if (!effOptInId) return true;
+
+        // Si requiere opt-in: debe haber confirmado el torneo padre o haber realizado un pago
+        const hasAccepted = athleteOptInSet.has(`${athlete.id}_${effOptInId}`);
+        const hasPayment = (productPayments || []).some(
+          (pay) => pay.athlete_id === athlete.id && pay.product_id === p.id
+        );
+
+        return hasAccepted || hasPayment;
+      });
+
+      // Si no aplica ningún producto para esta atleta (no aceptó la liga ni pagó), no evaluar
       if (applicableProducts.length === 0) return;
 
-      const targetPrice = applicableProducts.reduce((sum, p) => sum + Number(p.price), 0);
+      // Calcular precio exigible (restando exoneraciones específicas o de torneo padre)
+      let athleteTargetPrice = 0;
+      applicableProducts.forEach((p) => {
+        const parentProd = findParentProduct(p, allProductsData || []);
+        const isExempt =
+          athleteExemptionSet.has(`${athlete.id}_${p.id}`) ||
+          (parentProd && athleteExemptionSet.has(`${athlete.id}_${parentProd.id}`));
+        
+        if (!isExempt) {
+          athleteTargetPrice += Number(p.price);
+        }
+      });
 
       // Pagos de esta atleta para los productos aplicables
       const athleteCompletedPayments = (productPayments || []).filter(
-        (pay) => pay.athlete_id === athlete.id && pay.status === 'Completado' && applicableProducts.some((p) => p.id === pay.product_id)
+        (pay) =>
+          pay.athlete_id === athlete.id &&
+          pay.status === 'Completado' &&
+          applicableProducts.some((p) => p.id === pay.product_id)
       );
 
       const athletePendingPayments = (productPayments || []).filter(
-        (pay) => pay.athlete_id === athlete.id && pay.status === 'Pendiente' && applicableProducts.some((p) => p.id === pay.product_id)
+        (pay) =>
+          pay.athlete_id === athlete.id &&
+          pay.status === 'Pendiente' &&
+          applicableProducts.some((p) => p.id === pay.product_id)
       );
 
-      if (athleteCompletedPayments.length > 0) {
-        // Ha pagado
-        const paidTotal = athleteCompletedPayments.reduce((sum, pay) => sum + Number(pay.amount), 0);
-        montoSolvente += paidTotal;
+      const paidTotal = athleteCompletedPayments.reduce((sum, pay) => sum + Number(pay.amount), 0);
+      montoSolvente += paidTotal;
+
+      // Sumar al desglose de ingresos recibidos
+      athleteCompletedPayments.forEach((pay) => {
+        const pStat = productStatsMap.get(pay.product_id);
+        if (pStat) {
+          pStat.recibido += Number(pay.amount);
+        }
+      });
+
+      if (paidTotal >= athleteTargetPrice && athleteTargetPrice > 0) {
+        // Pagó completo
         totalSolventesMes++;
         paidAthleteIds.push(athlete.id);
 
         athleteProductMap.set(athlete.id, {
           status: 'paid',
           paidAmount: paidTotal,
-          targetAmount: targetPrice,
+          targetAmount: athleteTargetPrice,
         });
 
-        // Sumar al desglose de productos
-        athleteCompletedPayments.forEach((pay) => {
-          const pStat = productStatsMap.get(pay.product_id);
+        applicableProducts.forEach((p) => {
+          const pStat = productStatsMap.get(p.id);
+          if (pStat) pStat.solventes++;
+        });
+      } else if (paidTotal > 0 && paidTotal < athleteTargetPrice) {
+        // Abono parcial (ha pagado pero tiene saldo pendiente)
+        const saldoRestante = athleteTargetPrice - paidTotal;
+        montoMorosidad += saldoRestante;
+        totalSolventesMes++;
+        paidAthleteIds.push(athlete.id);
+        unpaidAthleteIds.push(athlete.id);
+
+        athleteProductMap.set(athlete.id, {
+          status: 'paid',
+          paidAmount: paidTotal,
+          targetAmount: athleteTargetPrice,
+        });
+
+        applicableProducts.forEach((p) => {
+          const pStat = productStatsMap.get(p.id);
           if (pStat) {
             pStat.solventes++;
-            pStat.recibido += Number(pay.amount);
+            pStat.pendiente += Math.max(0, Number(p.price) - paidTotal);
           }
         });
       } else if (athletePendingPayments.length > 0) {
-        // Tiene pago en revisión
+        // En revisión
         totalPendingReview++;
         pendingAthleteIds.push(athlete.id);
 
         athleteProductMap.set(athlete.id, {
           status: 'pending',
           paidAmount: 0,
-          targetAmount: targetPrice,
+          targetAmount: athleteTargetPrice,
         });
       } else {
-        // Debe el producto (Morosa del producto)
-        montoMorosidad += targetPrice;
+        // Sin pago (Debe completo)
+        montoMorosidad += athleteTargetPrice;
         totalMorososMes++;
         unpaidAthleteIds.push(athlete.id);
 
         athleteProductMap.set(athlete.id, {
           status: 'unpaid',
           paidAmount: 0,
-          targetAmount: targetPrice,
+          targetAmount: athleteTargetPrice,
         });
 
-        // Sumar a pendientes por producto
         applicableProducts.forEach((p) => {
           const pStat = productStatsMap.get(p.id);
           if (pStat) {
@@ -212,7 +299,8 @@ export default async function DashboardPage({
       }
     });
 
-    totalPoblacion = paidAthleteIds.length + unpaidAthleteIds.length + pendingAthleteIds.length;
+    const evaluatedAthleteIds = new Set([...paidAthleteIds, ...unpaidAthleteIds, ...pendingAthleteIds]);
+    totalPoblacion = evaluatedAthleteIds.size;
 
     breakdownRows = Array.from(productStatsMap.values()).map((p) => ({
       title: p.name,
@@ -524,7 +612,7 @@ export default async function DashboardPage({
                 {totalPoblacion}
               </dd>
               <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md inline-block mt-2">
-                {isProductMode ? 'Atletas de la categoría' : 'Atletas registrados'}
+                {isProductMode ? 'Atletas convocadas' : 'Atletas registrados'}
               </span>
             </div>
             <div className="p-3 bg-slate-100 rounded-2xl text-slate-600">
@@ -758,12 +846,18 @@ export default async function DashboardPage({
                     {isProductMode ? (
                       <span className={`px-2.5 py-1 inline-flex text-[11px] font-black rounded-full border shadow-2xs ${
                         productInfo?.status === 'paid'
-                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                          ? productInfo.paidAmount < productInfo.targetAmount
+                            ? 'bg-amber-50 text-amber-800 border-amber-300'
+                            : 'bg-emerald-50 text-emerald-800 border-emerald-200'
                           : productInfo?.status === 'pending'
                           ? 'bg-amber-50 text-amber-800 border-amber-200'
                           : 'bg-red-50 text-red-800 border-red-200'
                       }`}>
-                        {productInfo?.status === 'paid' && `✅ Pagó ($${productInfo.paidAmount.toFixed(2)})`}
+                        {productInfo?.status === 'paid' && (
+                          productInfo.paidAmount < productInfo.targetAmount
+                            ? `⚠️ Abono ($${productInfo.paidAmount.toFixed(2)} / $${productInfo.targetAmount.toFixed(2)})`
+                            : `✅ Pagó ($${productInfo.paidAmount.toFixed(2)})`
+                        )}
                         {productInfo?.status === 'pending' && '⏳ En Revisión'}
                         {productInfo?.status === 'unpaid' && `❌ Debe ($${productInfo.targetAmount.toFixed(2)})`}
                         {!productInfo && 'Sin Datos'}
@@ -858,12 +952,18 @@ export default async function DashboardPage({
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <span className={`px-3.5 py-1.5 inline-flex text-xs font-black rounded-full border shadow-2xs ${
                               productInfo?.status === 'paid'
-                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                ? productInfo.paidAmount < productInfo.targetAmount
+                                  ? 'bg-amber-50 text-amber-800 border-amber-300'
+                                  : 'bg-emerald-50 text-emerald-800 border-emerald-200'
                                 : productInfo?.status === 'pending'
                                 ? 'bg-amber-50 text-amber-800 border-amber-200'
                                 : 'bg-red-50 text-red-800 border-red-200'
                             }`}>
-                              {productInfo?.status === 'paid' && `✅ Pagó ($${productInfo.paidAmount.toFixed(2)})`}
+                              {productInfo?.status === 'paid' && (
+                                productInfo.paidAmount < productInfo.targetAmount
+                                  ? `⚠️ Abono ($${productInfo.paidAmount.toFixed(2)} / $${productInfo.targetAmount.toFixed(2)})`
+                                  : `✅ Pagó ($${productInfo.paidAmount.toFixed(2)})`
+                              )}
                               {productInfo?.status === 'pending' && '⏳ En Revisión'}
                               {productInfo?.status === 'unpaid' && `❌ Sin Pago ($${productInfo.targetAmount.toFixed(2)})`}
                               {!productInfo && 'Sin Datos'}
