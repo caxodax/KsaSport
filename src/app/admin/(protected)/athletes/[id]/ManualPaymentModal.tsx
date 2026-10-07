@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { 
   CreditCard, DollarSign, Calendar, Tag, Check, AlertCircle, 
-  Loader2, X, PlusCircle, Trophy, CheckCircle2, FileText, ArrowRight
+  Loader2, X, PlusCircle, Trophy, CheckCircle2, FileText, ArrowRight,
+  AlertTriangle
 } from 'lucide-react'
 import { recordManualPayment } from './actions'
 import { toast } from 'sonner'
@@ -55,6 +56,9 @@ export default function ManualPaymentModal({
   const [notes, setNotes] = useState<string>('')
   const [loading, setLoading] = useState(false)
 
+  // Estado para el Alert/Modal de confirmación de liga inactiva
+  const [isConfirmingEnroll, setIsConfirmingEnroll] = useState(false)
+
   const selectedProduct = products.find(p => p.id === selectedProductId)
 
   const handleOpen = () => {
@@ -63,6 +67,7 @@ export default function ManualPaymentModal({
       setSelectedProductId(prod.id)
       setAmount(prod.amountPending > 0 ? prod.amountPending.toString() : '')
     }
+    setIsConfirmingEnroll(false)
     setIsOpen(true)
   }
 
@@ -80,20 +85,7 @@ export default function ManualPaymentModal({
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    const numAmount = Number(amount)
-    if (isNaN(numAmount) || numAmount <= 0) {
-      toast.error('Ingresa un monto numérico válido mayor a 0.')
-      return
-    }
-
-    if (!selectedProductId) {
-      toast.error('Selecciona un producto para aplicar el abono.')
-      return
-    }
-
+  const executePayment = async (numAmount: number) => {
     setLoading(true)
     try {
       const res = await recordManualPayment({
@@ -115,6 +107,7 @@ export default function ManualPaymentModal({
           (selectedProduct?.requires_opt_in ? ' (Atleta confirmada en la liga 🏆)' : '')
         )
         setIsOpen(false)
+        setIsConfirmingEnroll(false)
         setAmount('')
         setReference('')
         setNotes('')
@@ -124,6 +117,31 @@ export default function ManualPaymentModal({
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+
+    const numAmount = Number(amount)
+    if (isNaN(numAmount) || numAmount <= 0) {
+      toast.error('Ingresa un monto numérico válido mayor a 0.')
+      return
+    }
+
+    if (!selectedProductId) {
+      toast.error('Selecciona un producto para aplicar el abono.')
+      return
+    }
+
+    // SI EL PRODUCTO ES TORNEO / REQUIERE OPT-IN Y LA ATLETA NO TIENE EL CHECK ACTIVO:
+    // Mostramos la alerta de confirmación para evitar errores humanos
+    if (selectedProduct?.requires_opt_in && !selectedProduct.isEnrolled) {
+      setIsConfirmingEnroll(true)
+      return
+    }
+
+    // Si ya está inscrita o es un producto normal (mensualidad), procesamos directamente
+    executePayment(numAmount)
   }
 
   return (
@@ -138,13 +156,16 @@ export default function ManualPaymentModal({
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-8">
+          <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-8 relative">
             
             {/* Cabecera del Modal */}
             <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-kasa-vinotinto p-6 text-white relative">
               <button
                 type="button"
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  setIsOpen(false)
+                  setIsConfirmingEnroll(false)
+                }}
                 className="absolute top-5 right-5 text-slate-300 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
@@ -169,7 +190,7 @@ export default function ManualPaymentModal({
               </p>
             </div>
 
-            {/* Formulario */}
+            {/* Formulario Principal */}
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
               
               {/* Selección de Producto */}
@@ -183,11 +204,21 @@ export default function ManualPaymentModal({
                   className="w-full px-4 py-3 rounded-2xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-kasa-vinotinto focus:outline-hidden text-sm font-bold text-gray-900 transition-all"
                   required
                 >
-                  {products.map(p => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} — ${p.price.toFixed(2)} {p.amountPending > 0 ? `(Debe: $${p.amountPending.toFixed(2)})` : p.amountPaid > 0 ? '(Completado)' : ''}
-                    </option>
-                  ))}
+                  {products.map(p => {
+                    let tag = ''
+                    if (p.requires_opt_in && !p.isEnrolled) {
+                      tag = '⚠️ (No juega aún - requiere confirmación)'
+                    } else if (p.amountPending > 0) {
+                      tag = `(Debe: $${p.amountPending.toFixed(2)})`
+                    } else if (p.amountPaid > 0) {
+                      tag = '(Completado)'
+                    }
+                    return (
+                      <option key={p.id} value={p.id}>
+                        {p.name} — ${p.price.toFixed(2)} {tag}
+                      </option>
+                    )
+                  })}
                 </select>
               </div>
 
@@ -209,14 +240,42 @@ export default function ManualPaymentModal({
                     </span>
                   </div>
 
+                  {/* Estado de Convocatoria si es Torneo */}
+                  {selectedProduct.requires_opt_in && (
+                    <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-xs">
+                      <span className="font-bold text-slate-600">Estatus en esta Liga:</span>
+                      {selectedProduct.isEnrolled ? (
+                        <span className="inline-flex items-center gap-1 font-black text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          Confirmada / Jugará Liga
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 font-black text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-300">
+                          <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                          No Convocada (No Juega Aún)
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   {/* Banner de Opt-In Automático para Torneos/Ligas */}
                   {selectedProduct.requires_opt_in && (
-                    <div className="bg-amber-50 border border-amber-200/90 rounded-xl p-3 flex items-start gap-2.5 text-xs text-amber-900">
-                      <Trophy className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                    <div className={`rounded-xl p-3 flex items-start gap-2.5 text-xs border ${
+                      selectedProduct.isEnrolled
+                        ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900'
+                        : 'bg-amber-50 border-amber-200/90 text-amber-950'
+                    }`}>
+                      <Trophy className={`w-4 h-4 shrink-0 mt-0.5 ${selectedProduct.isEnrolled ? 'text-emerald-700' : 'text-amber-700'}`} />
                       <div>
-                        <p className="font-black">Convocatoria de Liga Automática</p>
-                        <p className="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
-                          Al registrar este abono, la jugadora se marcará automáticamente en <strong>true</strong> como confirmada para jugar la liga en el sistema.
+                        <p className="font-black">
+                          {selectedProduct.isEnrolled
+                            ? 'Atleta inscrita formalmente en esta liga'
+                            : 'Atleta actualmente NO activa en esta liga'}
+                        </p>
+                        <p className="text-[11px] mt-0.5 leading-relaxed opacity-90">
+                          {selectedProduct.isEnrolled
+                            ? 'Este abono se sumará a su cuenta corriente de la liga normalmente.'
+                            : 'Al guardar, se te solicitará confirmación para activarla automáticamente en la liga y registrar el pago.'}
                         </p>
                       </div>
                     </div>
@@ -349,6 +408,57 @@ export default function ManualPaymentModal({
               </div>
 
             </form>
+
+            {/* ALERT / DIALOG DE CONFIRMACIÓN PARA EVITAR ERRORES HUMANOS */}
+            {isConfirmingEnroll && selectedProduct && (
+              <div className="absolute inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-6 animate-in fade-in zoom-in-95 duration-200">
+                <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-amber-300 text-center space-y-5">
+                  <div className="w-16 h-16 rounded-3xl bg-amber-100 border border-amber-200 text-amber-700 flex items-center justify-center mx-auto shadow-inner">
+                    <AlertTriangle className="w-8 h-8 text-amber-600 animate-pulse" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <h4 className="text-lg font-black text-gray-900">
+                      ¿Confirmar participación y abono?
+                    </h4>
+                    <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                      La jugadora <strong className="text-gray-900">{athleteName}</strong> actualmente <strong>NO tiene activa</strong> su participación en:
+                    </p>
+                    <div className="bg-slate-100 p-2.5 rounded-xl text-xs font-black text-gray-900 border border-slate-200">
+                      🏆 {selectedProduct.name}
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                      ¿Deseas registrar este abono de <strong className="text-emerald-700 font-mono text-sm">${Number(amount).toFixed(2)}</strong> y <strong className="text-rose-700">marcarla automáticamente como confirmada (true)</strong> para jugar la liga?
+                    </p>
+                  </div>
+
+                  <div className="pt-2 flex flex-col sm:flex-row gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsConfirmingEnroll(false)}
+                      disabled={loading}
+                      className="w-full sm:w-1/2 px-4 py-3 rounded-2xl border border-slate-300 text-xs font-black text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                    >
+                      Cancelar / Revisar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => executePayment(Number(amount))}
+                      disabled={loading}
+                      className="w-full sm:w-1/2 inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-xs px-4 py-3 rounded-2xl shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {loading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Check className="w-4 h-4" />
+                      )}
+                      <span>Sí, Activar y Abonar</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
       )}
