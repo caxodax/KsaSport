@@ -309,26 +309,26 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
       )}
 
       {/* SECCIÓN 0: IDENTIDAD DE MARCA & LOGOTIPO OFICIAL */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm space-y-6">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-gray-100 shadow-sm space-y-6 w-full min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-kasa-vinotinto/10 rounded-2xl text-kasa-vinotinto">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2.5 bg-kasa-vinotinto/10 rounded-2xl text-kasa-vinotinto shrink-0">
               <Sparkles className="w-6 h-6 text-kasa-dorado" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-xl font-black text-gray-900">Identidad de Marca & Logotipo Oficial</h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-kasa-dorado/20 text-yellow-800 border border-kasa-dorado/30">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-lg sm:text-xl font-black text-gray-900 truncate">Identidad de Marca & Logotipo Oficial</h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-kasa-dorado/20 text-yellow-800 border border-kasa-dorado/30 shrink-0">
                   Punto 4.3
                 </span>
               </div>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-gray-500 mt-0.5 line-clamp-2 sm:line-clamp-none">
                 Escudo dinámico de KsaSport. Se aplica en el Navbar superior, Footer, Portal de Atletas, App Móvil (PWA) y Menú Admin.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto shrink-0">
             <input
               type="file"
               ref={logoInputRef}
@@ -339,20 +339,20 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
             <button
               type="button"
               onClick={() => logoInputRef.current?.click()}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-kasa-vinotinto hover:bg-kasa-vinotinto-dark text-white transition-all shadow-xs hover:shadow-md cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-kasa-vinotinto hover:bg-kasa-vinotinto-dark text-white transition-all shadow-xs hover:shadow-md cursor-pointer"
             >
-              <Upload className="w-4 h-4 text-kasa-dorado" />
+              <Upload className="w-4 h-4 text-kasa-dorado shrink-0" />
               <span>Cambiar Logotipo</span>
             </button>
             {(newLogoPreview || removeLogo || (currentLogoUrl && !currentLogoUrl.includes('ksasport-official-logo.png'))) && (
               <button
                 type="button"
                 onClick={handleResetLogo}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-gray-600 hover:text-red-700 hover:bg-red-50 border border-gray-200 transition-colors cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold text-gray-600 hover:text-red-700 hover:bg-red-50 border border-gray-200 transition-colors cursor-pointer"
                 title="Restablecer logotipo al diseño original de fábrica"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Restablecer</span>
+                <RotateCcw className="w-3.5 h-3.5 shrink-0" />
+                <span>Restablecer Original</span>
               </button>
             )}
           </div>
@@ -427,20 +427,20 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
 
         {/* Notificación si hay archivo nuevo seleccionado */}
         {newLogoFile && (
-          <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between text-xs text-amber-900">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-              <span className="font-bold">Nuevo archivo seleccionado:</span>
-              <span className="font-mono">{newLogoFile.name}</span>
-              <span className="text-amber-700">({Math.round(newLogoFile.size / 1024)} KB)</span>
+          <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-amber-900 w-full min-w-0">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="w-2 h-2 rounded-full bg-amber-500 animate-ping shrink-0" />
+              <span className="font-bold shrink-0">Nuevo archivo:</span>
+              <span className="font-mono truncate">{newLogoFile.name}</span>
+              <span className="text-amber-700 shrink-0">({Math.round(newLogoFile.size / 1024)} KB)</span>
             </div>
-            <span className="font-bold text-kasa-vinotinto">Pulsa &quot;Guardar Configuración&quot; para aplicar</span>
+            <span className="font-bold text-kasa-vinotinto shrink-0">Pulsa &quot;Guardar&quot; para aplicar</span>
           </div>
         )}
 
         {/* Notificación si se restablece */}
         {removeLogo && !newLogoFile && (
-          <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-2xl flex items-center gap-2 text-xs text-blue-900">
+          <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-2xl flex items-center gap-2 text-xs text-blue-900 w-full min-w-0">
             <RotateCcw className="w-4 h-4 text-blue-600 shrink-0" />
             <span className="font-bold">Se restablecerá el logotipo oficial de fábrica al guardar.</span>
           </div>
@@ -448,14 +448,14 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
       </div>
 
       {/* SECCIÓN 1: REDES SOCIALES Y CONTACTO */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm space-y-6">
-        <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
-          <div className="p-2.5 bg-amber-50 rounded-2xl text-amber-700">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-gray-100 shadow-sm space-y-6 w-full min-w-0">
+        <div className="flex items-center gap-3 border-b border-gray-100 pb-4 min-w-0">
+          <div className="p-2.5 bg-amber-50 rounded-2xl text-amber-700 shrink-0">
             <Share2 className="w-6 h-6" />
           </div>
-          <div>
-            <h3 className="text-xl font-black text-gray-900">Redes Sociales y WhatsApp Oficial</h3>
-            <p className="text-xs text-gray-500 mt-0.5">
+          <div className="min-w-0">
+            <h3 className="text-lg sm:text-xl font-black text-gray-900 truncate">Redes Sociales y WhatsApp Oficial</h3>
+            <p className="text-xs text-gray-500 mt-0.5 line-clamp-1 sm:line-clamp-none">
               Alimentan los botones del pie de página (Footer) y el enlace de contacto de Tryouts en la Landing Page.
             </p>
           </div>
@@ -554,27 +554,27 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
       </div>
 
       {/* SECCIÓN 2: CALENDARIO DE LIGAS ACTIVAS */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm space-y-6">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-gray-100 shadow-sm space-y-6 w-full min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-kasa-vinotinto/10 rounded-2xl text-kasa-vinotinto">
+          <div className="flex items-start sm:items-center gap-3 min-w-0">
+            <div className="p-2.5 bg-kasa-vinotinto/10 rounded-2xl text-kasa-vinotinto shrink-0">
               <Calendar className="w-6 h-6" />
             </div>
-            <div>
-              <h3 className="text-xl font-black text-gray-900">Calendario Oficial de Ligas Activas</h3>
-              <p className="text-xs text-gray-500 mt-0.5">
+            <div className="min-w-0">
+              <h3 className="text-lg sm:text-xl font-black text-gray-900 break-words">Calendario Oficial de Ligas Activas</h3>
+              <p className="text-xs text-gray-500 mt-0.5 break-words">
                 Contenido público accesible en la ruta <a href="/calendario" target="_blank" className="font-bold text-kasa-vinotinto underline">/calendario</a> sin requerir inicio de sesión.
               </p>
             </div>
           </div>
 
           {/* Toggle Activo / Pausado */}
-          <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-2xl border border-gray-200">
+          <div className="flex items-center justify-between sm:justify-start gap-3 bg-gray-50 p-2 rounded-2xl border border-gray-200 shrink-0">
             <span className="text-xs font-bold text-gray-700">Estado Público:</span>
             <button
               type="button"
               onClick={() => setCalendarIsActive(!calendarIsActive)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
                 calendarIsActive 
                   ? 'bg-emerald-600 text-white shadow-xs' 
                   : 'bg-gray-300 text-gray-700'
@@ -586,7 +586,7 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
         </div>
 
         {/* Título y Temporada */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           <div className="space-y-2">
             <label className="text-xs font-black uppercase tracking-wider text-gray-700">
               Nombre de la Liga o Torneo
@@ -631,13 +631,13 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
 
         {/* GESTOR DE IMÁGENES DEL CALENDARIO */}
         <div className="space-y-4 pt-4 border-t border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="min-w-0">
               <h4 className="text-sm font-black text-gray-900 flex items-center gap-2">
-                <ImageIcon className="w-4 h-4 text-kasa-dorado-dark" />
-                Imágenes y Afiches del Calendario / Rol de Juegos
+                <ImageIcon className="w-4 h-4 text-kasa-dorado-dark shrink-0" />
+                <span>Imágenes y Afiches del Calendario</span>
               </h4>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-gray-400 mt-0.5 break-words">
                 Sube las fotos de las jornadas o el fixture. Los visitantes podrán abrirlas y hacerles zoom en pantalla completa.
               </p>
             </div>
@@ -645,7 +645,7 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
             <button
               type="button"
               onClick={() => imageInputRef.current?.click()}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-kasa-vinotinto hover:bg-red-950 text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-kasa-vinotinto hover:bg-red-950 text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer shrink-0"
             >
               <Plus className="w-4 h-4" />
               Subir Imagen
@@ -661,7 +661,7 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
           </div>
 
           {/* Galería de imágenes (Existentes + Nuevas) */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
             {/* Existentes */}
             {retainedImages.map((url, idx) => (
               <div key={`retained-${idx}`} className="group relative aspect-[3/4] rounded-2xl overflow-hidden border border-gray-200 bg-gray-100 shadow-2xs">
@@ -711,7 +711,7 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
             {retainedImages.length === 0 && newImageFiles.length === 0 && (
               <div 
                 onClick={() => imageInputRef.current?.click()}
-                className="col-span-full py-10 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition-colors"
+                className="col-span-full py-8 sm:py-10 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition-colors p-4"
               >
                 <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center mb-2">
                   <Upload className="w-6 h-6" />
@@ -727,42 +727,42 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
         <div className="space-y-3 pt-4 border-t border-gray-100">
           <div>
             <h4 className="text-sm font-black text-gray-900 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-kasa-vinotinto" />
-              Documento PDF Descargable del Calendario Oficial
+              <FileText className="w-4 h-4 text-kasa-vinotinto shrink-0" />
+              <span>Documento PDF Descargable del Calendario Oficial</span>
             </h4>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <p className="text-xs text-gray-400 mt-0.5 break-words">
               Permite a los visitantes descargar el archivo PDF completo del rol de juegos o reglamento del torneo.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-200">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 bg-gray-50 p-3.5 sm:p-4 rounded-2xl border border-gray-200">
             {removePdf ? (
-              <div className="flex-1 flex items-center justify-between text-xs text-amber-800 bg-amber-50/80 p-3 rounded-xl border border-amber-200">
-                <span className="font-semibold">El PDF oficial se eliminará al guardar los cambios.</span>
+              <div className="flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-amber-800 bg-amber-50/80 p-3 rounded-xl border border-amber-200">
+                <span className="font-semibold break-words">El PDF oficial se eliminará al guardar los cambios.</span>
                 <button
                   type="button"
                   onClick={() => {
                     setRemovePdf(false)
                     setCurrentPdfUrl(settings?.calendar_pdf_url || null)
                   }}
-                  className="font-black underline text-amber-900 hover:text-black cursor-pointer inline-flex items-center gap-1.5 ml-2"
+                  className="font-black underline text-amber-900 hover:text-black cursor-pointer inline-flex items-center gap-1.5 self-start sm:self-auto"
                 >
                   <RotateCcw className="w-3.5 h-3.5" /> Deshacer
                 </button>
               </div>
             ) : newPdfFile ? (
-              <div className="flex-1 flex items-center gap-3">
+              <div className="flex-1 flex items-center gap-3 min-w-0">
                 <FileText className="w-8 h-8 text-emerald-600 shrink-0" />
-                <div className="truncate">
+                <div className="truncate min-w-0">
                   <p className="text-xs font-bold text-gray-900 truncate">{newPdfFile.name}</p>
-                  <p className="text-[10px] text-emerald-600 font-bold">Nuevo archivo seleccionado (Pendiente de guardar)</p>
+                  <p className="text-[10px] text-emerald-600 font-bold truncate">Nuevo archivo seleccionado (Pendiente de guardar)</p>
                 </div>
               </div>
             ) : currentPdfUrl ? (
-              <div className="flex-1 flex items-center gap-3">
+              <div className="flex-1 flex items-center gap-3 min-w-0">
                 <FileText className="w-8 h-8 text-red-600 shrink-0" />
-                <div className="truncate">
-                  <p className="text-xs font-bold text-gray-900">Calendario_Oficial_KsaSport.pdf</p>
+                <div className="truncate min-w-0">
+                  <p className="text-xs font-bold text-gray-900 truncate">Calendario_Oficial_KsaSport.pdf</p>
                   <a
                     href={currentPdfUrl}
                     target="_blank"
@@ -779,11 +779,11 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
               </div>
             )}
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-200">
               <button
                 type="button"
                 onClick={() => pdfInputRef.current?.click()}
-                className="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 font-bold text-xs rounded-xl shadow-2xs transition-colors cursor-pointer"
+                className="flex-1 sm:flex-none px-4 py-2.5 bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 font-bold text-xs rounded-xl shadow-2xs transition-colors cursor-pointer text-center"
               >
                 {currentPdfUrl || newPdfFile ? 'Reemplazar PDF' : 'Subir Archivo PDF'}
               </button>
@@ -799,7 +799,7 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
                 <button
                   type="button"
                   onClick={handleRemoveCurrentPdf}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                  className="p-2.5 text-red-600 hover:bg-red-50 rounded-xl transition-colors shrink-0"
                   title="Eliminar PDF"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -812,16 +812,16 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
       </div>
 
       {/* BOTÓN FLOTANTE O FIJO DE GUARDADO */}
-      <div className="sticky bottom-6 z-20 flex justify-end">
+      <div className="sticky bottom-4 sm:bottom-6 z-20 flex justify-end pb-[env(safe-area-inset-bottom,0px)]">
         <button
           type="submit"
           disabled={saving}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-kasa-vinotinto to-red-950 hover:from-red-950 hover:to-black text-white font-black text-sm rounded-2xl shadow-xl transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 bg-gradient-to-r from-kasa-vinotinto to-red-950 hover:from-red-950 hover:to-black text-white font-black text-sm rounded-2xl shadow-xl transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
         >
           {saving ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Guardando y procesando imágenes...</span>
+              <span>Guardando y procesando...</span>
             </>
           ) : (
             <>

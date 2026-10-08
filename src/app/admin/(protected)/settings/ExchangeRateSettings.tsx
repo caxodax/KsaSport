@@ -127,25 +127,25 @@ export default function ExchangeRateSettings({
   const paginatedHistory = groupedHistory.slice(startHistoryIdx, endHistoryIdx);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8 w-full min-w-0">
       
       {/* 1. TARJETA DE TASA VIGENTE DEL DÍA */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 border-l-[6px] border-l-emerald-600 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] relative">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-slate-200/90 border-l-4 sm:border-l-[6px] border-l-emerald-600 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] relative w-full min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200 shadow-2xs shrink-0">
-              <Landmark className="w-6 h-6" />
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200 shadow-2xs shrink-0">
+              <Landmark className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div>
-              <h2 className="text-xl font-black text-gray-900 flex flex-wrap items-center gap-2">
+            <div className="min-w-0">
+              <h2 className="text-lg sm:text-xl font-black text-gray-900 flex flex-wrap items-center gap-2">
                 <span>Tasa Oficial Vigente</span>
-                <span className={`inline-flex items-center gap-1.5 text-[11px] font-black uppercase px-3 py-1 rounded-full border shadow-2xs ${
+                <span className={`inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-black uppercase px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full border shadow-2xs ${
                   isUpToDate 
                     ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
                     : 'bg-amber-50 text-amber-800 border-amber-200'
                 }`}>
                   <span className={`w-2 h-2 rounded-full ${isUpToDate ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                  <span>Fecha Valor: {currentRates.date}</span>
+                  <span>Fecha: {currentRates.date}</span>
                 </span>
               </h2>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -155,15 +155,16 @@ export default function ExchangeRateSettings({
           </div>
 
           {/* Botón Sincronizar Tasas Ahora (Cron Manual Runner) */}
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
             <button
               onClick={handleSyncNow}
               disabled={syncing}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-5 py-3 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 active:scale-95 text-white text-xs sm:text-sm font-black rounded-2xl shadow-md hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 active:scale-95 text-white text-xs sm:text-sm font-black rounded-xl sm:rounded-2xl shadow-md hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer"
               title="Ejecuta de inmediato el cron job de sincronización contra BCV y Binance P2P"
             >
-              <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin text-white' : ''}`} />
-              <span>{syncing ? 'Ejecutando Cron Job...' : 'Ejecutar Cron Manual (Sincronizar)'}</span>
+              <RefreshCw className={`w-4 h-4 shrink-0 ${syncing ? 'animate-spin text-white' : ''}`} />
+              <span className="sm:inline hidden">{syncing ? 'Ejecutando Cron Job...' : 'Sincronizar BCV Ahora (Cron Job)'}</span>
+              <span className="sm:hidden inline">{syncing ? 'Sincronizando...' : 'Sincronizar BCV Ahora'}</span>
             </button>
           </div>
         </div>
@@ -185,10 +186,10 @@ export default function ExchangeRateSettings({
         )}
 
         {/* Cajas de Tasas Vigentes (USD, EUR, USDT) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-5 w-full min-w-0">
           
           {/* Tarjeta Dólar BCV */}
-          <div className="bg-slate-50/80 rounded-2xl p-5 border border-slate-200/90 shadow-2xs">
+          <div className="bg-slate-50/80 rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs w-full min-w-0">
             <div className="flex justify-between items-start mb-2">
               <span className="text-xs font-black uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
                 <span className="text-base">🇺🇸</span> Dólar Oficial (USD)
@@ -198,19 +199,19 @@ export default function ExchangeRateSettings({
               </span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl sm:text-4xl font-mono font-black text-gray-900 tracking-tight">
+              <span className="text-2xl sm:text-3xl md:text-4xl font-mono font-black text-gray-900 tracking-tight">
                 {Number(currentRates.usd).toFixed(2)}
               </span>
-              <span className="text-sm font-bold text-slate-500 font-mono">Bs. / USD</span>
+              <span className="text-xs sm:text-sm font-bold text-slate-500 font-mono">Bs. / USD</span>
             </div>
-            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1.5 font-medium">
+            <p className="text-[11px] text-slate-500 mt-2 flex flex-wrap items-center gap-1 font-medium">
               <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span>Fecha Valor oficial: <strong className="text-gray-800 font-bold capitalize">{formatFechaValor(currentRates.date)}</strong></span>
+              <span>Fecha Valor: <strong className="text-gray-800 font-bold capitalize">{formatFechaValor(currentRates.date)}</strong></span>
             </p>
           </div>
 
           {/* Tarjeta Euro BCV */}
-          <div className="bg-slate-50/80 rounded-2xl p-5 border border-slate-200/90 shadow-2xs">
+          <div className="bg-slate-50/80 rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs w-full min-w-0">
             <div className="flex justify-between items-start mb-2">
               <span className="text-xs font-black uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
                 <span className="text-base">🇪🇺</span> Euro Oficial (EUR)
@@ -220,19 +221,19 @@ export default function ExchangeRateSettings({
               </span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl sm:text-4xl font-mono font-black text-gray-900 tracking-tight">
+              <span className="text-2xl sm:text-3xl md:text-4xl font-mono font-black text-gray-900 tracking-tight">
                 {Number(currentRates.eur).toFixed(2)}
               </span>
-              <span className="text-sm font-bold text-slate-500 font-mono">Bs. / EUR</span>
+              <span className="text-xs sm:text-sm font-bold text-slate-500 font-mono">Bs. / EUR</span>
             </div>
-            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1.5 font-medium">
+            <p className="text-[11px] text-slate-500 mt-2 flex flex-wrap items-center gap-1 font-medium">
               <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span>Fecha Valor oficial: <strong className="text-gray-800 font-bold capitalize">{formatFechaValor(currentRates.date)}</strong></span>
+              <span>Fecha Valor: <strong className="text-gray-800 font-bold capitalize">{formatFechaValor(currentRates.date)}</strong></span>
             </p>
           </div>
 
           {/* Tarjeta USDT Promedio */}
-          <div className="bg-slate-50/80 rounded-2xl p-5 border border-slate-200/90 shadow-2xs">
+          <div className="bg-slate-50/80 rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs w-full min-w-0">
             <div className="flex justify-between items-start mb-2">
               <span className="text-xs font-black uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
                 <span className="text-base">🟢</span> USDT Promedio (P2P)
@@ -242,12 +243,12 @@ export default function ExchangeRateSettings({
               </span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl sm:text-4xl font-mono font-black text-gray-900 tracking-tight">
+              <span className="text-2xl sm:text-3xl md:text-4xl font-mono font-black text-gray-900 tracking-tight">
                 {Number(currentRates.usdt_promedio || currentRates.usdt || 960).toFixed(2)}
               </span>
-              <span className="text-sm font-bold text-slate-500 font-mono">Bs. / USDT</span>
+              <span className="text-xs sm:text-sm font-bold text-slate-500 font-mono">Bs. / USDT</span>
             </div>
-            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1.5 font-medium">
+            <p className="text-[11px] text-slate-500 mt-2 flex flex-wrap items-center gap-1 font-medium">
               <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <span>Mercado Cripto / P2P de referencia</span>
             </p>
@@ -256,11 +257,11 @@ export default function ExchangeRateSettings({
         </div>
 
         {/* Automatización Cron & Fallback Info */}
-        <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500">
+        <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>
-              <strong>Cron Automático Activo:</strong> Se ejecuta automáticamente cada día a las 7:00 AM (hora Venezuela) sincronizando la Fecha Valor del BCV y USDT Binance P2P.
+              <strong>Cron Automático:</strong> Sincronización diaria 7:00 AM (BCV y USDT Binance).
             </span>
           </div>
 
@@ -363,18 +364,18 @@ export default function ExchangeRateSettings({
       </div>
 
       {/* 2. HISTÓRICO DE TASAS DE DÍAS ANTERIORES */}
-      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] overflow-hidden">
-        <div className="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70">
-          <div>
-            <h3 className="font-black text-gray-900 text-lg flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-kasa-vinotinto" />
+      <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] overflow-hidden w-full min-w-0">
+        <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-black text-gray-900 text-base sm:text-lg flex items-center gap-2 truncate">
+              <Calendar className="w-5 h-5 text-kasa-vinotinto shrink-0" />
               <span>Histórico de Tasas Diarias</span>
             </h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Registro inmutable de tasas según el día de la transacción para cortes mensuales, trimestrales y auditorías.
+            <p className="text-xs text-slate-500 font-medium mt-0.5 line-clamp-1 sm:line-clamp-none">
+              Registro inmutable de tasas según el día de la transacción para cortes y auditorías.
             </p>
           </div>
-          <span className="text-xs font-black text-slate-500 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs self-start sm:self-auto">
+          <span className="text-xs font-black text-slate-500 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs self-start sm:self-auto shrink-0">
             {groupedHistory.length} fechas registradas
           </span>
         </div>
@@ -383,17 +384,17 @@ export default function ExchangeRateSettings({
           <div className="p-10 text-center text-slate-400">
             <Clock className="w-10 h-10 mx-auto mb-2 text-slate-300" />
             <p className="text-sm font-bold text-slate-600">Aún no hay histórico acumulado</p>
-            <p className="text-xs mt-1">Haz clic en &ldquo;Sincronizar Tasas Ahora&rdquo; para registrar la tasa de hoy.</p>
+            <p className="text-xs mt-1">Haz clic en &ldquo;Sincronizar BCV Ahora&rdquo; para registrar la tasa de hoy.</p>
           </div>
         ) : (
-          <div className="flex flex-col">
+          <div className="flex flex-col w-full min-w-0">
             {/* VISTA MÓVIL: TARJETAS TÁCTILES COMPACTAS */}
-            <div className="md:hidden divide-y divide-slate-100 bg-slate-50/40 p-3 sm:p-4 space-y-3">
+            <div className="md:hidden divide-y divide-slate-100 bg-slate-50/40 p-3 sm:p-4 space-y-3 w-full min-w-0">
               {paginatedHistory.map((item) => (
-                <div key={item.date} className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-2xs space-y-3">
+                <div key={item.date} className="bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200/90 shadow-2xs space-y-2.5 w-full min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-black text-gray-950 text-sm capitalize">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-black text-gray-950 text-xs sm:text-sm capitalize truncate">
                         {formatLocalDate(item.date, { 
                           weekday: 'short', 
                           day: '2-digit', 
@@ -401,12 +402,12 @@ export default function ExchangeRateSettings({
                           year: 'numeric' 
                         })}
                       </p>
-                      <p className="text-[11px] font-mono text-slate-400 mt-0.5">
+                      <p className="text-[10px] sm:text-[11px] font-mono text-slate-400 mt-0.5 truncate">
                         {item.date} {item.created_at ? `• ${new Date(item.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}` : ''}
                       </p>
                     </div>
 
-                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-2xs shrink-0 ${
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider border shadow-2xs shrink-0 ${
                       item.source === 'bcv' 
                         ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
                         : item.source === 'dolarapi' 
@@ -417,22 +418,22 @@ export default function ExchangeRateSettings({
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 bg-slate-50/80 p-2.5 rounded-xl border border-slate-100 text-center">
-                    <div>
-                      <span className="text-[10px] text-slate-400 uppercase font-black block">Dólar BCV</span>
-                      <span className="font-mono font-black text-slate-900 text-xs sm:text-sm">
+                  <div className="grid grid-cols-3 gap-1 sm:gap-2 bg-slate-50/80 p-2 sm:p-2.5 rounded-xl border border-slate-100 text-center w-full min-w-0">
+                    <div className="min-w-0">
+                      <span className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-black block truncate">Dólar BCV</span>
+                      <span className="font-mono font-black text-slate-900 text-[11px] sm:text-xs truncate block">
                         {item.usd ? `Bs. ${item.usd.toFixed(2)}` : 'N/A'}
                       </span>
                     </div>
-                    <div className="border-x border-slate-200/70">
-                      <span className="text-[10px] text-slate-400 uppercase font-black block">Euro BCV</span>
-                      <span className="font-mono font-black text-slate-900 text-xs sm:text-sm">
+                    <div className="border-x border-slate-200/70 min-w-0">
+                      <span className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-black block truncate">Euro BCV</span>
+                      <span className="font-mono font-black text-slate-900 text-[11px] sm:text-xs truncate block">
                         {item.eur ? `Bs. ${item.eur.toFixed(2)}` : 'N/A'}
                       </span>
                     </div>
-                    <div>
-                      <span className="text-[10px] text-emerald-600 uppercase font-black block">USDT P2P</span>
-                      <span className="font-mono font-black text-emerald-800 text-xs sm:text-sm">
+                    <div className="min-w-0">
+                      <span className="text-[9px] sm:text-[10px] text-emerald-600 uppercase font-black block truncate">USDT P2P</span>
+                      <span className="font-mono font-black text-emerald-800 text-[11px] sm:text-xs truncate block">
                         {item.usdt_promedio ? `Bs. ${item.usdt_promedio.toFixed(2)}` : '-'}
                       </span>
                     </div>

@@ -27,7 +27,7 @@ export default async function RatesPage() {
   const ratesHistory = await getExchangeRatesHistory(40);
 
   return (
-    <div className="p-4 sm:p-8 max-w-5xl mx-auto">
+    <div className="p-3 sm:p-6 lg:p-8 max-w-5xl mx-auto w-full min-w-0">
       <SettingsDashboard
         settings={settings || { id: 1, grace_period_days: 5, penalty_amount: 10.00 }}
         categories={categories || []}

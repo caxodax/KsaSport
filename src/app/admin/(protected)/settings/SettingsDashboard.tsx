@@ -398,27 +398,29 @@ export default function SettingsDashboard({
       </div>
 
       {/* CABECERA PRINCIPAL DINÁMICA */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)]">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] w-full min-w-0">
+        <div className="w-full min-w-0">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             {activeTab === 'rates' ? (
-              <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-black uppercase tracking-wider border border-emerald-200/80 shadow-2xs flex items-center gap-1.5">
-                <Landmark className="w-3.5 h-3.5" />
-                Banco Central de Venezuela • Divisas Oficiales & Automatización
+              <span className="inline-flex flex-wrap items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[10px] sm:text-xs font-black uppercase tracking-wider border border-emerald-200/80 shadow-2xs max-w-full">
+                <Landmark className="w-3.5 h-3.5 shrink-0" />
+                <span className="sm:inline hidden">Banco Central de Venezuela • Divisas Oficiales & Automatización</span>
+                <span className="sm:hidden inline">Tasa Oficial BCV & Divisas</span>
               </span>
             ) : activeTab === 'portal' ? (
-              <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-900 text-xs font-black uppercase tracking-wider border border-amber-200/80 shadow-2xs flex items-center gap-1.5">
-                <Share2 className="w-3.5 h-3.5" />
-                Presencia Digital • Redes Sociales & Calendario de Ligas
+              <span className="inline-flex flex-wrap items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-900 text-[10px] sm:text-xs font-black uppercase tracking-wider border border-amber-200/80 shadow-2xs max-w-full">
+                <Share2 className="w-3.5 h-3.5 shrink-0" />
+                <span className="sm:inline hidden">Presencia Digital • Redes Sociales & Calendario de Ligas</span>
+                <span className="sm:hidden inline">Portal, Redes & Calendario</span>
               </span>
             ) : (
-              <span className="px-3 py-1 rounded-full bg-red-50 text-kasa-vinotinto text-xs font-black uppercase tracking-wider border border-red-200/80 shadow-2xs flex items-center gap-1.5">
-                <SettingsIcon className="w-3.5 h-3.5" />
-                Parámetros & Políticas Financieras
+              <span className="inline-flex flex-wrap items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-kasa-vinotinto text-[10px] sm:text-xs font-black uppercase tracking-wider border border-red-200/80 shadow-2xs max-w-full">
+                <SettingsIcon className="w-3.5 h-3.5 shrink-0" />
+                <span>Parámetros & Políticas Financieras</span>
               </span>
             )}
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 tracking-tight break-words">
             {activeTab === 'rates' ? 'Configuración de Tasa Oficial (BCV)' : activeTab === 'portal' ? 'Portal, Redes y Calendario de Ligas' : 'Configuración de Cobros & Morosidad'}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1 max-w-2xl">
@@ -439,16 +441,16 @@ export default function SettingsDashboard({
       ) : activeTab === 'portal' ? (
         <PortalSettings settings={settings} />
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-6 sm:space-y-8 w-full min-w-0">
           {/* SECCIÓN 1: REGLA GENERAL DE LA ACADEMIA (FALLBACK GLOBAL) */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 border-l-[6px] border-l-kasa-vinotinto shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] relative">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-slate-200/90 border-l-4 sm:border-l-[6px] border-l-kasa-vinotinto shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] relative w-full min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5 mb-6">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="w-11 h-11 rounded-2xl bg-red-50 text-kasa-vinotinto flex items-center justify-center border border-red-200/80 shadow-2xs shrink-0">
               <Globe className="w-6 h-6" />
             </div>
-            <div>
-              <h2 className="text-lg font-black text-gray-900">
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-black text-gray-900 leading-tight">
                 Regla General del Club (Base Global)
               </h2>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -456,7 +458,7 @@ export default function SettingsDashboard({
               </p>
             </div>
           </div>
-          <span className="px-3 py-1 rounded-xl bg-slate-100 text-slate-700 text-xs font-black uppercase tracking-wider border border-slate-200 self-start sm:self-auto shadow-2xs">
+          <span className="px-3 py-1 rounded-xl bg-slate-100 text-slate-700 text-xs font-black uppercase tracking-wider border border-slate-200 self-start sm:self-auto shadow-2xs shrink-0">
             Regla por Defecto
           </span>
         </div>
@@ -562,14 +564,14 @@ export default function SettingsDashboard({
       </div>
 
       {/* SECCIÓN 2: POLÍTICAS ESPECÍFICAS POR DISCIPLINA DEPORTIVA */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 border-l-[6px] border-l-kasa-dorado shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)]">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-slate-200/90 border-l-4 sm:border-l-[6px] border-l-kasa-dorado shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] w-full min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5 mb-6">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center border border-amber-200/80 shadow-2xs shrink-0 text-xl">
               🏆
             </div>
-            <div>
-              <h2 className="text-lg font-black text-gray-900">
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-black text-gray-900 leading-tight">
                 Reglas Personalizadas por Disciplina
               </h2>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -577,7 +579,7 @@ export default function SettingsDashboard({
               </p>
             </div>
           </div>
-          <span className="px-3 py-1 rounded-xl bg-amber-50 text-amber-900 text-xs font-black uppercase tracking-wider border border-amber-200 shadow-2xs self-start sm:self-auto">
+          <span className="px-3 py-1 rounded-xl bg-amber-50 text-amber-900 text-xs font-black uppercase tracking-wider border border-amber-200 shadow-2xs self-start sm:self-auto shrink-0">
             {categories.length} Disciplinas Registradas
           </span>
         </div>
@@ -589,7 +591,7 @@ export default function SettingsDashboard({
             <p className="text-xs text-slate-400 mt-1">Crea categorías en el módulo de disciplinas para configurar sus penalidades.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 w-full min-w-0">
             {categories.map((cat) => {
               const state = categoryStates[cat.id] || {
                 useCustom: false,
@@ -612,36 +614,36 @@ export default function SettingsDashboard({
               return (
                 <div
                   key={cat.id}
-                  className={`rounded-3xl p-5 sm:p-6 border-2 transition-all flex flex-col justify-between ${
+                  className={`rounded-2xl sm:rounded-3xl p-4 sm:p-5 border-2 transition-all flex flex-col justify-between w-full min-w-0 ${
                     state.useCustom
                       ? 'bg-gradient-to-br from-amber-50/40 via-white to-amber-50/20 border-amber-400/90 shadow-md ring-2 ring-amber-400/20'
                       : 'bg-white border-slate-200/90 hover:border-slate-300 shadow-2xs'
                   }`}
                 >
-                  <div className="space-y-4">
+                  <div className="space-y-4 w-full min-w-0">
                     
                     {/* Cabecera de Categoría */}
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl shrink-0 border ${
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                        <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center text-lg sm:text-xl shrink-0 border ${
                           state.useCustom 
                             ? 'bg-amber-100 border-amber-300 shadow-2xs' 
                             : 'bg-slate-100 border-slate-200'
                         }`}>
                           {icon}
                         </div>
-                        <div>
-                          <h3 className="text-base font-black text-gray-900 leading-tight">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-sm sm:text-base font-black text-gray-900 leading-tight truncate">
                             {cleanName}
                           </h3>
-                          <p className="text-[11px] text-slate-500 font-semibold mt-0.5">
+                          <p className="text-[10px] sm:text-[11px] text-slate-500 font-semibold mt-0.5 truncate">
                             {cat.athletesCount ?? 0} atletas inscritas • {cat.teamsCount ?? 0} equipos
                           </p>
                         </div>
                       </div>
 
                       {/* Badge de Estado */}
-                      <span className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border shrink-0 shadow-2xs flex items-center gap-1.5 ${
+                      <span className={`px-2.5 sm:px-3 py-1 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-wider border shrink-0 shadow-2xs flex items-center gap-1.5 ${
                         state.useCustom
                           ? 'bg-amber-100 text-amber-950 border-amber-300'
                           : 'bg-slate-100 text-slate-600 border-slate-200'
@@ -663,23 +665,23 @@ export default function SettingsDashboard({
                     {/* INTERRUPTOR ACCESIBLE Y 100% CLICKEABLE */}
                     <div 
                       onClick={() => handleToggleCustom(cat.id, !state.useCustom)}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-4 select-none ${
+                      className={`p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 select-none ${
                         state.useCustom 
                           ? 'bg-amber-100/50 border-amber-300/80 hover:bg-amber-100/70 shadow-2xs' 
                           : 'bg-slate-50 border-slate-200/90 hover:bg-slate-100/80'
                       }`}
                     >
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                         <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 transition-colors ${
                           state.useCustom ? 'bg-amber-500 text-white shadow-2xs' : 'bg-slate-200 text-slate-600'
                         }`}>
                           {state.useCustom ? 'ON' : 'OFF'}
                         </div>
-                        <div className="truncate">
+                        <div className="min-w-0 flex-1">
                           <p className="text-xs sm:text-sm font-black text-gray-900 truncate">
                             ¿Personalizar cobros para {cleanName}?
                           </p>
-                          <p className="text-[11px] text-slate-500 font-medium mt-0.5 truncate">
+                          <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium mt-0.5 line-clamp-1 sm:line-clamp-2">
                             {state.useCustom 
                               ? 'Activado: usa condiciones particulares para esta disciplina.' 
                               : `Desactivado: hereda los ${globalGrace} días y $${Number(globalPenalty).toFixed(2)} del club.`}
