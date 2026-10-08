@@ -38,10 +38,12 @@ export default async function PaymentsPage({
   const completedPayments = payments?.filter(p => p.status === 'Completado') || [];
   const pendingPayments = payments?.filter(p => p.status === 'Pendiente') || [];
   const rejectedPayments = payments?.filter(p => p.status === 'Rechazado') || [];
+  const voidedPayments = payments?.filter(p => p.status === 'Anulado') || [];
 
   const completedCount = completedPayments.length;
   const pendingCount = pendingPayments.length;
   const rejectedCount = rejectedPayments.length;
+  const voidedCount = voidedPayments.length;
 
   const completedTotal = completedPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
   const pendingTotal = pendingPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
@@ -167,6 +169,7 @@ export default async function PaymentsPage({
         pendingCount={pendingCount}
         completedCount={completedCount}
         rejectedCount={rejectedCount}
+        voidedCount={voidedCount}
         formattedPendingTotal={formatPaymentsTotal(pendingPayments)}
         formattedCompletedTotal={formatPaymentsTotal(completedPayments)}
         formattedRejectedTotal={formatPaymentsTotal(rejectedPayments)}
