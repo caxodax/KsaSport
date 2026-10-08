@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Users, UserPlus, Search, Shield, Key, Trash2, Edit3, Trophy, 
-  Crown, Coins, Compass, CheckCircle2, AlertTriangle, Loader2, Check 
+  Crown, Coins, Compass, CheckCircle2, AlertTriangle, Loader2, Check,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import UserDrawer, { AdminUserData, AdminRoleItem } from './UserDrawer';
 import { revokeAdminUser } from './actions';
@@ -49,6 +50,10 @@ export default function UsersDashboard({
     router.refresh();
   };
 
+  // Paginación Reactiva
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
   // Filtrado en memoria
   const filteredUsers = users.filter((u) => {
     const matchesQuery = 
@@ -58,6 +63,10 @@ export default function UsersDashboard({
     const matchesRole = selectedRoleFilter ? u.role_id === selectedRoleFilter : true;
     return matchesQuery && matchesRole;
   });
+
+  const totalPages = Math.ceil(filteredUsers.length / pageSize) || 1;
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedUsers = filteredUsers.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const handleOpenCreate = () => {
     setEditingUser(null);
@@ -197,7 +206,10 @@ export default function UsersDashboard({
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
             placeholder="Buscar por correo o nombre..."
             className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm rounded-lg border border-gray-200 outline-none focus:ring-2 focus:ring-kasa-vinotinto bg-gray-50/50"
           />
@@ -206,7 +218,10 @@ export default function UsersDashboard({
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <select
             value={selectedRoleFilter}
-            onChange={(e) => setSelectedRoleFilter(e.target.value)}
+            onChange={(e) => {
+              setSelectedRoleFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full sm:w-auto px-3 py-2 text-xs sm:text-sm font-medium rounded-lg border border-gray-200 outline-none focus:ring-2 focus:ring-kasa-vinotinto bg-white text-gray-700 cursor-pointer"
           >
             <option value="">Todos los Roles</option>
@@ -245,7 +260,7 @@ export default function UsersDashboard({
                 </td>
               </tr>
             ) : (
-              filteredUsers.map((u) => {
+              paginatedUsers.map((u) => {
                 const isCurrentUser = u.id === currentUserId;
                 const displayName = u.staff?.name || u.email.split('@')[0];
                 const teamDisplay = u.staff?.teams?.name 
@@ -338,7 +353,7 @@ export default function UsersDashboard({
             <p className="font-semibold text-gray-600">No hay usuarios coincidentes</p>
           </div>
         ) : (
-          filteredUsers.map((u) => {
+          paginatedUsers.map((u) => {
             const isCurrentUser = u.id === currentUserId;
             const displayName = u.staff?.name || u.email.split('@')[0];
             const teamDisplay = u.staff?.teams?.name 
@@ -383,7 +398,7 @@ export default function UsersDashboard({
                 <div className="pt-2 border-t border-gray-100 flex items-center justify-end gap-2">
                   <button
                     onClick={() => handleOpenEdit(u)}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                     <span>Editar</span>
@@ -395,7 +410,7 @@ export default function UsersDashboard({
                     className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
                       isCurrentUser
                         ? 'text-gray-300 bg-gray-50 cursor-not-allowed'
-                        : 'text-red-700 bg-red-50 hover:bg-red-100'
+                        : 'text-red-700 bg-red-50 hover:bg-red-100 cursor-pointer'
                     }`}
                   >
                     {revokingId === u.id ? (
@@ -411,6 +426,75 @@ export default function UsersDashboard({
           })
         )}
       </div>
+
+      {/* PAGINACIÓN REACTIVA */}
+      {totalPages > 1 && (
+        <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="text-xs text-gray-500 font-medium order-2 sm:order-1 text-center sm:text-left">
+            Mostrando <strong className="font-bold text-gray-900">{(safePage - 1) * pageSize + 1}</strong> a{' '}
+            <strong className="font-bold text-gray-900">
+              {Math.min(safePage * pageSize, filteredUsers.length)}
+            </strong>{' '}
+            de <strong className="font-bold text-gray-900">{filteredUsers.length}</strong> usuarios
+          </div>
+
+          <div className="flex items-center gap-1.5 order-1 sm:order-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={safePage <= 1}
+              className="p-2 sm:px-3 sm:py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Anterior</span>
+            </button>
+
+            <div className="flex items-center gap-1 px-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => {
+                if (
+                  totalPages > 7 &&
+                  pg !== 1 &&
+                  pg !== totalPages &&
+                  Math.abs(pg - safePage) > 1
+                ) {
+                  if (pg === 2 || pg === totalPages - 1) {
+                    return (
+                      <span key={pg} className="px-1 text-xs text-gray-400">
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                }
+                return (
+                  <button
+                    key={pg}
+                    type="button"
+                    onClick={() => setCurrentPage(pg)}
+                    className={`w-8 h-8 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      safePage === pg
+                        ? 'bg-kasa-vinotinto text-white shadow-xs'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    {pg}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage >= totalPages}
+              className="p-2 sm:px-3 sm:py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
+            >
+              <span className="hidden sm:inline">Siguiente</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Drawer de Creación y Edición */}
       <UserDrawer

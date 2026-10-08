@@ -4,7 +4,8 @@ import { useState, useMemo } from 'react';
 import { 
   ShoppingBag, Plus, Search, LayoutGrid, Table as TableIcon, 
   Calendar, DollarSign, Tag, Edit3, Trash2, Layers, 
-  CheckCircle2, AlertCircle, Clock, ShieldCheck, X 
+  CheckCircle2, AlertCircle, Clock, ShieldCheck, X,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { toggleProductStatus, deleteProduct } from './actions';
 import ProductDrawer, { ProductData, CategoryOption } from './ProductDrawer';
@@ -39,6 +40,10 @@ export default function ProductDashboard({
   const activeCount = useMemo(() => initialProducts.filter(p => p.is_active).length, [initialProducts]);
   const inactiveCount = useMemo(() => initialProducts.filter(p => !p.is_active).length, [initialProducts]);
 
+  // Paginación Reactiva (12 productos por página para cuadrículas 1x, 2x o 3x)
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12;
+
   // Filtrado reactivo
   const filteredProducts = useMemo(() => {
     return initialProducts.filter(p => {
@@ -61,6 +66,13 @@ export default function ProductDashboard({
       return matchSearch && matchStatus && matchCategory;
     });
   }, [initialProducts, search, selectedStatus, selectedCategory]);
+
+  const totalPages = Math.ceil(filteredProducts.length / pageSize) || 1;
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedProducts = useMemo(() => {
+    const from = (safePage - 1) * pageSize;
+    return filteredProducts.slice(from, from + pageSize);
+  }, [filteredProducts, safePage, pageSize]);
 
   const handleOpenCreate = () => {
     setSelectedProduct(null);
@@ -135,13 +147,19 @@ export default function ProductDashboard({
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
             placeholder="Buscar por nombre o descripción..."
             className="w-full pl-10 pr-9 py-2.5 bg-slate-50 hover:bg-slate-100/80 focus:bg-white rounded-2xl border border-slate-200 text-xs font-bold text-gray-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-kasa-vinotinto/20 focus:border-kasa-vinotinto transition-all shadow-2xs"
           />
           {search && (
             <button
-              onClick={() => setSearch('')}
+              onClick={() => {
+                setSearch('');
+                setCurrentPage(1);
+              }}
               className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
             >
               <X className="w-4 h-4" />
@@ -153,7 +171,10 @@ export default function ProductDashboard({
         <div className="flex flex-wrap items-center gap-2">
           <div className="inline-flex p-1 bg-slate-100 rounded-2xl border border-slate-200/80 shadow-2xs">
             <button
-              onClick={() => setSelectedStatus('all')}
+              onClick={() => {
+                setSelectedStatus('all');
+                setCurrentPage(1);
+              }}
               className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-200 ease-out ${
                 selectedStatus === 'all'
                   ? 'bg-white text-gray-900 shadow-2xs'
@@ -163,7 +184,10 @@ export default function ProductDashboard({
               Todos ({initialProducts.length})
             </button>
             <button
-              onClick={() => setSelectedStatus('active')}
+              onClick={() => {
+                setSelectedStatus('active');
+                setCurrentPage(1);
+              }}
               className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-200 ease-out ${
                 selectedStatus === 'active'
                   ? 'bg-emerald-600 text-white shadow-2xs'
@@ -173,7 +197,10 @@ export default function ProductDashboard({
               Activos ({activeCount})
             </button>
             <button
-              onClick={() => setSelectedStatus('inactive')}
+              onClick={() => {
+                setSelectedStatus('inactive');
+                setCurrentPage(1);
+              }}
               className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-200 ease-out ${
                 selectedStatus === 'inactive'
                   ? 'bg-slate-800 text-white shadow-2xs'
@@ -188,7 +215,10 @@ export default function ProductDashboard({
           {categories.length > 0 && (
             <select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value);
+                setCurrentPage(1);
+              }}
               className="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-kasa-vinotinto/20 focus:border-kasa-vinotinto transition-all duration-200 ease-out shadow-2xs"
             >
               <option value="all">Todas las Categorías</option>
@@ -260,8 +290,8 @@ export default function ProductDashboard({
         </div>
       ) : viewMode === 'grid' ? (
         /* VISTA DE TARJETAS (Grid First-Mobile) */
-        <div key={`grid-${selectedStatus}-${selectedCategory}`} className="animate-tab-enter grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {filteredProducts.map((p) => {
+        <div key={`grid-${selectedStatus}-${selectedCategory}-${safePage}`} className="animate-tab-enter grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {paginatedProducts.map((p) => {
             const expired = isProductExpired(p);
             const ribbonBorder = p.is_active 
               ? 'border-l-[6px] border-l-emerald-500' 
@@ -410,7 +440,7 @@ export default function ProductDashboard({
         </div>
       ) : (
         /* VISTA DE TABLA (Linear / Stripe style) */
-        <div key={`table-${selectedStatus}-${selectedCategory}`} className="animate-tab-enter bg-white rounded-3xl border border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] overflow-hidden">
+        <div key={`table-${selectedStatus}-${selectedCategory}-${safePage}`} className="animate-tab-enter bg-white rounded-3xl border border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06),0_2px_4px_-1px_rgba(0,0,0,0.03)] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[720px]">
               <thead>
@@ -433,7 +463,7 @@ export default function ProductDashboard({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {filteredProducts.map((p) => {
+                {paginatedProducts.map((p) => {
                   const expired = isProductExpired(p);
 
                   return (
@@ -553,6 +583,75 @@ export default function ProductDashboard({
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* 3.1 PAGINACIÓN REACTIVA */}
+      {totalPages > 1 && (
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="text-xs text-slate-500 font-medium order-2 sm:order-1 text-center sm:text-left">
+            Mostrando <strong className="font-bold text-gray-900">{(safePage - 1) * pageSize + 1}</strong> a{' '}
+            <strong className="font-bold text-gray-900">
+              {Math.min(safePage * pageSize, filteredProducts.length)}
+            </strong>{' '}
+            de <strong className="font-bold text-gray-900">{filteredProducts.length}</strong> productos
+          </div>
+
+          <div className="flex items-center gap-1.5 order-1 sm:order-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={safePage <= 1}
+              className="p-2 sm:px-3 sm:py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Anterior</span>
+            </button>
+
+            <div className="flex items-center gap-1 px-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => {
+                if (
+                  totalPages > 7 &&
+                  pg !== 1 &&
+                  pg !== totalPages &&
+                  Math.abs(pg - safePage) > 1
+                ) {
+                  if (pg === 2 || pg === totalPages - 1) {
+                    return (
+                      <span key={pg} className="px-1 text-xs text-slate-400">
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                }
+                return (
+                  <button
+                    key={pg}
+                    type="button"
+                    onClick={() => setCurrentPage(pg)}
+                    className={`w-8 h-8 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      safePage === pg
+                        ? 'bg-kasa-vinotinto text-white shadow-xs'
+                        : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    {pg}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage >= totalPages}
+              className="p-2 sm:px-3 sm:py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
+            >
+              <span className="hidden sm:inline">Siguiente</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}

@@ -231,8 +231,48 @@ export default function SettingsDashboard({
   return (
     <div className="space-y-6 sm:space-y-8">
       
-      {/* NAVEGACIÓN SUPERIOR DE PESTAÑAS (ALTA VISIBILIDAD) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+      {/* NAVEGACIÓN SUPERIOR MÓVIL (Pills compactos táctiles) */}
+      <div className="sm:hidden flex items-center gap-1.5 p-1.5 bg-slate-100 rounded-2xl border border-slate-200 overflow-x-auto no-scrollbar shadow-2xs">
+        <button
+          type="button"
+          onClick={() => handleTabChange('rates')}
+          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-black whitespace-nowrap transition-all shrink-0 cursor-pointer ${
+            activeTab === 'rates'
+              ? 'bg-emerald-600 text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+          }`}
+        >
+          <Landmark className="w-4 h-4" />
+          <span>Tasa BCV</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => handleTabChange('penalties')}
+          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-black whitespace-nowrap transition-all shrink-0 cursor-pointer ${
+            activeTab === 'penalties'
+              ? 'bg-kasa-vinotinto text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+          }`}
+        >
+          <Sliders className="w-4 h-4" />
+          <span>Cobros & Moras</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => handleTabChange('portal')}
+          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-black whitespace-nowrap transition-all shrink-0 cursor-pointer ${
+            activeTab === 'portal'
+              ? 'bg-amber-700 text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+          }`}
+        >
+          <Share2 className="w-4 h-4" />
+          <span>Portal & Redes</span>
+        </button>
+      </div>
+
+      {/* NAVEGACIÓN SUPERIOR DE PESTAÑAS (ESCRITORIO / TABLET) */}
+      <div className="hidden sm:grid sm:grid-cols-3 gap-3 sm:gap-4">
         {/* Pestaña: Tasa Oficial (BCV) */}
         <button
           type="button"

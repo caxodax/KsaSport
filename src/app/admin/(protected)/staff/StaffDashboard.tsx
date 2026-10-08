@@ -4,7 +4,8 @@ import { useState, useMemo } from 'react';
 import { 
   Plus, Search, LayoutGrid, Table as TableIcon, Shield, Award, 
   UserCheck, Activity, Briefcase, HeartHandshake, Phone, 
-  MessageCircle, Edit3, Trash2, X, Filter, Trophy, Users, Layers
+  MessageCircle, Edit3, Trash2, X, Filter, Trophy, Users, Layers,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { deleteStaff } from './actions';
 import StaffDrawer, { StaffData, TeamOption, STAFF_ROLES } from './StaffDrawer';
@@ -30,6 +31,10 @@ export default function StaffDashboard({
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<StaffData | null>(null);
 
+  // Paginación Reactiva
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12;
+
   // Filtrado reactivo multidimensional
   const filteredStaff = useMemo(() => {
     return initialStaff.filter(item => {
@@ -48,6 +53,13 @@ export default function StaffDashboard({
       return matchSearch && matchRole && matchTeam && matchCategory;
     });
   }, [initialStaff, search, roleFilter, teamFilter, categoryFilter]);
+
+  const totalPages = Math.ceil(filteredStaff.length / pageSize) || 1;
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedStaff = useMemo(() => {
+    const from = (safePage - 1) * pageSize;
+    return filteredStaff.slice(from, from + pageSize);
+  }, [filteredStaff, safePage, pageSize]);
 
   // Generador de iniciales
   const getInitials = (name: string) => {
@@ -136,6 +148,7 @@ export default function StaffDashboard({
     setRoleFilter('');
     setTeamFilter('');
     setCategoryFilter('');
+    setCurrentPage(1);
   };
 
   return (
@@ -169,7 +182,7 @@ export default function StaffDashboard({
           {/* Botón CTA Primario (Abre el Drawer lateral) */}
           <button
             onClick={handleOpenCreate}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-kasa-vinotinto to-red-950 hover:from-red-900 hover:to-kasa-vinotinto text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-kasa-vinotinto/25 hover:shadow-xl transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-kasa-vinotinto to-red-950 hover:from-red-900 hover:to-kasa-vinotinto text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-kasa-vinotinto/25 hover:shadow-xl transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
           >
             <Plus className="w-4 h-4 text-kasa-dorado stroke-[3]" />
             <span>Registrar Staff</span>
@@ -187,14 +200,20 @@ export default function StaffDashboard({
             <input
               type="text"
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={e => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
               placeholder="Buscar por nombre, cédula o teléfono..."
               className="w-full pl-10 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold text-gray-900 focus:bg-white focus:border-kasa-vinotinto focus:ring-4 focus:ring-kasa-vinotinto/10 outline-none transition-all placeholder:text-slate-400"
             />
             {search && (
               <button
-                onClick={() => setSearch('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                onClick={() => {
+                  setSearch('');
+                  setCurrentPage(1);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -206,7 +225,10 @@ export default function StaffDashboard({
             {/* Filtro por Rol */}
             <select
               value={roleFilter}
-              onChange={e => setRoleFilter(e.target.value)}
+              onChange={e => {
+                setRoleFilter(e.target.value);
+                setCurrentPage(1);
+              }}
               className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 outline-none focus:border-kasa-vinotinto focus:bg-white cursor-pointer transition-all"
             >
               <option value="">Todos los Roles</option>
@@ -218,7 +240,10 @@ export default function StaffDashboard({
             {/* Filtro por Equipo */}
             <select
               value={teamFilter}
-              onChange={e => setTeamFilter(e.target.value)}
+              onChange={e => {
+                setTeamFilter(e.target.value);
+                setCurrentPage(1);
+              }}
               className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 outline-none focus:border-kasa-vinotinto focus:bg-white cursor-pointer transition-all"
             >
               <option value="">Todos los Equipos</option>
@@ -231,7 +256,10 @@ export default function StaffDashboard({
             {categories.length > 0 && (
               <select
                 value={categoryFilter}
-                onChange={e => setCategoryFilter(e.target.value)}
+                onChange={e => {
+                  setCategoryFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 outline-none focus:border-kasa-vinotinto focus:bg-white cursor-pointer transition-all"
               >
                 <option value="">Todas las Disciplinas</option>
@@ -245,7 +273,7 @@ export default function StaffDashboard({
             {hasActiveFilters && (
               <button
                 onClick={resetFilters}
-                className="px-3 py-2 text-xs font-bold text-rose-700 hover:text-rose-900 bg-rose-50 hover:bg-rose-100 rounded-2xl transition-colors border border-rose-200"
+                className="px-3 py-2 text-xs font-bold text-rose-700 hover:text-rose-900 bg-rose-50 hover:bg-rose-100 rounded-2xl transition-colors border border-rose-200 cursor-pointer"
               >
                 Limpiar
               </button>
@@ -316,8 +344,8 @@ export default function StaffDashboard({
         </div>
       ) : viewMode === 'grid' ? (
         /* VISTA GRID: TARJETAS 360 */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredStaff.map(staff => {
+        <div key={`grid-${roleFilter}-${teamFilter}-${categoryFilter}-${safePage}`} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {paginatedStaff.map(staff => {
             const roleBadge = getRoleBadge(staff.role);
             const waLink = getWhatsAppLink(staff.phone);
 
@@ -452,7 +480,7 @@ export default function StaffDashboard({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {filteredStaff.map(staff => {
+                {paginatedStaff.map(staff => {
                   const roleBadge = getRoleBadge(staff.role);
                   const waLink = getWhatsAppLink(staff.phone);
 
@@ -535,14 +563,14 @@ export default function StaffDashboard({
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => handleOpenEdit(staff)}
-                            className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-800 rounded-lg transition-colors"
+                            className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-800 rounded-lg transition-colors cursor-pointer"
                             title="Editar"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(staff)}
-                            className="p-1.5 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg transition-colors"
+                            className="p-1.5 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg transition-colors cursor-pointer"
                             title="Eliminar"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -554,6 +582,75 @@ export default function StaffDashboard({
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* 3.1 PAGINACIÓN REACTIVA */}
+      {totalPages > 1 && (
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="text-xs text-slate-500 font-medium order-2 sm:order-1 text-center sm:text-left">
+            Mostrando <strong className="font-bold text-gray-900">{(safePage - 1) * pageSize + 1}</strong> a{' '}
+            <strong className="font-bold text-gray-900">
+              {Math.min(safePage * pageSize, filteredStaff.length)}
+            </strong>{' '}
+            de <strong className="font-bold text-gray-900">{filteredStaff.length}</strong> miembros del staff
+          </div>
+
+          <div className="flex items-center gap-1.5 order-1 sm:order-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={safePage <= 1}
+              className="p-2 sm:px-3 sm:py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Anterior</span>
+            </button>
+
+            <div className="flex items-center gap-1 px-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => {
+                if (
+                  totalPages > 7 &&
+                  pg !== 1 &&
+                  pg !== totalPages &&
+                  Math.abs(pg - safePage) > 1
+                ) {
+                  if (pg === 2 || pg === totalPages - 1) {
+                    return (
+                      <span key={pg} className="px-1 text-xs text-slate-400">
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                }
+                return (
+                  <button
+                    key={pg}
+                    type="button"
+                    onClick={() => setCurrentPage(pg)}
+                    className={`w-8 h-8 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      safePage === pg
+                        ? 'bg-kasa-vinotinto text-white shadow-xs'
+                        : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    {pg}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage >= totalPages}
+              className="p-2 sm:px-3 sm:py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
+            >
+              <span className="hidden sm:inline">Siguiente</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}

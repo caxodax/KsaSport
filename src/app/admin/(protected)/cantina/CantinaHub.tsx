@@ -21,7 +21,9 @@ import {
   AlertTriangle,
   ShoppingBag,
   Landmark,
-  Edit
+  Edit,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react"
 import { formatCedula } from "@/lib/cedula"
 import { formatLocalDateShort } from "@/lib/dateUtils"
@@ -236,6 +238,28 @@ export default function CantinaHub({
   // TAB 3: CUENTAS POR COBRAR
   const [creditFilterDebtOnly, setCreditFilterDebtOnly] = useState(false)
   const [creditSearchQuery, setCreditSearchQuery] = useState("")
+  const [creditCurrentPage, setCreditCurrentPage] = useState(1)
+  const creditPageSize = 15
+
+  const filteredCreditAthletes = useMemo(() => {
+    return athletes.filter(a => {
+      const acc = creditMap.get(a.id) || { balance: 0, credit_limit: 50 }
+      if (creditFilterDebtOnly && acc.balance <= 0) return false
+      if (creditSearchQuery.trim()) {
+        const q = creditSearchQuery.toLowerCase().trim()
+        return a.name.toLowerCase().includes(q) || a.cedula.toLowerCase().includes(q)
+      }
+      return true
+    })
+  }, [athletes, creditMap, creditFilterDebtOnly, creditSearchQuery])
+
+  const creditTotalPages = Math.ceil(filteredCreditAthletes.length / creditPageSize) || 1
+  const creditSafePage = Math.min(creditCurrentPage, creditTotalPages)
+  const paginatedCreditAthletes = useMemo(() => {
+    const from = (creditSafePage - 1) * creditPageSize
+    return filteredCreditAthletes.slice(from, from + creditPageSize)
+  }, [filteredCreditAthletes, creditSafePage, creditPageSize])
+
   const [adjustLimitAthlete, setAdjustLimitAthlete] = useState<any | null>(null)
   const [newLimitValue, setNewLimitValue] = useState<string>("50")
   const [manualPayAthlete, setManualPayAthlete] = useState<any | null>(null)
@@ -1378,13 +1402,19 @@ export default function CantinaHub({
                   type="text"
                   placeholder="Buscar por nombre o cédula..."
                   value={creditSearchQuery}
-                  onChange={(e) => setCreditSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setCreditSearchQuery(e.target.value)
+                    setCreditCurrentPage(1)
+                  }}
                   className="w-full text-xs pl-9 pr-3 py-2 rounded-xl bg-gray-50 border border-gray-200"
                 />
               </div>
 
               <button
-                onClick={() => setCreditFilterDebtOnly(!creditFilterDebtOnly)}
+                onClick={() => {
+                  setCreditFilterDebtOnly(!creditFilterDebtOnly)
+                  setCreditCurrentPage(1)
+                }}
                 className={`text-xs font-bold px-3.5 py-2 rounded-xl border transition-colors ${
                   creditFilterDebtOnly
                     ? "bg-red-50 text-red-700 border-red-200"
@@ -1398,33 +1428,14 @@ export default function CantinaHub({
 
           {/* VISTA MÓVIL (Tarjetas de Deuda & Crédito Táctiles) */}
           <div className="md:hidden space-y-3">
-            {athletes
-              .filter(a => {
-                const acc = creditMap.get(a.id) || { balance: 0, credit_limit: 50 }
-                if (creditFilterDebtOnly && acc.balance <= 0) return false
-                if (creditSearchQuery.trim()) {
-                  const q = creditSearchQuery.toLowerCase()
-                  return a.name.toLowerCase().includes(q) || a.cedula.toLowerCase().includes(q)
-                }
-                return true
-              }).length === 0 ? (
+            {filteredCreditAthletes.length === 0 ? (
               <div className="bg-white rounded-2xl p-8 text-center border border-gray-100 shadow-xs">
                 <Users className="w-10 h-10 text-gray-300 mx-auto mb-2" />
                 <p className="font-semibold text-gray-600 text-sm">Sin resultados</p>
                 <p className="text-xs text-gray-400 mt-1">No hay atletas que coincidan con la búsqueda o filtro.</p>
               </div>
             ) : (
-              athletes
-                .filter(a => {
-                  const acc = creditMap.get(a.id) || { balance: 0, credit_limit: 50 }
-                  if (creditFilterDebtOnly && acc.balance <= 0) return false
-                  if (creditSearchQuery.trim()) {
-                    const q = creditSearchQuery.toLowerCase()
-                    return a.name.toLowerCase().includes(q) || a.cedula.toLowerCase().includes(q)
-                  }
-                  return true
-                })
-                .map(athlete => {
+              paginatedCreditAthletes.map(athlete => {
                   const acc = creditMap.get(athlete.id) || { balance: 0, credit_limit: 50 }
                   const available = Math.max(0, acc.credit_limit - acc.balance)
                   const team = athlete.teams ? (Array.isArray(athlete.teams) ? athlete.teams[0] : athlete.teams) : null
@@ -1515,17 +1526,14 @@ export default function CantinaHub({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {athletes
-                  .filter(a => {
-                    const acc = creditMap.get(a.id) || { balance: 0, credit_limit: 50 }
-                    if (creditFilterDebtOnly && acc.balance <= 0) return false
-                    if (creditSearchQuery.trim()) {
-                      const q = creditSearchQuery.toLowerCase()
-                      return a.name.toLowerCase().includes(q) || a.cedula.toLowerCase().includes(q)
-                    }
-                    return true
-                  })
-                  .map(athlete => {
+                {filteredCreditAthletes.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-gray-400 font-medium">
+                      No hay atletas que coincidan con la búsqueda o filtro.
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedCreditAthletes.map(athlete => {
                     const acc = creditMap.get(athlete.id) || { balance: 0, credit_limit: 50 }
                     const available = Math.max(0, acc.credit_limit - acc.balance)
                     const team = athlete.teams ? (Array.isArray(athlete.teams) ? athlete.teams[0] : athlete.teams) : null
@@ -1583,10 +1591,80 @@ export default function CantinaHub({
                         </td>
                       </tr>
                     )
-                  })}
+                  })
+                )}
               </tbody>
             </table>
           </div>
+
+          {/* PAGINACIÓN REACTIVA DE CRÉDITOS */}
+          {creditTotalPages > 1 && (
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="text-xs text-gray-500 font-medium order-2 sm:order-1 text-center sm:text-left">
+                Mostrando <strong className="font-bold text-gray-900">{(creditSafePage - 1) * creditPageSize + 1}</strong> a{' '}
+                <strong className="font-bold text-gray-900">
+                  {Math.min(creditSafePage * creditPageSize, filteredCreditAthletes.length)}
+                </strong>{' '}
+                de <strong className="font-bold text-gray-900">{filteredCreditAthletes.length}</strong> atletas
+              </div>
+
+              <div className="flex items-center gap-1.5 order-1 sm:order-2">
+                <button
+                  type="button"
+                  onClick={() => setCreditCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={creditSafePage <= 1}
+                  className="p-2 sm:px-3 sm:py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline">Anterior</span>
+                </button>
+
+                <div className="flex items-center gap-1 px-1">
+                  {Array.from({ length: creditTotalPages }, (_, i) => i + 1).map((pg) => {
+                    if (
+                      creditTotalPages > 7 &&
+                      pg !== 1 &&
+                      pg !== creditTotalPages &&
+                      Math.abs(pg - creditSafePage) > 1
+                    ) {
+                      if (pg === 2 || pg === creditTotalPages - 1) {
+                        return (
+                          <span key={pg} className="px-1 text-xs text-gray-400">
+                            ...
+                          </span>
+                        );
+                      }
+                      return null;
+                    }
+                    return (
+                      <button
+                        key={pg}
+                        type="button"
+                        onClick={() => setCreditCurrentPage(pg)}
+                        className={`w-8 h-8 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                          creditSafePage === pg
+                            ? 'bg-kasa-vinotinto text-white shadow-xs'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        {pg}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setCreditCurrentPage((p) => Math.min(creditTotalPages, p + 1))}
+                  disabled={creditSafePage >= creditTotalPages}
+                  className="p-2 sm:px-3 sm:py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  <span className="hidden sm:inline">Siguiente</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* MODAL AJUSTAR LÍMITE (BOTTOM SHEET EN MÓVIL) */}
           {adjustLimitAthlete && (

@@ -666,12 +666,12 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
             {retainedImages.map((url, idx) => (
               <div key={`retained-${idx}`} className="group relative aspect-[3/4] rounded-2xl overflow-hidden border border-gray-200 bg-gray-100 shadow-2xs">
                 <img src={url} alt="Calendario" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent sm:bg-black/40 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-end sm:items-center justify-center gap-2.5 p-3 sm:p-0">
                   <a
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2 bg-white/90 hover:bg-white text-gray-900 rounded-full shadow-md"
+                    className="w-10 h-10 sm:w-8 sm:h-8 bg-white/90 hover:bg-white text-gray-900 rounded-full shadow-md flex items-center justify-center cursor-pointer"
                     title="Ver en grande"
                   >
                     <Eye className="w-4 h-4" />
@@ -679,7 +679,7 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
                   <button
                     type="button"
                     onClick={() => handleRemoveRetainedImage(idx)}
-                    className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-md"
+                    className="w-10 h-10 sm:w-8 sm:h-8 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-md flex items-center justify-center cursor-pointer"
                     title="Eliminar imagen"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -695,11 +695,11 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
                 <span className="absolute top-2 left-2 bg-emerald-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-xs">
                   Por guardar
                 </span>
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent sm:bg-black/40 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-end sm:items-center justify-center p-3 sm:p-0">
                   <button
                     type="button"
                     onClick={() => handleRemoveNewImage(idx)}
-                    className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-md"
+                    className="w-10 h-10 sm:w-8 sm:h-8 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-md flex items-center justify-center cursor-pointer"
                     title="Quitar"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -812,11 +812,11 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
       </div>
 
       {/* BOTÓN FLOTANTE O FIJO DE GUARDADO */}
-      <div className="sticky bottom-6 flex justify-end">
+      <div className="sticky bottom-6 z-20 flex justify-end">
         <button
           type="submit"
           disabled={saving}
-          className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-kasa-vinotinto to-red-950 hover:from-red-950 hover:to-black text-white font-black text-sm rounded-2xl shadow-xl transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-kasa-vinotinto to-red-950 hover:from-red-950 hover:to-black text-white font-black text-sm rounded-2xl shadow-xl transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
         >
           {saving ? (
             <>

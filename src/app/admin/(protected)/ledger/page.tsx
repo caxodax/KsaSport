@@ -353,42 +353,71 @@ export default async function LedgerPage({
             </h3>
           </div>
           
-          <div className="flex-1 overflow-auto">
-            <table className="min-w-full divide-y divide-gray-100">
-              <thead className="bg-gray-50/50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-black text-gray-500 uppercase tracking-widest">Producto / Concepto</th>
-                  <th className="px-6 py-4 text-center text-xs font-black text-gray-500 uppercase tracking-widest">Transacciones</th>
-                  <th className="px-6 py-4 text-right text-xs font-black text-gray-500 uppercase tracking-widest">Ingreso</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-50">
-                {sortedProducts.map(([product, data]) => (
-                  <tr key={product} className="hover:bg-gray-50/80 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-bold text-gray-900">{product}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700">
-                        {data.count}
+          <div className="flex-1 flex flex-col">
+            {/* VISTA MÓVIL: TARJETAS COMPACTAS */}
+            <div className="md:hidden divide-y divide-gray-100 bg-gray-50/30 p-3 sm:p-4 space-y-2.5">
+              {sortedProducts.length > 0 ? (
+                sortedProducts.map(([product, data]) => (
+                  <div key={product} className="bg-white p-3.5 rounded-2xl border border-gray-100 shadow-2xs flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-gray-900 text-sm truncate" title={product}>{product}</p>
+                      <p className="text-xs text-gray-400 font-semibold mt-0.5">
+                        {data.count} {data.count === 1 ? 'transacción' : 'transacciones'}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="font-black text-green-700 text-sm sm:text-base font-mono">
+                        {data.rateType === 'EUR' ? '€' : '$'}{data.total.toFixed(2)}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <span className="font-black text-green-700 text-base">{data.rateType === 'EUR' ? '€' : '$'}{data.total.toFixed(2)}</span>
-                    </td>
-                  </tr>
-                ))}
-                {sortedProducts.length === 0 && (
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <ShoppingCart className="w-8 h-8 text-gray-300 mx-auto mb-1.5" />
+                  <p className="font-semibold text-gray-600 text-xs">Sin ingresos por producto</p>
+                </div>
+              )}
+            </div>
+
+            {/* VISTA DESKTOP: TABLA ESTRUCTURADA */}
+            <div className="hidden md:block overflow-auto">
+              <table className="min-w-full divide-y divide-gray-100">
+                <thead className="bg-gray-50/50">
                   <tr>
-                    <td colSpan={3} className="px-6 py-12 text-center">
-                      <ShoppingCart className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                      <p className="font-semibold text-gray-600 text-sm">Sin ingresos por producto</p>
-                      <p className="text-xs text-gray-400 mt-0.5">No se registraron ventas en el período seleccionado.</p>
-                    </td>
+                    <th className="px-6 py-4 text-left text-xs font-black text-gray-500 uppercase tracking-widest">Producto / Concepto</th>
+                    <th className="px-6 py-4 text-center text-xs font-black text-gray-500 uppercase tracking-widest">Transacciones</th>
+                    <th className="px-6 py-4 text-right text-xs font-black text-gray-500 uppercase tracking-widest">Ingreso</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-50">
+                  {sortedProducts.map(([product, data]) => (
+                    <tr key={product} className="hover:bg-gray-50/80 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="font-bold text-gray-900">{product}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700">
+                          {data.count}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <span className="font-black text-green-700 text-base">{data.rateType === 'EUR' ? '€' : '$'}{data.total.toFixed(2)}</span>
+                      </td>
+                    </tr>
+                  ))}
+                  {sortedProducts.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-12 text-center">
+                        <ShoppingCart className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                        <p className="font-semibold text-gray-600 text-sm">Sin ingresos por producto</p>
+                        <p className="text-xs text-gray-400 mt-0.5">No se registraron ventas en el período seleccionado.</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
         
@@ -409,61 +438,125 @@ export default async function LedgerPage({
             </div>
           </div>
           
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-100">
-              <thead className="bg-white">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-black text-gray-500 uppercase tracking-widest">Producto</th>
-                  <th className="px-6 py-4 text-center text-xs font-black text-gray-500 uppercase tracking-widest">Atletas</th>
-                  <th className="px-6 py-4 text-right text-xs font-black text-gray-500 uppercase tracking-widest">Facturado</th>
-                  <th className="px-6 py-4 text-right text-xs font-black text-green-600 uppercase tracking-widest">Abonado</th>
-                  <th className="px-6 py-4 text-right text-xs font-black text-red-600 uppercase tracking-widest">Pendiente</th>
-                  <th className="px-6 py-4 text-center text-xs font-black text-gray-500 uppercase tracking-widest">Cobranza</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-50">
-                {installmentSummary.map(prod => {
-                  const pct = prod.totalFacturado > 0 ? Math.min(100, (prod.totalAbonado / prod.totalFacturado) * 100) : 0;
-                  return (
-                    <tr key={prod.id} className="hover:bg-gray-50/80 transition-colors">
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-gray-900">{prod.name}</span>
-                          <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 uppercase tracking-wider">
+          <div className="flex flex-col">
+            {/* VISTA MÓVIL: TARJETAS DE SEGUIMIENTO TÁCTILES */}
+            <div className="md:hidden divide-y divide-gray-100 bg-gray-50/30 p-3 sm:p-4 space-y-3">
+              {installmentSummary.map(prod => {
+                const pct = prod.totalFacturado > 0 ? Math.min(100, (prod.totalAbonado / prod.totalFacturado) * 100) : 0;
+                return (
+                  <div key={prod.id} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-2xs space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h4 className="font-black text-gray-900 text-sm leading-snug">{prod.name}</h4>
+                          <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 uppercase">
                             {prod.rateType}
                           </span>
                         </div>
                         {prod.enrolledAthletes && prod.enrolledAthletes.length > 0 && (
-                          <p className="text-xs text-slate-500 font-medium mt-1">
-                            Inscritas: <span className="text-slate-700 font-semibold">{prod.enrolledAthletes.join(', ')}</span>
+                          <p className="text-[11px] text-slate-500 font-medium mt-1 line-clamp-1">
+                            Inscritas ({prod.athleteCount}): <span className="text-slate-700 font-semibold">{prod.enrolledAthletes.join(', ')}</span>
                           </p>
                         )}
-                      </td>
-                      <td className="px-6 py-5 text-center">
-                        <span className="text-sm font-bold text-gray-600">{prod.athleteCount}</span>
-                      </td>
-                      <td className="px-6 py-5 text-right">
-                        <span className="text-sm font-bold text-gray-500">{prod.currencySymbol}{prod.totalFacturado.toFixed(2)}</span>
-                      </td>
-                      <td className="px-6 py-5 text-right">
-                        <span className="text-sm font-black text-green-700">{prod.currencySymbol}{prod.totalAbonado.toFixed(2)}</span>
-                      </td>
-                      <td className="px-6 py-5 text-right">
-                        <span className="text-sm font-black text-red-700">{prod.currencySymbol}{prod.saldoPendiente.toFixed(2)}</span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden">
-                            <div className={`h-3 rounded-full transition-all duration-1000 ${pct >= 100 ? 'bg-green-500' : 'bg-orange-400'}`} style={{ width: `${pct}%` }}></div>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase shrink-0 ${
+                        pct >= 100 
+                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
+                          : 'bg-amber-50 text-amber-800 border border-amber-200'
+                      }`}>
+                        {pct >= 100 ? 'Completado' : `${pct.toFixed(0)}% Cobranza`}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 bg-gray-50/80 p-2.5 rounded-xl border border-gray-100 text-center text-xs">
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Facturado</span>
+                        <span className="font-bold text-gray-700 font-mono">{prod.currencySymbol}{prod.totalFacturado.toFixed(2)}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-green-600 font-bold uppercase block">Abonado</span>
+                        <span className="font-black text-green-700 font-mono">{prod.currencySymbol}{prod.totalAbonado.toFixed(2)}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-red-600 font-bold uppercase block">Pendiente</span>
+                        <span className="font-black text-red-700 font-mono">{prod.currencySymbol}{prod.saldoPendiente.toFixed(2)}</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-[11px] font-bold text-gray-500 mb-1">
+                        <span>Avance de Cobranza ({prod.athleteCount} atletas)</span>
+                        <span className="text-gray-900 font-black">{pct.toFixed(0)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                        <div
+                          className={`h-2.5 rounded-full transition-all duration-700 ${pct >= 100 ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* VISTA DESKTOP: TABLA COMPLETA */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-100">
+                <thead className="bg-white">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-black text-gray-500 uppercase tracking-widest">Producto</th>
+                    <th className="px-6 py-4 text-center text-xs font-black text-gray-500 uppercase tracking-widest">Atletas</th>
+                    <th className="px-6 py-4 text-right text-xs font-black text-gray-500 uppercase tracking-widest">Facturado</th>
+                    <th className="px-6 py-4 text-right text-xs font-black text-green-600 uppercase tracking-widest">Abonado</th>
+                    <th className="px-6 py-4 text-right text-xs font-black text-red-600 uppercase tracking-widest">Pendiente</th>
+                    <th className="px-6 py-4 text-center text-xs font-black text-gray-500 uppercase tracking-widest">Cobranza</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-50">
+                  {installmentSummary.map(prod => {
+                    const pct = prod.totalFacturado > 0 ? Math.min(100, (prod.totalAbonado / prod.totalFacturado) * 100) : 0;
+                    return (
+                      <tr key={prod.id} className="hover:bg-gray-50/80 transition-colors">
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-gray-900">{prod.name}</span>
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 uppercase tracking-wider">
+                              {prod.rateType}
+                            </span>
                           </div>
-                          <span className="text-xs font-black text-gray-700 w-9 text-right">{pct.toFixed(0)}%</span>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                          {prod.enrolledAthletes && prod.enrolledAthletes.length > 0 && (
+                            <p className="text-xs text-slate-500 font-medium mt-1">
+                              Inscritas: <span className="text-slate-700 font-semibold">{prod.enrolledAthletes.join(', ')}</span>
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-6 py-5 text-center">
+                          <span className="text-sm font-bold text-gray-600">{prod.athleteCount}</span>
+                        </td>
+                        <td className="px-6 py-5 text-right">
+                          <span className="text-sm font-bold text-gray-500">{prod.currencySymbol}{prod.totalFacturado.toFixed(2)}</span>
+                        </td>
+                        <td className="px-6 py-5 text-right">
+                          <span className="text-sm font-black text-green-700">{prod.currencySymbol}{prod.totalAbonado.toFixed(2)}</span>
+                        </td>
+                        <td className="px-6 py-5 text-right">
+                          <span className="text-sm font-black text-red-700">{prod.currencySymbol}{prod.saldoPendiente.toFixed(2)}</span>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden">
+                              <div className={`h-3 rounded-full transition-all duration-1000 ${pct >= 100 ? 'bg-green-500' : 'bg-orange-400'}`} style={{ width: `${pct}%` }}></div>
+                            </div>
+                            <span className="text-xs font-black text-gray-700 w-9 text-right">{pct.toFixed(0)}%</span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

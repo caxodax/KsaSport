@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { 
   DollarSign, RefreshCw, AlertCircle, CheckCircle2, 
   Calendar, ShieldCheck, Landmark, Clock, ArrowUpRight, 
-  ArrowDownRight, Plus, HelpCircle, Save, Loader2 
+  ArrowDownRight, Plus, HelpCircle, Save, Loader2,
+  ChevronLeft, ChevronRight 
 } from 'lucide-react';
 import { syncRatesNow, saveManualRateAction } from './rate-actions';
 import { ExchangeRateResult, RateHistoryItem } from '@/lib/exchangeRate';
@@ -116,6 +117,15 @@ export default function ExchangeRateSettings({
   });
   const groupedHistory = Array.from(groupedHistoryMap.values());
 
+  // Paginación reactiva para el histórico
+  const [historyPage, setHistoryPage] = useState(1);
+  const historyPageSize = 10;
+  const totalHistoryPages = Math.max(1, Math.ceil(groupedHistory.length / historyPageSize));
+  const safeHistoryPage = Math.min(Math.max(1, historyPage), totalHistoryPages);
+  const startHistoryIdx = (safeHistoryPage - 1) * historyPageSize;
+  const endHistoryIdx = Math.min(startHistoryIdx + historyPageSize, groupedHistory.length);
+  const paginatedHistory = groupedHistory.slice(startHistoryIdx, endHistoryIdx);
+
   return (
     <div className="space-y-8">
       
@@ -145,11 +155,11 @@ export default function ExchangeRateSettings({
           </div>
 
           {/* Botón Sincronizar Tasas Ahora (Cron Manual Runner) */}
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               onClick={handleSyncNow}
               disabled={syncing}
-              className="inline-flex items-center gap-2.5 px-5 py-3 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 active:scale-95 text-white text-xs sm:text-sm font-black rounded-2xl shadow-md hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-5 py-3 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 active:scale-95 text-white text-xs sm:text-sm font-black rounded-2xl shadow-md hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer"
               title="Ejecuta de inmediato el cron job de sincronización contra BCV y Binance P2P"
             >
               <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin text-white' : ''}`} />
@@ -295,6 +305,7 @@ export default function ExchangeRateSettings({
                 <input 
                   type="number"
                   step="0.0001"
+                  inputMode="decimal"
                   value={manualUsd}
                   onChange={(e) => setManualUsd(e.target.value)}
                   placeholder="Ej: 842.2067"
@@ -307,6 +318,7 @@ export default function ExchangeRateSettings({
                 <input 
                   type="number"
                   step="0.0001"
+                  inputMode="decimal"
                   value={manualEur}
                   onChange={(e) => setManualEur(e.target.value)}
                   placeholder="Ej: 977.8778"
@@ -319,6 +331,7 @@ export default function ExchangeRateSettings({
                 <input 
                   type="number"
                   step="0.0001"
+                  inputMode="decimal"
                   value={manualUsdt}
                   onChange={(e) => setManualUsdt(e.target.value)}
                   placeholder="Ej: 960.00"
@@ -373,56 +386,167 @@ export default function ExchangeRateSettings({
             <p className="text-xs mt-1">Haz clic en &ldquo;Sincronizar Tasas Ahora&rdquo; para registrar la tasa de hoy.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[720px]">
-              <thead>
-                <tr className="bg-slate-50/90 border-b border-slate-200">
-                  <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Fecha (date_rate)</th>
-                  <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Dólar BCV (USD)</th>
-                  <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Euro BCV (EUR)</th>
-                  <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">USDT Promedio</th>
-                  <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider text-center">Fuente</th>
-                  <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider text-right">Hora Registro</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 bg-white text-xs font-medium">
-                {groupedHistory.map((item) => (
-                  <tr key={item.date} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-4 px-6 font-bold text-gray-900 whitespace-nowrap">
-                      {formatLocalDate(item.date, { 
-                        weekday: 'short', 
-                        day: '2-digit', 
-                        month: 'short', 
-                        year: 'numeric' 
-                      })}
-                    </td>
-                    <td className="py-4 px-6 whitespace-nowrap font-mono font-bold text-slate-800 text-sm">
-                      {item.usd ? `Bs. ${item.usd.toFixed(2)}` : 'N/A'}
-                    </td>
-                    <td className="py-4 px-6 whitespace-nowrap font-mono font-bold text-slate-800 text-sm">
-                      {item.eur ? `Bs. ${item.eur.toFixed(2)}` : 'N/A'}
-                    </td>
-                    <td className="py-4 px-6 whitespace-nowrap font-mono font-bold text-emerald-800 text-sm">
-                      {item.usdt_promedio ? `Bs. ${item.usdt_promedio.toFixed(2)}` : '-'}
-                    </td>
-                    <td className="py-4 px-6 text-center whitespace-nowrap">
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-2xs ${
-                        item.source === 'bcv' 
-                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
-                          : item.source === 'dolarapi' 
-                          ? 'bg-sky-50 text-sky-800 border-sky-200' 
-                          : 'bg-amber-50 text-amber-800 border-amber-200'
-                      }`}>
-                        {item.source}
+          <div className="flex flex-col">
+            {/* VISTA MÓVIL: TARJETAS TÁCTILES COMPACTAS */}
+            <div className="md:hidden divide-y divide-slate-100 bg-slate-50/40 p-3 sm:p-4 space-y-3">
+              {paginatedHistory.map((item) => (
+                <div key={item.date} className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-2xs space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-black text-gray-950 text-sm capitalize">
+                        {formatLocalDate(item.date, { 
+                          weekday: 'short', 
+                          day: '2-digit', 
+                          month: 'short', 
+                          year: 'numeric' 
+                        })}
+                      </p>
+                      <p className="text-[11px] font-mono text-slate-400 mt-0.5">
+                        {item.date} {item.created_at ? `• ${new Date(item.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}` : ''}
+                      </p>
+                    </div>
+
+                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-2xs shrink-0 ${
+                      item.source === 'bcv' 
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+                        : item.source === 'dolarapi' 
+                        ? 'bg-sky-50 text-sky-800 border-sky-200' 
+                        : 'bg-amber-50 text-amber-800 border-amber-200'
+                    }`}>
+                      {item.source}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 bg-slate-50/80 p-2.5 rounded-xl border border-slate-100 text-center">
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-black block">Dólar BCV</span>
+                      <span className="font-mono font-black text-slate-900 text-xs sm:text-sm">
+                        {item.usd ? `Bs. ${item.usd.toFixed(2)}` : 'N/A'}
                       </span>
-                    </td>
-                    <td className="py-4 px-6 text-right whitespace-nowrap text-slate-400 font-mono text-[11px]">
-                      {item.created_at ? new Date(item.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '-'}
-                    </td>
+                    </div>
+                    <div className="border-x border-slate-200/70">
+                      <span className="text-[10px] text-slate-400 uppercase font-black block">Euro BCV</span>
+                      <span className="font-mono font-black text-slate-900 text-xs sm:text-sm">
+                        {item.eur ? `Bs. ${item.eur.toFixed(2)}` : 'N/A'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-emerald-600 uppercase font-black block">USDT P2P</span>
+                      <span className="font-mono font-black text-emerald-800 text-xs sm:text-sm">
+                        {item.usdt_promedio ? `Bs. ${item.usdt_promedio.toFixed(2)}` : '-'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* VISTA DESKTOP: TABLA COMPLETA */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[720px]">
+                <thead>
+                  <tr className="bg-slate-50/90 border-b border-slate-200">
+                    <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Fecha (date_rate)</th>
+                    <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Dólar BCV (USD)</th>
+                    <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Euro BCV (EUR)</th>
+                    <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">USDT Promedio</th>
+                    <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider text-center">Fuente</th>
+                    <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider text-right">Hora Registro</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100 bg-white text-xs font-medium">
+                  {paginatedHistory.map((item) => (
+                    <tr key={item.date} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-4 px-6 font-bold text-gray-900 whitespace-nowrap">
+                        {formatLocalDate(item.date, { 
+                          weekday: 'short', 
+                          day: '2-digit', 
+                          month: 'short', 
+                          year: 'numeric' 
+                        })}
+                      </td>
+                      <td className="py-4 px-6 whitespace-nowrap font-mono font-bold text-slate-800 text-sm">
+                        {item.usd ? `Bs. ${item.usd.toFixed(2)}` : 'N/A'}
+                      </td>
+                      <td className="py-4 px-6 whitespace-nowrap font-mono font-bold text-slate-800 text-sm">
+                        {item.eur ? `Bs. ${item.eur.toFixed(2)}` : 'N/A'}
+                      </td>
+                      <td className="py-4 px-6 whitespace-nowrap font-mono font-bold text-emerald-800 text-sm">
+                        {item.usdt_promedio ? `Bs. ${item.usdt_promedio.toFixed(2)}` : '-'}
+                      </td>
+                      <td className="py-4 px-6 text-center whitespace-nowrap">
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-2xs ${
+                          item.source === 'bcv' 
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+                            : item.source === 'dolarapi' 
+                            ? 'bg-sky-50 text-sky-800 border-sky-200' 
+                            : 'bg-amber-50 text-amber-800 border-amber-200'
+                        }`}>
+                          {item.source}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-right whitespace-nowrap text-slate-400 font-mono text-[11px]">
+                        {item.created_at ? new Date(item.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* CONTROLES DE PAGINACIÓN */}
+            {groupedHistory.length > 0 && (
+              <div className="px-4 py-3 sm:px-6 sm:py-3.5 border-t border-slate-100 bg-slate-50/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                <span className="text-slate-500 font-medium">
+                  Mostrando <strong className="text-gray-900 font-bold">{startHistoryIdx + 1}</strong>–
+                  <strong className="text-gray-900 font-bold">{endHistoryIdx}</strong> de{' '}
+                  <strong className="text-gray-900 font-bold">{groupedHistory.length}</strong> fechas
+                </span>
+
+                {totalHistoryPages > 1 && (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
+                      disabled={safeHistoryPage === 1}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-gray-700 font-bold hover:bg-slate-50 hover:text-kasa-vinotinto disabled:opacity-30 disabled:pointer-events-none transition-all shadow-2xs cursor-pointer"
+                      title="Página anterior"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      <span className="hidden sm:inline">Anterior</span>
+                    </button>
+
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: totalHistoryPages }, (_, i) => i + 1).map((pNum) => (
+                        <button
+                          key={pNum}
+                          type="button"
+                          onClick={() => setHistoryPage(pNum)}
+                          className={`min-w-[30px] h-7 px-2 rounded-lg font-black text-xs transition-all cursor-pointer ${
+                            safeHistoryPage === pNum
+                              ? 'bg-kasa-vinotinto text-white shadow-2xs'
+                              : 'bg-white border border-slate-200 text-gray-700 hover:bg-slate-50 hover:text-kasa-vinotinto'
+                          }`}
+                        >
+                          {pNum}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setHistoryPage((p) => Math.min(totalHistoryPages, p + 1))}
+                      disabled={safeHistoryPage === totalHistoryPages}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-gray-700 font-bold hover:bg-slate-50 hover:text-kasa-vinotinto disabled:opacity-30 disabled:pointer-events-none transition-all shadow-2xs cursor-pointer"
+                      title="Página siguiente"
+                    >
+                      <span className="hidden sm:inline">Siguiente</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
