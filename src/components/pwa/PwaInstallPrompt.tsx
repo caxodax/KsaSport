@@ -3,62 +3,72 @@
 import { useState, useEffect } from 'react';
 import { 
   Download, Bell, X, Share, PlusSquare, CheckCircle2, 
-  Smartphone, BellRing, Sparkles, Loader2, Info, Check
+  Sparkles, Loader2, Info, Check
 } from 'lucide-react';
-import { urlBase64ToUint8Array } from '@/lib/pushClient';
+import { urlBase64ToUint8Array, getDevicePwaStatus } from '@/lib/pushClient';
 import { savePushSubscription } from '@/app/actions/pushSubscription';
 import { toast } from 'sonner';
+import IosInstallGuideModal from './IosInstallGuideModal';
 
 export default function PwaInstallPrompt() {
   const [mounted, setMounted] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [isIos, setIsIos] = useState(false);
   const [pushGranted, setPushGranted] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isIos, setIsIos] = useState(false);
   const [showIosGuide, setShowIosGuide] = useState(false);
+  const [iosGuideReason, setIosGuideReason] = useState<'install' | 'push'>('install');
   const [showAndroidGuide, setShowAndroidGuide] = useState(false);
   const [isSubscribingPush, setIsSubscribingPush] = useState(false);
 
   useEffect(() => {
     setMounted(true);
 
-    // 1. Detectar si es dispositivo iOS (iPhone / iPad)
-    const userAgent = window.navigator.userAgent.toLowerCase();
-    const isIosDevice = /iphone|ipad|ipod/.test(userAgent) && !(window as any).MSStream;
-    setIsIos(isIosDevice);
+    // 1. Detectar características del dispositivo y modo de ejecución
+    const status = getDevicePwaStatus();
+    setIsIos(status.isIos);
+    setIsStandalone(status.isStandalone);
 
-    // 2. Detección híbrida y completa de instalación
-    const isStandaloneMedia = window.matchMedia('(display-mode: standalone)').matches;
-    const isIosStandalone = (window.navigator as any).standalone === true;
-    const isWebApk = typeof document !== 'undefined' && document.referrer?.includes('android-app://');
-    const isPwaParam = typeof window !== 'undefined' && window.location.search.includes('source=pwa');
-    const storedInstalled = typeof window !== 'undefined' && localStorage.getItem('ksasport_pwa_installed') === 'true';
+    // 2. Detección precisa de instalación
+    if (status.isIos) {
+      // En iOS, el único estado real de app instalada y activa es standalone
+      if (status.isStandalone) {
+        setIsInstalled(true);
+        try {
+          localStorage.setItem('ksasport_pwa_installed', 'true');
+        } catch (e) {}
+      } else {
+        // En Safari web no está corriendo como app standalone
+        setIsInstalled(false);
+      }
+    } else {
+      // En Android / Chrome / Desktop
+      const isWebApk = typeof document !== 'undefined' && document.referrer?.includes('android-app://');
+      const isPwaParam = typeof window !== 'undefined' && window.location.search.includes('source=pwa');
+      const storedInstalled = typeof window !== 'undefined' && localStorage.getItem('ksasport_pwa_installed') === 'true';
 
-    const alreadyInstalled = isStandaloneMedia || isIosStandalone || isWebApk || isPwaParam || storedInstalled;
+      if (status.isStandalone || isWebApk || isPwaParam || storedInstalled) {
+        setIsInstalled(true);
+        try {
+          localStorage.setItem('ksasport_pwa_installed', 'true');
+        } catch (e) {}
+      }
 
-    if (alreadyInstalled) {
-      setIsInstalled(true);
-      try {
-        localStorage.setItem('ksasport_pwa_installed', 'true');
-      } catch (e) {
-        // ignore
+      if ('getInstalledRelatedApps' in navigator) {
+        (navigator as any).getInstalledRelatedApps().then((relatedApps: any[]) => {
+          if (relatedApps && relatedApps.length > 0) {
+            setIsInstalled(true);
+            try {
+              localStorage.setItem('ksasport_pwa_installed', 'true');
+            } catch (e) {}
+          }
+        }).catch(() => {});
       }
     }
 
-    // Comprobación adicional en navegadores modernos (Chrome getInstalledRelatedApps)
-    if ('getInstalledRelatedApps' in navigator) {
-      (navigator as any).getInstalledRelatedApps().then((relatedApps: any[]) => {
-        if (relatedApps && relatedApps.length > 0) {
-          setIsInstalled(true);
-          try {
-            localStorage.setItem('ksasport_pwa_installed', 'true');
-          } catch (e) {}
-        }
-      }).catch(() => {});
-    }
-
-    // 3. Detección de notificaciones Push (Permission, LocalStorage y ServiceWorker)
+    // 3. Detección de notificaciones Push activas
     const storedPush = typeof window !== 'undefined' && localStorage.getItem('ksasport_push_active') === 'true';
     const permGranted = typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted';
 
@@ -110,13 +120,12 @@ export default function PwaInstallPrompt() {
     };
   }, []);
 
-  // Función para marcar manualmente como instalada
-  const markAsInstalled = () => {
+  // Función para confirmar instalación en Android
+  const markAsInstalledAndroid = () => {
     setIsInstalled(true);
     try {
       localStorage.setItem('ksasport_pwa_installed', 'true');
     } catch (e) {}
-    setShowIosGuide(false);
     setShowAndroidGuide(false);
     toast.success('¡KsaSport confirmada como instalada en tu dispositivo! 🏆');
   };
@@ -127,12 +136,13 @@ export default function PwaInstallPrompt() {
   // 2. Si el usuario cerró el aviso en esta sesión con la X, no mostrarlo hasta recargar
   if (isDismissed) return null;
 
-  // 3. Si AMBOS servicios ya están listos (instalada y notificaciones activas), no mostrarlo NUNCA
+  // 3. Si AMBOS servicios ya están listos (instalada y notificaciones activas), no mostrarlo
   if (isInstalled && pushGranted) return null;
 
-  // Manejar clic en "Instalar"
+  // Manejar clic en botón de instalación
   const handleInstallClick = async () => {
     if (isIos) {
+      setIosGuideReason('install');
       setShowIosGuide(true);
       return;
     }
@@ -142,7 +152,7 @@ export default function PwaInstallPrompt() {
         deferredPrompt.prompt();
         const choiceResult = await deferredPrompt.userChoice;
         if (choiceResult.outcome === 'accepted') {
-          markAsInstalled();
+          markAsInstalledAndroid();
         }
       } catch (err) {
         console.error('Error lanzando prompt de instalación', err);
@@ -150,20 +160,29 @@ export default function PwaInstallPrompt() {
         setDeferredPrompt(null);
       }
     } else {
-      // Si el navegador no tiene deferredPrompt (porque ya la instaló o no lo soporta directamente)
       setShowAndroidGuide(true);
     }
   };
 
   // Manejar activación de notificaciones Push
   const handleEnablePush = async () => {
-    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-      if (isIos && !isInstalled) {
-        setShowIosGuide(true);
-        toast.info('En iPhone, primero debes añadir KsaSport a tu pantalla de inicio para recibir alertas push.');
-        return;
-      }
-      toast.error('Tu navegador no soporta notificaciones Web Push.');
+    const status = getDevicePwaStatus();
+
+    // REGLA CRÍTICA EN IPHONE (iOS):
+    // Apple bloquea Web Push en las pestañas normales de Safari.
+    // Requiere obligatoriamente que la app se haya agregado a la pantalla de inicio
+    // y se abra en modo standalone desde el ícono.
+    if (status.isIos && !status.isStandalone) {
+      setIosGuideReason('push');
+      setShowIosGuide(true);
+      toast.info('En iPhone, primero debes abrir KsaSport desde tu pantalla de inicio para activar notificaciones.', {
+        duration: 6000,
+      });
+      return;
+    }
+
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+      toast.error('Tu navegador o dispositivo no soporta notificaciones Web Push.');
       return;
     }
 
@@ -171,7 +190,11 @@ export default function PwaInstallPrompt() {
     try {
       const perm = await Notification.requestPermission();
       if (perm !== 'granted') {
-        toast.error('Permiso denegado. Puedes activarlo en los ajustes de tu navegador.');
+        toast.error(
+          status.isIos 
+            ? 'Permiso denegado. Ve a Configuración > Safari/KsaSport > Notificaciones para permitir alertas.' 
+            : 'Permiso denegado. Puedes activarlo en los ajustes de tu navegador.'
+        );
         setIsSubscribingPush(false);
         return;
       }
@@ -185,7 +208,7 @@ export default function PwaInstallPrompt() {
       const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
       if (!vapidPublicKey) {
-        throw new Error('Clave pública VAPID no configurada.');
+        throw new Error('Clave pública VAPID no configurada en el servidor.');
       }
 
       const sub = await reg.pushManager.subscribe({
@@ -203,10 +226,22 @@ export default function PwaInstallPrompt() {
         });
       }
 
-      toast.success('¡Notificaciones Push activadas en tu dispositivo! 🔔');
+      toast.success(
+        status.isIos 
+          ? '¡Notificaciones Push activadas en tu iPhone! 🔔' 
+          : '¡Notificaciones Push activadas en tu dispositivo! 🔔'
+      );
     } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || 'No se pudo completar la suscripción push.');
+      console.error('Error suscribiendo push:', err);
+      if (err.name === 'NotAllowedError') {
+        toast.error('Permiso bloqueado. Habilita las notificaciones en los Ajustes de tu dispositivo.');
+      } else if (status.isIos && !status.isStandalone) {
+        setIosGuideReason('push');
+        setShowIosGuide(true);
+        toast.info('En iPhone, abre KsaSport desde el ícono de inicio para activar alertas.');
+      } else {
+        toast.error(err.message || 'No se pudo completar la suscripción push.');
+      }
     } finally {
       setIsSubscribingPush(false);
     }
@@ -217,7 +252,7 @@ export default function PwaInstallPrompt() {
       {/* BARRA FLOTANTE FIJA INFERIOR */}
       <aside 
         aria-label="Configuración de la Aplicación KsaSport"
-        className="fixed bottom-4 inset-x-3 sm:inset-x-auto sm:right-6 sm:w-[450px] z-50 transition-all duration-300 animate-in fade-in slide-in-from-bottom-5 pb-[env(safe-area-inset-bottom,0px)]"
+        className="fixed bottom-4 inset-x-3 sm:inset-x-auto sm:right-6 sm:w-[460px] z-50 transition-all duration-300 animate-in fade-in slide-in-from-bottom-5 pb-[env(safe-area-inset-bottom,0px)]"
       >
         <div className="bg-gradient-to-r from-[#3B0711] via-kasa-vinotinto to-[#250309] text-white rounded-3xl p-4 sm:p-5 shadow-[0_12px_45px_rgba(0,0,0,0.5)] border border-white/20 backdrop-blur-xl relative overflow-hidden">
           {/* Acento de brillo decorativo */}
@@ -240,7 +275,9 @@ export default function PwaInstallPrompt() {
                     </span>
                   </div>
                   <p className="text-[11px] text-white/75 truncate mt-0.5">
-                    {!isInstalled && !pushGranted
+                    {isIos && !isStandalone
+                      ? 'Agrega la app a tu inicio para activar alertas'
+                      : !isInstalled && !pushGranted
                       ? 'Instala la app y activa tus alertas deportivas'
                       : !isInstalled
                       ? 'Agrega KsaSport a tu pantalla de inicio'
@@ -276,16 +313,31 @@ export default function PwaInstallPrompt() {
                     onClick={handleInstallClick}
                     className="min-h-[44px] w-full px-3.5 py-2.5 rounded-2xl bg-kasa-dorado hover:bg-yellow-400 text-kasa-vinotinto font-black text-xs transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                   >
-                    <Download className="w-4 h-4 shrink-0" />
-                    <span>Instalar en Inicio</span>
+                    {isIos ? (
+                      <>
+                        <Share className="w-4 h-4 shrink-0" />
+                        <span>Agregar a Inicio</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4 shrink-0" />
+                        <span>Instalar en Inicio</span>
+                      </>
+                    )}
                   </button>
-                  <button
-                    type="button"
-                    onClick={markAsInstalled}
-                    className="text-[10px] text-white/70 hover:text-white underline underline-offset-2 transition-colors cursor-pointer text-center py-1 mt-0.5"
-                  >
-                    ¿Ya la instalaste? Toca aquí
-                  </button>
+                  {isIos ? (
+                    <span className="text-[10px] text-white/60 text-center py-0.5 mt-0.5">
+                      Toca para ver pasos en Safari
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={markAsInstalledAndroid}
+                      className="text-[10px] text-white/70 hover:text-white underline underline-offset-2 transition-colors cursor-pointer text-center py-1 mt-0.5"
+                    >
+                      ¿Ya la instalaste? Toca aquí
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="min-h-[44px] px-3 py-2 rounded-2xl bg-white/10 border border-white/15 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5">
@@ -315,9 +367,9 @@ export default function PwaInstallPrompt() {
                       </>
                     )}
                   </button>
-                  {isIos && !isInstalled && (
-                    <span className="text-[10px] text-white/50 text-center py-1 mt-0.5">
-                      (Requiere agregar a inicio)
+                  {isIos && !isStandalone && (
+                    <span className="text-[10px] text-white/60 text-center py-0.5 mt-0.5">
+                      (Requiere abrir desde el inicio)
                     </span>
                   )}
                 </div>
@@ -333,93 +385,12 @@ export default function PwaInstallPrompt() {
         </div>
       </aside>
 
-      {/* MODAL GUÍA PASO A PASO PARA IPHONE (SAFARI) */}
-      {showIosGuide && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-t-[32px] sm:rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5 text-gray-900 animate-in slide-in-from-bottom-8">
-            <div className="flex justify-between items-center border-b pb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-kasa-vinotinto p-1 flex items-center justify-center shrink-0">
-                  <img src="/icon-192.png" alt="KsaSport" className="w-full h-full object-contain rounded-xl" />
-                </div>
-                <div>
-                  <h3 className="font-black text-lg text-gray-900 leading-tight">Instalar KsaSport</h3>
-                  <p className="text-xs text-slate-500 font-medium">Guía para iPhone / iPad (Safari)</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowIosGuide(false)}
-                className="min-h-[44px] min-w-[44px] text-gray-400 hover:text-gray-700 flex items-center justify-center rounded-xl transition-colors cursor-pointer"
-                aria-label="Cerrar guía de instalación"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-600 leading-relaxed">
-              En Safari de Apple, agrega <strong>KsaSport</strong> a tu pantalla de inicio siguiendo estos 3 pasos:
-            </p>
-
-            <div className="space-y-3">
-              <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                <div className="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 font-black text-xs">
-                  1
-                </div>
-                <div className="text-xs text-slate-700">
-                  <p className="font-bold text-gray-900">Pulsa el botón Compartir</p>
-                  <p className="text-slate-500 mt-0.5">
-                    En la barra inferior de Safari busca el ícono <Share className="w-3.5 h-3.5 inline text-blue-600 mx-0.5" />.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 font-black text-xs">
-                  2
-                </div>
-                <div className="text-xs text-slate-700">
-                  <p className="font-bold text-gray-900">«Agregar a pantalla de inicio»</p>
-                  <p className="text-slate-500 mt-0.5">
-                    Desliza en las opciones y selecciona <PlusSquare className="w-3.5 h-3.5 inline text-gray-800 mx-0.5" /> <strong>Agregar a pantalla de inicio</strong>.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 font-black text-xs">
-                  3
-                </div>
-                <div className="text-xs text-slate-700">
-                  <p className="font-bold text-gray-900">Confirma pulsando «Agregar»</p>
-                  <p className="text-slate-500 mt-0.5">
-                    En la esquina superior derecha, toca <strong>Agregar</strong>.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-2 space-y-2">
-              <button
-                type="button"
-                onClick={markAsInstalled}
-                className="min-h-[44px] w-full py-3.5 rounded-2xl bg-kasa-vinotinto text-white font-black text-xs hover:bg-red-950 transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-md"
-              >
-                <Check className="w-4 h-4 text-kasa-dorado" />
-                <span>¡Listo, ya la agregué a mi inicio!</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowIosGuide(false)}
-                className="min-h-[44px] w-full py-2.5 rounded-2xl text-slate-500 hover:text-slate-800 font-semibold text-xs transition-colors cursor-pointer"
-              >
-                Cerrar guía
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* MODAL GUÍA PASO A PASO PARA IPHONE (SAFARI / IOS) */}
+      <IosInstallGuideModal
+        isOpen={showIosGuide}
+        onClose={() => setShowIosGuide(false)}
+        reason={iosGuideReason}
+      />
 
       {/* MODAL GUÍA PARA ANDROID / CHROME */}
       {showAndroidGuide && (
@@ -465,7 +436,7 @@ export default function PwaInstallPrompt() {
             <div className="pt-2 space-y-2">
               <button
                 type="button"
-                onClick={markAsInstalled}
+                onClick={markAsInstalledAndroid}
                 className="min-h-[44px] w-full py-3.5 rounded-2xl bg-kasa-vinotinto text-white font-black text-xs hover:bg-red-950 transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-md"
               >
                 <Check className="w-4 h-4 text-kasa-dorado" />
