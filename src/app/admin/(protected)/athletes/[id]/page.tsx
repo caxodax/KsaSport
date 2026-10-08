@@ -399,7 +399,55 @@ export default async function AthleteProfilePage({
                 />
               </div>
               
-              <div className="overflow-x-auto">
+              {/* Vista Móvil: Tarjetas Táctiles de Estado de Cuenta */}
+              <div className="md:hidden divide-y divide-slate-100">
+                {statement.map(item => (
+                  <div key={item.id} className="p-4 space-y-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="font-bold text-gray-900 text-sm">{item.name}</span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {item.isExempt && (
+                          <span className="bg-amber-100/80 text-amber-900 border border-amber-300 text-[10px] px-2 py-0.5 rounded-md font-black uppercase tracking-wider">
+                            🤝 Exonerado
+                          </span>
+                        )}
+                        {item.pagado > 0 && item.saldo > 0 && (
+                          <span className="bg-sky-50 text-sky-800 border border-sky-200 text-[10px] px-2 py-0.5 rounded-md font-black uppercase tracking-wider">
+                            Abono parcial
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-center">
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-slate-400">Facturado</p>
+                        <p className="font-mono font-bold text-xs text-slate-700 mt-0.5">${item.facturado.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-emerald-600">Abonado</p>
+                        <p className="font-mono font-black text-xs text-emerald-700 mt-0.5">${item.pagado.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className={`text-[10px] uppercase font-bold ${item.saldo > 0 ? 'text-rose-500' : 'text-slate-400'}`}>Saldo</p>
+                        <p className={`font-mono font-black text-xs mt-0.5 ${item.saldo > 0 ? 'text-rose-600' : 'text-slate-800'}`}>
+                          ${item.saldo.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {statement.length === 0 && (
+                  <div className="py-8 text-center px-4">
+                    <CreditCard className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                    <p className="text-sm font-bold text-gray-700">No hay obligaciones financieras activas</p>
+                    <p className="text-xs text-slate-400 mt-0.5">La atleta no posee compromisos de pago vigentes.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Vista Desktop: Tabla Tradicional de Estado de Cuenta */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50/90 border-b border-slate-200">
@@ -467,7 +515,95 @@ export default async function AthleteProfilePage({
                 </span>
               </div>
               
-              <div className="overflow-x-auto">
+              {/* Vista Móvil: Tarjetas Táctiles de Pagos */}
+              <div className="md:hidden divide-y divide-slate-100">
+                {payments?.map(pay => {
+                  const isVoided = pay.status === 'Anulado'
+
+                  return (
+                    <div key={pay.id} className={`p-4 space-y-3 ${isVoided ? 'opacity-60 bg-slate-50/40' : ''}`}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold text-gray-900">
+                          {formatLocalDate(pay.created_at, { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </span>
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-black rounded-full border ${
+                          pay.status === 'Completado' ? 'bg-emerald-50 text-emerald-800 border-emerald-300' :
+                          pay.status === 'Rechazado' ? 'bg-rose-50 text-rose-800 border-rose-300' :
+                          pay.status === 'Anulado' ? 'bg-slate-100 text-slate-600 border-slate-300 line-through' :
+                          'bg-amber-50 text-amber-800 border-amber-300'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            pay.status === 'Completado' ? 'bg-emerald-500' :
+                            pay.status === 'Rechazado' ? 'bg-rose-500' :
+                            pay.status === 'Anulado' ? 'bg-slate-400' :
+                            'bg-amber-500'
+                          }`} />
+                          {pay.status}
+                        </span>
+                      </div>
+
+                      <div className="flex items-baseline justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-gray-900 truncate">
+                            {(pay.products as any)?.name || 'Cuota'}
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            {pay.method || 'Método no especificado'} {pay.reference ? `• Ref #${pay.reference}` : ''}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className={`font-mono font-black text-base ${isVoided ? 'line-through text-slate-400' : 'text-gray-900'}`}>
+                            {(pay.rate_type === 'EUR' ? '€' : '$')}{Number(pay.amount).toFixed(2)}
+                          </span>
+                          {pay.payment_currency === 'VES' && pay.transferred_amount ? (
+                            <p className={`text-[11px] font-mono font-bold ${isVoided ? 'line-through text-slate-400' : 'text-slate-600'}`}>
+                              Bs. {Number(pay.transferred_amount).toLocaleString('es-VE', { minimumFractionDigits: 2 })}
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                        <div>
+                          {pay.receipt_url ? (
+                            <a 
+                              href={pay.receipt_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="inline-flex items-center gap-1 text-xs font-bold text-kasa-vinotinto hover:underline py-1.5"
+                            >
+                              Ver Comprobante <ExternalLink className="w-3 h-3" />
+                            </a>
+                          ) : (
+                            <span className="text-[11px] text-slate-400 italic">Sin comprobante</span>
+                          )}
+                        </div>
+
+                        <div>
+                          <VoidPaymentButton
+                            paymentId={pay.id}
+                            concept={(pay.products as any)?.name || pay.concept || 'Pago'}
+                            amount={Number(pay.amount)}
+                            rateType={pay.rate_type || 'USD'}
+                            athleteName={athlete.name}
+                            status={pay.status}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+                {(!payments || payments.length === 0) && (
+                  <div className="py-8 text-center px-4">
+                    <Receipt className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                    <p className="text-sm font-bold text-gray-700">No hay pagos registrados</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Aún no se han reportado transferencias o abonos.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Vista Desktop: Tabla Tradicional de Pagos */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50/90 border-b border-slate-200">

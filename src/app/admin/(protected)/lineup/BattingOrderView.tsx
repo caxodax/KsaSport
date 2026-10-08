@@ -103,11 +103,11 @@ export default function BattingOrderView({ athletes }: { athletes: Athlete[] }) 
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex items-center gap-2 mt-2 md:mt-0 justify-end">
+                    <div className="w-full md:w-auto flex items-center gap-2 mt-2 md:mt-0 justify-end">
                       <button
                         onClick={() => handleStat(athlete.id, 'hit')}
                         disabled={isLoading}
-                        className="flex items-center gap-1.5 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors disabled:opacity-50"
+                        className="flex-1 md:flex-initial justify-center min-h-[44px] flex items-center gap-1.5 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors disabled:opacity-50 active:scale-95 cursor-pointer shadow-2xs"
                       >
                         <Target className="w-4 h-4" />
                         +1 Hit
@@ -115,7 +115,7 @@ export default function BattingOrderView({ athletes }: { athletes: Athlete[] }) 
                       <button
                         onClick={() => handleStat(athlete.id, 'out')}
                         disabled={isLoading}
-                        className="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors disabled:opacity-50"
+                        className="flex-1 md:flex-initial justify-center min-h-[44px] flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors disabled:opacity-50 active:scale-95 cursor-pointer shadow-2xs"
                       >
                         <ShieldX className="w-4 h-4" />
                         +1 Out (Ofensivo)

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { sendAdminBroadcast } from './actions';
 import { formatLocalDate } from '@/lib/dateUtils';
+import Pagination from '../Pagination';
 import { toast } from 'sonner';
 
 interface TeamOption {
@@ -43,6 +44,8 @@ interface NotificationsHubProps {
   logs: NotificationLog[];
 }
 
+const LOGS_PER_PAGE = 8;
+
 export default function NotificationsHub({
   subscriberCount,
   athleteSubscriberCount,
@@ -57,6 +60,12 @@ export default function NotificationsHub({
   const [targetType, setTargetType] = useState<'all' | 'team' | 'status' | 'athlete'>('all');
   const [targetFilter, setTargetFilter] = useState('');
   const [sending, setSending] = useState(false);
+  const [logPage, setLogPage] = useState(1);
+
+  // Paginación reactiva de logs
+  const totalLogPages = Math.ceil(logs.length / LOGS_PER_PAGE) || 1;
+  const safeLogPage = Math.min(Math.max(logPage, 1), totalLogPages);
+  const paginatedLogs = logs.slice((safeLogPage - 1) * LOGS_PER_PAGE, safeLogPage * LOGS_PER_PAGE);
 
   const presets = [
     {
@@ -424,7 +433,7 @@ export default function NotificationsHub({
         </div>
 
         {/* Simulador de Smartphone (Live Preview) */}
-        <div className="bg-gradient-to-b from-slate-900 to-black p-6 rounded-[40px] border-4 border-slate-700 shadow-2xl text-white relative">
+        <div className="w-full max-w-[340px] mx-auto lg:max-w-none bg-gradient-to-b from-slate-900 to-black p-6 rounded-[40px] border-4 border-slate-700 shadow-2xl text-white relative">
           <div className="w-24 h-4 bg-slate-800 rounded-full mx-auto mb-6" />
 
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center mb-4">
@@ -478,43 +487,55 @@ export default function NotificationsHub({
         </div>
 
         {logs.length > 0 ? (
-          <div className="divide-y divide-slate-100">
-            {logs.map((log) => (
-              <div key={log.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 transition-colors">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-bold text-gray-900 truncate">
-                      {log.title}
-                    </h4>
-                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                      {log.target_type === 'all' ? '📢 Todos' : log.target_type === 'team' ? '🏆 Equipo' : log.target_type === 'status' ? '💳 Estatus' : '👤 Atleta'}
+          <>
+            <div className="divide-y divide-slate-100">
+              {paginatedLogs.map((log) => (
+                <div key={log.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 transition-colors">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-bold text-gray-900 truncate">
+                        {log.title}
+                      </h4>
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                        {log.target_type === 'all' ? '📢 Todos' : log.target_type === 'team' ? '🏆 Equipo' : log.target_type === 'status' ? '💳 Estatus' : '👤 Atleta'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                      {log.body}
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-2">
+                      <span>{formatLocalDate(log.created_at, { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                      <span>•</span>
+                      <span>Enviado por: {log.created_by || 'Admin'}</span>
+                      {log.url && (
+                        <>
+                          <span>•</span>
+                          <span className="text-kasa-vinotinto font-medium">{log.url}</span>
+                        </>
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="text-left sm:text-right shrink-0">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-black">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      {log.sent_count} {log.sent_count === 1 ? 'dispositivo' : 'dispositivos'}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                    {log.body}
-                  </p>
-                  <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-2">
-                    <span>{formatLocalDate(log.created_at, { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                    <span>•</span>
-                    <span>Enviado por: {log.created_by || 'Admin'}</span>
-                    {log.url && (
-                      <>
-                        <span>•</span>
-                        <span className="text-kasa-vinotinto font-medium">{log.url}</span>
-                      </>
-                    )}
-                  </p>
                 </div>
+              ))}
+            </div>
 
-                <div className="text-left sm:text-right shrink-0">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-black">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    {log.sent_count} {log.sent_count === 1 ? 'dispositivo' : 'dispositivos'}
-                  </span>
-                </div>
+            {totalLogPages > 1 && (
+              <div className="p-4 border-t border-slate-100 flex justify-center bg-slate-50/50">
+                <Pagination
+                  currentPage={safeLogPage}
+                  totalPages={totalLogPages}
+                  onPageChange={setLogPage}
+                />
               </div>
-            ))}
-          </div>
+            )}
+          </>
         ) : (
           <div className="p-10 text-center text-slate-400 text-xs">
             <Bell className="w-8 h-8 mx-auto mb-2 text-slate-300" />

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   Plus, Search, LayoutGrid, Table as TableIcon, Trophy, Users, Shield, 
   Activity, Edit3, Trash2, Layers, Zap, Eye, ChevronRight
@@ -8,6 +8,7 @@ import {
 import { deleteCategory } from './actions';
 import CategoryDrawer from './CategoryDrawer';
 import PositionsModal from './PositionsModal';
+import Pagination from '../Pagination';
 import { PositionItem, normalizePositions } from '@/lib/positions';
 import { toast } from 'sonner';
 
@@ -17,6 +18,8 @@ interface CategoryData {
   positions?: any;
   created_at?: string;
 }
+
+const PAGE_SIZE = 12;
 
 export default function CategoryDashboard({
   initialCategories,
@@ -29,6 +32,7 @@ export default function CategoryDashboard({
 }) {
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [currentPage, setCurrentPage] = useState(1);
   
   // Drawer y Modales
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -38,6 +42,11 @@ export default function CategoryDashboard({
     name: string;
     positions: PositionItem[];
   } | null>(null);
+
+  // Reset de página al cambiar búsqueda
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   // Filtrado reactivo
   const filteredCategories = useMemo(() => {
@@ -52,6 +61,14 @@ export default function CategoryDashboard({
       return nameMatch || posMatch;
     });
   }, [initialCategories, search]);
+
+  // Paginación reactiva
+  const totalPages = Math.ceil(filteredCategories.length / PAGE_SIZE) || 1;
+  const safeCurrentPage = Math.min(Math.max(currentPage, 1), totalPages);
+  const paginatedCategories = useMemo(() => {
+    const start = (safeCurrentPage - 1) * PAGE_SIZE;
+    return filteredCategories.slice(start, start + PAGE_SIZE);
+  }, [filteredCategories, safeCurrentPage]);
 
   // Totales para KPIs
   const totalDisciplines = initialCategories.length;
@@ -250,7 +267,7 @@ export default function CategoryDashboard({
         
         /* === VISTA TARJETAS 360° (FIRST-MOBILE) === */
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {filteredCategories.map((cat) => {
+          {paginatedCategories.map((cat) => {
             const positions = normalizePositions(cat.positions);
             const teamsCount = teamsCountMap[cat.name] || 0;
             const athletesCount = athletesCountMap[cat.name] || 0;
@@ -283,14 +300,14 @@ export default function CategoryDashboard({
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleOpenEdit(cat)}
-                        className="p-2 text-gray-400 hover:text-kasa-vinotinto hover:bg-red-50 rounded-xl transition-colors"
+                        className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-kasa-vinotinto hover:bg-red-50 rounded-xl transition-colors"
                         title="Editar disciplina"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(cat)}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                        className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
                         title="Eliminar disciplina"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -351,7 +368,7 @@ export default function CategoryDashboard({
                   </span>
                   <button
                     onClick={() => handleOpenEdit(cat)}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-kasa-vinotinto hover:text-red-950"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-kasa-vinotinto hover:text-red-950 py-2"
                   >
                     Gestionar
                     <ChevronRight className="w-3.5 h-3.5" />
@@ -364,114 +381,175 @@ export default function CategoryDashboard({
 
       ) : (
 
-        /* === VISTA TABLA EJECUTIVA (STYLE STRIPE/LINEAR) === */
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr className="bg-gray-50/50">
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Disciplina
-                  </th>
-                  <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Equipos
-                  </th>
-                  <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Atletas
-                  </th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Posiciones Configuradas
-                  </th>
-                  <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 bg-white">
-                {filteredCategories.map((cat) => {
-                  const positions = normalizePositions(cat.positions);
-                  const teamsCount = teamsCountMap[cat.name] || 0;
-                  const athletesCount = athletesCountMap[cat.name] || 0;
-                  const previewPositions = positions.slice(0, 5);
-                  const remainingCount = positions.length - previewPositions.length;
+        /* === VISTA TABLA EJECUTIVA CON VISTA DUAL MÓVIL === */
+        <div className="space-y-4">
+          {/* Tarjetas móviles cuando está en modo tabla */}
+          <div className="md:hidden space-y-3">
+            {paginatedCategories.map((cat) => {
+              const positions = normalizePositions(cat.positions);
+              const teamsCount = teamsCountMap[cat.name] || 0;
+              const athletesCount = athletesCountMap[cat.name] || 0;
 
-                  return (
-                    <tr key={cat.id} className="hover:bg-gray-50/70 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center shrink-0">
-                            {getSportIcon(cat.name)}
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-gray-900">{cat.name}</p>
-                            <p className="text-[11px] text-gray-400">ID: {cat.id.slice(0, 8)}</p>
-                          </div>
-                        </div>
-                      </td>
+              return (
+                <div 
+                  key={cat.id}
+                  className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center justify-between gap-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-11 h-11 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center shrink-0">
+                      {getSportIcon(cat.name)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-black text-gray-900 truncate">{cat.name}</p>
+                      <div className="flex items-center gap-2 mt-0.5 text-[11px] text-gray-500 font-medium">
+                        <span>{teamsCount} equipos</span>
+                        <span>•</span>
+                        <span>{athletesCount} atletas</span>
+                      </div>
+                    </div>
+                  </div>
 
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                          {teamsCount} equipos
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                          {athletesCount} atletas
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        {positions.length > 0 ? (
-                          <div className="flex flex-wrap gap-1 items-center max-w-md">
-                            {previewPositions.map((p) => (
-                              <span
-                                key={p.code}
-                                className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200"
-                                title={p.name}
-                              >
-                                {p.code}
-                              </span>
-                            ))}
-                            {remainingCount > 0 && (
-                              <button
-                                type="button"
-                                onClick={() => setInspectPositionsData({ name: cat.name, positions })}
-                                className="text-[11px] font-bold text-kasa-vinotinto bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded-full border border-red-200"
-                              >
-                                +{remainingCount} más
-                              </button>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-xs text-gray-400 italic">No aplica</span>
-                        )}
-                      </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => handleOpenEdit(cat)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
-                            title="Editar disciplina"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(cat)}
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
-                            title="Eliminar disciplina"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => handleOpenEdit(cat)}
+                      className="p-2.5 min-w-[40px] min-h-[40px] flex items-center justify-center text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
+                      title="Editar disciplina"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(cat)}
+                      className="p-2.5 min-w-[40px] min-h-[40px] flex items-center justify-center text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                      title="Eliminar disciplina"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
+
+          {/* Tabla desktop tradicional */}
+          <div className="hidden md:block bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr className="bg-gray-50/50">
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Disciplina
+                    </th>
+                    <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Equipos
+                    </th>
+                    <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Atletas
+                    </th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Posiciones Configuradas
+                    </th>
+                    <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 bg-white">
+                  {paginatedCategories.map((cat) => {
+                    const positions = normalizePositions(cat.positions);
+                    const teamsCount = teamsCountMap[cat.name] || 0;
+                    const athletesCount = athletesCountMap[cat.name] || 0;
+                    const previewPositions = positions.slice(0, 5);
+                    const remainingCount = positions.length - previewPositions.length;
+
+                    return (
+                      <tr key={cat.id} className="hover:bg-gray-50/70 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center shrink-0">
+                              {getSportIcon(cat.name)}
+                            </div>
+                            <div>
+                              <p className="text-sm font-black text-gray-900">{cat.name}</p>
+                              <p className="text-[11px] text-gray-400">ID: {cat.id.slice(0, 8)}</p>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            {teamsCount} equipos
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                            {athletesCount} atletas
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-4">
+                          {positions.length > 0 ? (
+                            <div className="flex flex-wrap gap-1 items-center max-w-md">
+                              {previewPositions.map((p) => (
+                                <span
+                                  key={p.code}
+                                  className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200"
+                                  title={p.name}
+                                >
+                                  {p.code}
+                                </span>
+                              ))}
+                              {remainingCount > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setInspectPositionsData({ name: cat.name, positions })}
+                                  className="text-[11px] font-bold text-kasa-vinotinto bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded-full border border-red-200"
+                                >
+                                  +{remainingCount} más
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400 italic">No aplica</span>
+                          )}
+                        </td>
+
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => handleOpenEdit(cat)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
+                              title="Editar disciplina"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(cat)}
+                              className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                              title="Eliminar disciplina"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Paginación Reactiva */}
+      {totalPages > 1 && (
+        <div className="mt-6 flex justify-center">
+          <Pagination
+            currentPage={safeCurrentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </div>
       )}
 

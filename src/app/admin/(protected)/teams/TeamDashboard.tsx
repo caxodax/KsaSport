@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   Plus, Search, LayoutGrid, Table as TableIcon, Shield, Users, 
   Edit3, Trash2, Filter, ChevronRight, Layers
 } from 'lucide-react';
 import { deleteTeam } from './actions';
 import TeamDrawer from './TeamDrawer';
+import Pagination from '../Pagination';
 import { toast } from 'sonner';
 
 interface TeamData {
@@ -22,6 +23,8 @@ interface CategoryOption {
   name: string;
 }
 
+const PAGE_SIZE = 12;
+
 export default function TeamDashboard({
   initialTeams,
   categories = [],
@@ -34,10 +37,16 @@ export default function TeamDashboard({
   const [search, setSearch] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Drawer
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<TeamData | null>(null);
+
+  // Reset de página al cambiar filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedCategoryFilter]);
 
   // Filtrado reactivo (Búsqueda + Categoría)
   const filteredTeams = useMemo(() => {
@@ -47,6 +56,14 @@ export default function TeamDashboard({
       return matchSearch && matchCategory;
     });
   }, [initialTeams, search, selectedCategoryFilter]);
+
+  // Paginación reactiva
+  const totalPages = Math.ceil(filteredTeams.length / PAGE_SIZE) || 1;
+  const safeCurrentPage = Math.min(Math.max(currentPage, 1), totalPages);
+  const paginatedTeams = useMemo(() => {
+    const start = (safeCurrentPage - 1) * PAGE_SIZE;
+    return filteredTeams.slice(start, start + PAGE_SIZE);
+  }, [filteredTeams, safeCurrentPage]);
 
   // Generador de iniciales si no tiene logo
   const getInitials = (name: string) => {
@@ -208,7 +225,7 @@ export default function TeamDashboard({
 
         /* === VISTA TARJETAS 360° (FIRST-MOBILE) === */
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {filteredTeams.map((team) => {
+          {paginatedTeams.map((team) => {
             const athletesCount = athletesCountMap[team.id] || 0;
 
             return (
@@ -249,14 +266,14 @@ export default function TeamDashboard({
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => handleOpenEdit(team)}
-                        className="p-2 text-gray-400 hover:text-kasa-vinotinto hover:bg-red-50 rounded-xl transition-colors"
+                        className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-kasa-vinotinto hover:bg-red-50 rounded-xl transition-colors"
                         title="Editar equipo"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(team)}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                        className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
                         title="Eliminar equipo"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -283,7 +300,7 @@ export default function TeamDashboard({
                   </span>
                   <button
                     onClick={() => handleOpenEdit(team)}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-kasa-vinotinto hover:text-red-950 transition-colors"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-kasa-vinotinto hover:text-red-950 transition-colors py-2"
                   >
                     Gestionar Equipo
                     <ChevronRight className="w-3.5 h-3.5" />
@@ -296,87 +313,155 @@ export default function TeamDashboard({
 
       ) : (
 
-        /* === VISTA TABLA EJECUTIVA (STYLE STRIPE/LINEAR) === */
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr className="bg-gray-50/50">
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Equipo
-                  </th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Disciplina / Categoría
-                  </th>
-                  <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Nómina
-                  </th>
-                  <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 bg-white">
-                {filteredTeams.map((team) => {
-                  const athletesCount = athletesCountMap[team.id] || 0;
+        /* === VISTA TABLA EJECUTIVA (STYLE STRIPE/LINEAR) CON VISTA DUAL MÓVIL === */
+        <div className="space-y-4">
+          {/* Tarjetas móviles cuando está en modo tabla en pantallas pequeñas */}
+          <div className="md:hidden space-y-3">
+            {paginatedTeams.map((team) => {
+              const athletesCount = athletesCountMap[team.id] || 0;
 
-                  return (
-                    <tr key={team.id} className="hover:bg-gray-50/70 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-3.5">
-                          <div className="w-10 h-10 rounded-xl border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center shrink-0 shadow-sm">
-                            {team.logo_url ? (
-                              <img src={team.logo_url} alt={team.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center text-kasa-vinotinto font-black text-xs">
-                                {getInitials(team.name)}
-                              </div>
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-gray-900">{team.name}</p>
-                            <p className="text-[11px] text-gray-400">ID: {team.id.slice(0, 8)}</p>
-                          </div>
+              return (
+                <div 
+                  key={team.id}
+                  className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center justify-between gap-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-12 h-12 rounded-xl border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center shrink-0">
+                      {team.logo_url ? (
+                        <img src={team.logo_url} alt={team.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center text-kasa-vinotinto font-black text-xs">
+                          {getInitials(team.name)}
                         </div>
-                      </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-kasa-vinotinto border border-red-100">
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-black text-gray-900 truncate">{team.name}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-kasa-vinotinto border border-red-100">
                           {team.category}
                         </span>
-                      </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-50 text-gray-700 border border-gray-200">
-                          <Users className="w-3.5 h-3.5 text-gray-400" />
-                          {athletesCount} {athletesCount === 1 ? 'atleta' : 'atletas'}
+                        <span className="text-[11px] text-gray-500 font-medium">
+                          {athletesCount} atletas
                         </span>
-                      </td>
+                      </div>
+                    </div>
+                  </div>
 
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => handleOpenEdit(team)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
-                            title="Editar equipo"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(team)}
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
-                            title="Eliminar equipo"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => handleOpenEdit(team)}
+                      className="p-2.5 min-w-[40px] min-h-[40px] flex items-center justify-center text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
+                      title="Editar"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(team)}
+                      className="p-2.5 min-w-[40px] min-h-[40px] flex items-center justify-center text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                      title="Eliminar"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
+
+          {/* Tabla tradicional para desktop */}
+          <div className="hidden md:block bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr className="bg-gray-50/50">
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Equipo
+                    </th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Disciplina / Categoría
+                    </th>
+                    <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Nómina
+                    </th>
+                    <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 bg-white">
+                  {paginatedTeams.map((team) => {
+                    const athletesCount = athletesCountMap[team.id] || 0;
+
+                    return (
+                      <tr key={team.id} className="hover:bg-gray-50/70 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-3.5">
+                            <div className="w-10 h-10 rounded-xl border border-gray-100 overflow-hidden bg-gray-50 flex items-center justify-center shrink-0 shadow-sm">
+                              {team.logo_url ? (
+                                <img src={team.logo_url} alt={team.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center text-kasa-vinotinto font-black text-xs">
+                                  {getInitials(team.name)}
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-sm font-black text-gray-900">{team.name}</p>
+                              <p className="text-[11px] text-gray-400">ID: {team.id.slice(0, 8)}</p>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-kasa-vinotinto border border-red-100">
+                            {team.category}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-50 text-gray-700 border border-gray-200">
+                            <Users className="w-3.5 h-3.5 text-gray-400" />
+                            {athletesCount} {athletesCount === 1 ? 'atleta' : 'atletas'}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => handleOpenEdit(team)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
+                              title="Editar equipo"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(team)}
+                              className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                              title="Eliminar equipo"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Paginación Reactiva */}
+      {totalPages > 1 && (
+        <div className="mt-6 flex justify-center">
+          <Pagination
+            currentPage={safeCurrentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </div>
       )}
 
