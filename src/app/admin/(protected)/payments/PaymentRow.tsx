@@ -1,7 +1,7 @@
 'use client'
 
-import { Check, X, Clock, FileText } from 'lucide-react'
-import { approvePayment, rejectPayment } from './actions'
+import { Check, X, Clock, FileText, Ban } from 'lucide-react'
+import { approvePayment, rejectPayment, voidPayment } from './actions'
 import { useState } from 'react'
 import { formatCedula } from '@/lib/cedula'
 import { formatLocalDateShort } from '@/lib/dateUtils'
@@ -117,17 +117,32 @@ export default function PaymentRow({ payment }: { payment: Payment }) {
     setLoading(false)
   }
 
+  const handleVoid = async () => {
+    const reason = prompt('Indica el motivo de la anulación contable (opcional):', 'Error administrativo')
+    if (reason === null) return
+    setLoading(true)
+    const res = await voidPayment(payment.id, reason)
+    if (res?.error) {
+      toast.error(`Error al anular pago: ${res.error}`)
+    } else {
+      toast.success('Pago anulado exitosamente. Saldo revertido.')
+    }
+    setLoading(false)
+  }
+
   return (
     <>
-      <tr className="hover:bg-gray-50 transition-colors">
+      <tr className={`hover:bg-gray-50 transition-colors ${payment.status === 'Anulado' ? 'opacity-60 bg-slate-50/50' : ''}`}>
         <td className="px-6 py-4 whitespace-nowrap">
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-lg ${
               payment.status === 'Pendiente' ? 'bg-yellow-50' : 
-              payment.status === 'Completado' ? 'bg-green-50' : 'bg-red-50'
+              payment.status === 'Completado' ? 'bg-green-50' : 
+              payment.status === 'Anulado' ? 'bg-slate-100' : 'bg-red-50'
             }`}>
               {payment.status === 'Pendiente' ? <Clock className="w-5 h-5 text-yellow-600" /> :
                payment.status === 'Completado' ? <Check className="w-5 h-5 text-green-600" /> :
+               payment.status === 'Anulado' ? <Ban className="w-5 h-5 text-slate-500" /> :
                <X className="w-5 h-5 text-red-600" />}
             </div>
             <div>
@@ -158,11 +173,11 @@ export default function PaymentRow({ payment }: { payment: Payment }) {
           )}
         </td>
         <td className="px-6 py-4 whitespace-nowrap">
-          <div className="text-sm font-bold text-kasa-vinotinto">
+          <div className={`text-sm font-bold ${payment.status === 'Anulado' ? 'line-through text-slate-400' : 'text-kasa-vinotinto'}`}>
             {payment.rate_type === 'EUR' ? '€' : '$'}{Number(payment.amount).toFixed(2)} <span className="text-[10px] text-slate-500 font-normal">{payment.rate_type || 'USD'}</span>
           </div>
           {payment.payment_currency === 'VES' && payment.transferred_amount ? (
-            <div className="text-xs font-mono font-bold text-slate-700 mt-0.5">
+            <div className={`text-xs font-mono font-bold mt-0.5 ${payment.status === 'Anulado' ? 'line-through text-slate-400' : 'text-slate-700'}`}>
               Bs. {Number(payment.transferred_amount).toLocaleString('es-VE', { minimumFractionDigits: 2 })}
             </div>
           ) : null}
@@ -181,6 +196,7 @@ export default function PaymentRow({ payment }: { payment: Payment }) {
           <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
             payment.status === 'Pendiente' ? 'bg-yellow-100 text-yellow-800' :
             payment.status === 'Completado' ? 'bg-green-100 text-green-800' :
+            payment.status === 'Anulado' ? 'bg-slate-100 text-slate-600 line-through' :
             'bg-red-100 text-red-800'
           }`}>
             {payment.status}
@@ -206,8 +222,21 @@ export default function PaymentRow({ payment }: { payment: Payment }) {
                 <X className="w-5 h-5" />
               </button>
             </div>
+          ) : payment.status === 'Completado' ? (
+            <div className="flex justify-end items-center gap-2">
+              <span className="text-xs text-gray-400 italic">Procesado</span>
+              <button
+                onClick={handleVoid}
+                disabled={loading}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-slate-500 hover:text-rose-700 hover:bg-rose-50 border border-slate-200 hover:border-rose-300 rounded-lg transition-all cursor-pointer shadow-2xs"
+                title="Anular contablemente este pago"
+              >
+                <Ban className="w-3.5 h-3.5 text-rose-500" />
+                <span>Anular</span>
+              </button>
+            </div>
           ) : (
-            <span className="text-xs text-gray-400 italic">Procesado</span>
+            <span className="text-xs text-slate-400 italic">{payment.status}</span>
           )}
         </td>
       </tr>
@@ -244,17 +273,32 @@ export function PaymentCard({ payment }: { payment: Payment }) {
     setLoading(false)
   }
 
+  const handleVoid = async () => {
+    const reason = prompt('Indica el motivo de la anulación contable (opcional):', 'Error administrativo')
+    if (reason === null) return
+    setLoading(true)
+    const res = await voidPayment(payment.id, reason)
+    if (res?.error) {
+      toast.error(`Error al anular pago: ${res.error}`)
+    } else {
+      toast.success('Pago anulado exitosamente. Saldo revertido.')
+    }
+    setLoading(false)
+  }
+
   return (
     <>
-      <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col gap-3">
+      <div className={`bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col gap-3 ${payment.status === 'Anulado' ? 'opacity-60 bg-slate-50/50' : ''}`}>
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-lg ${
               payment.status === 'Pendiente' ? 'bg-yellow-50' : 
-              payment.status === 'Completado' ? 'bg-green-50' : 'bg-red-50'
+              payment.status === 'Completado' ? 'bg-green-50' : 
+              payment.status === 'Anulado' ? 'bg-slate-100' : 'bg-red-50'
             }`}>
               {payment.status === 'Pendiente' ? <Clock className="w-5 h-5 text-yellow-600" /> :
                payment.status === 'Completado' ? <Check className="w-5 h-5 text-green-600" /> :
+               payment.status === 'Anulado' ? <Ban className="w-5 h-5 text-slate-500" /> :
                <X className="w-5 h-5 text-red-600" />}
             </div>
             <div>
@@ -263,17 +307,18 @@ export function PaymentCard({ payment }: { payment: Payment }) {
             </div>
           </div>
           <div className="text-right">
-            <div className="font-bold text-kasa-vinotinto">
+            <div className={`font-bold ${payment.status === 'Anulado' ? 'line-through text-slate-400' : 'text-kasa-vinotinto'}`}>
               {payment.rate_type === 'EUR' ? '€' : '$'}{Number(payment.amount).toFixed(2)} <span className="text-[10px] text-slate-500 font-normal">{payment.rate_type || 'USD'}</span>
             </div>
             {payment.payment_currency === 'VES' && payment.transferred_amount ? (
-              <div className="text-xs font-mono font-bold text-slate-700">
+              <div className={`text-xs font-mono font-bold ${payment.status === 'Anulado' ? 'line-through text-slate-400' : 'text-slate-700'}`}>
                 Bs. {Number(payment.transferred_amount).toLocaleString('es-VE', { minimumFractionDigits: 2 })}
               </div>
             ) : null}
             <span className={`px-2 py-0.5 inline-flex text-[10px] leading-5 font-semibold rounded-full mt-1 ${
               payment.status === 'Pendiente' ? 'bg-yellow-100 text-yellow-800' :
               payment.status === 'Completado' ? 'bg-green-100 text-green-800' :
+              payment.status === 'Anulado' ? 'bg-slate-100 text-slate-600 line-through' :
               'bg-red-100 text-red-800'
             }`}>
               {payment.status}
@@ -337,8 +382,22 @@ export function PaymentCard({ payment }: { payment: Payment }) {
             </button>
           </div>
         )}
+
+        {payment.status === 'Completado' && (
+          <div className="mt-2 pt-2 border-t border-gray-100 flex justify-end">
+            <button 
+              onClick={handleVoid}
+              disabled={loading}
+              className="w-full min-h-[40px] py-2 px-3 bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold rounded-xl transition-all text-xs disabled:opacity-50 cursor-pointer active:scale-[0.98] flex items-center justify-center gap-1.5 border border-rose-200"
+            >
+              <Ban className="w-3.5 h-3.5" />
+              <span>Anular Pago</span>
+            </button>
+          </div>
+        )}
       </div>
       <ReceiptModal url={previewUrl} payment={payment} onClose={() => setPreviewUrl(null)} />
     </>
   )
 }
+

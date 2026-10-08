@@ -5,6 +5,7 @@ import { ArrowLeft, User, Calendar, CreditCard, ShieldCheck, Activity, Trophy, M
 import ExemptionManager from './ExemptionManager'
 import TournamentEnrollmentManager from './TournamentEnrollmentManager'
 import ManualPaymentModal from './ManualPaymentModal'
+import VoidPaymentButton from './VoidPaymentButton'
 import { formatCedula } from '@/lib/cedula'
 import { formatLocalDate } from '@/lib/dateUtils'
 import { findParentProduct, getEffectiveOptInProductId } from '@/lib/productHierarchy'
@@ -473,62 +474,79 @@ export default async function AthleteProfilePage({
                       <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Fecha y Método</th>
                       <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Monto / Concepto</th>
                       <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider text-right">Estatus</th>
+                      <th className="py-3.5 px-6 text-xs font-black text-slate-500 uppercase tracking-wider text-right">Acción</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
-                    {payments?.map(pay => (
-                      <tr key={pay.id} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="py-4 px-6 whitespace-nowrap">
-                          <div className="font-bold text-gray-900 text-sm">
-                            {formatLocalDate(pay.created_at, { day: '2-digit', month: 'short', year: 'numeric' })}
-                          </div>
-                          <div className="text-xs font-semibold text-slate-400 mt-0.5">
-                            {pay.method || 'Método no especificado'} {pay.reference ? `• Ref #${pay.reference}` : ''}
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="font-mono font-black text-gray-900 text-sm">
-                            {(pay.rate_type === 'EUR' ? '€' : '$')}{Number(pay.amount).toFixed(2)} <span className="text-[10px] text-slate-400 font-normal">{pay.rate_type || 'USD'}</span>
-                          </div>
-                          {pay.payment_currency === 'VES' && pay.transferred_amount ? (
-                            <div className="text-xs font-mono font-bold text-slate-700">
-                              Bs. {Number(pay.transferred_amount).toLocaleString('es-VE', { minimumFractionDigits: 2 })}
-                              {pay.exchange_rate && Number(pay.exchange_rate) > 1 && (
-                                <span className="text-[10px] text-slate-400 font-normal ml-1">(@ {Number(pay.exchange_rate).toFixed(2)} Bs.)</span>
-                              )}
+                    {payments?.map(pay => {
+                      const isVoided = pay.status === 'Anulado'
+
+                      return (
+                        <tr key={pay.id} className={`hover:bg-slate-50/70 transition-colors ${isVoided ? 'opacity-60 bg-slate-50/40' : ''}`}>
+                          <td className="py-4 px-6 whitespace-nowrap">
+                            <div className="font-bold text-gray-900 text-sm">
+                              {formatLocalDate(pay.created_at, { day: '2-digit', month: 'short', year: 'numeric' })}
                             </div>
-                          ) : null}
-                          <div className="text-xs text-slate-500 font-medium mt-0.5">{(pay.products as any)?.name || 'Cuota'}</div>
-                          {pay.receipt_url && (
-                            <a 
-                              href={pay.receipt_url} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              className="inline-flex items-center gap-1 text-[11px] font-bold text-kasa-vinotinto hover:underline mt-1"
-                            >
-                              Ver Comprobante <ExternalLink className="w-3 h-3" />
-                            </a>
-                          )}
-                        </td>
-                        <td className="py-4 px-6 text-right whitespace-nowrap">
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-black rounded-full border shadow-2xs ${
-                            pay.status === 'Completado' ? 'bg-emerald-50 text-emerald-800 border-emerald-300' :
-                            pay.status === 'Rechazado' ? 'bg-rose-50 text-rose-800 border-rose-300' :
-                            'bg-amber-50 text-amber-800 border-amber-300'
-                          }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${
-                              pay.status === 'Completado' ? 'bg-emerald-500' :
-                              pay.status === 'Rechazado' ? 'bg-rose-500' :
-                              'bg-amber-500'
-                            }`} />
-                            {pay.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                            <div className="text-xs font-semibold text-slate-400 mt-0.5">
+                              {pay.method || 'Método no especificado'} {pay.reference ? `• Ref #${pay.reference}` : ''}
+                            </div>
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className={`font-mono font-black text-sm ${isVoided ? 'line-through text-slate-400' : 'text-gray-900'}`}>
+                              {(pay.rate_type === 'EUR' ? '€' : '$')}{Number(pay.amount).toFixed(2)} <span className="text-[10px] text-slate-400 font-normal">{pay.rate_type || 'USD'}</span>
+                            </div>
+                            {pay.payment_currency === 'VES' && pay.transferred_amount ? (
+                              <div className={`text-xs font-mono font-bold ${isVoided ? 'line-through text-slate-400' : 'text-slate-700'}`}>
+                                Bs. {Number(pay.transferred_amount).toLocaleString('es-VE', { minimumFractionDigits: 2 })}
+                                {pay.exchange_rate && Number(pay.exchange_rate) > 1 && (
+                                  <span className="text-[10px] text-slate-400 font-normal ml-1">(@ {Number(pay.exchange_rate).toFixed(2)} Bs.)</span>
+                                )}
+                              </div>
+                            ) : null}
+                            <div className="text-xs text-slate-500 font-medium mt-0.5">{(pay.products as any)?.name || 'Cuota'}</div>
+                            {pay.receipt_url && (
+                              <a 
+                                href={pay.receipt_url} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="inline-flex items-center gap-1 text-[11px] font-bold text-kasa-vinotinto hover:underline mt-1"
+                              >
+                                Ver Comprobante <ExternalLink className="w-3 h-3" />
+                              </a>
+                            )}
+                          </td>
+                          <td className="py-4 px-6 text-right whitespace-nowrap">
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-black rounded-full border shadow-2xs ${
+                              pay.status === 'Completado' ? 'bg-emerald-50 text-emerald-800 border-emerald-300' :
+                              pay.status === 'Rechazado' ? 'bg-rose-50 text-rose-800 border-rose-300' :
+                              pay.status === 'Anulado' ? 'bg-slate-100 text-slate-600 border-slate-300 line-through' :
+                              'bg-amber-50 text-amber-800 border-amber-300'
+                            }`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${
+                                pay.status === 'Completado' ? 'bg-emerald-500' :
+                                pay.status === 'Rechazado' ? 'bg-rose-500' :
+                                pay.status === 'Anulado' ? 'bg-slate-400' :
+                                'bg-amber-500'
+                              }`} />
+                              {pay.status}
+                            </span>
+                          </td>
+                          <td className="py-4 px-6 text-right whitespace-nowrap">
+                            <VoidPaymentButton
+                              paymentId={pay.id}
+                              concept={(pay.products as any)?.name || pay.concept || 'Pago'}
+                              amount={Number(pay.amount)}
+                              rateType={pay.rate_type || 'USD'}
+                              athleteName={athlete.name}
+                              status={pay.status}
+                            />
+                          </td>
+                        </tr>
+                      )
+                    })}
                     {(!payments || payments.length === 0) && (
                       <tr>
-                        <td colSpan={3} className="py-10 text-center">
+                        <td colSpan={4} className="py-10 text-center">
                           <Receipt className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                           <p className="text-sm font-bold text-gray-700">No hay pagos registrados</p>
                           <p className="text-xs text-slate-400 mt-0.5">Aún no se han reportado transferencias o abonos.</p>

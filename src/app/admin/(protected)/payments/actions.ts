@@ -135,3 +135,109 @@ export async function rejectPayment(paymentId: string) {
   revalidatePath('/admin')
   return { success: true }
 }
+
+/**
+ * Anula contablemente un pago completado o registrado por error.
+ * Actualiza el status a 'Anulado', descontándolo inmediatamente del estado de cuenta,
+ * ingresos del club y recalculando solvencia si correspondía a una mensualidad.
+ */
+export async function voidPayment(paymentId: string, reason?: string) {
+  const { permissions } = await checkAdminPermission()
+  if (!permissions.includes('view_finances') && !permissions.includes('manage_catalog')) {
+    return { error: 'No autorizado para anular pagos.' }
+  }
+
+  const supabase = getServiceSupabase()
+
+  // 1. Obtener la data del pago antes de anular
+  const { data: payment, error: fetchError } = await supabase
+    .from('payments')
+    .select('id, athlete_id, product_id, amount, concept, status, rate_type')
+    .eq('id', paymentId)
+    .single()
+
+  if (fetchError || !payment) {
+    return { error: 'Pago no encontrado.' }
+  }
+
+  if (payment.status === 'Anulado') {
+    return { error: 'Este pago ya se encuentra anulado.' }
+  }
+
+  // 2. Anular el pago actualizando su estatus
+  const voidConcept = reason?.trim() 
+    ? `${payment.concept} [ANULADO: ${reason.trim()}]` 
+    : `${payment.concept} [ANULADO]`
+
+  const { error: updateError } = await supabase
+    .from('payments')
+    .update({ 
+      status: 'Anulado',
+      concept: voidConcept
+    })
+    .eq('id', paymentId)
+
+  if (updateError) {
+    return { error: updateError.message || 'Error al anular el pago.' }
+  }
+
+  const athleteId = payment.athlete_id
+
+  // 3. Reversión de estatus del atleta si el pago era una Mensualidad
+  if (payment.concept.toLowerCase().includes('mensualidad') && athleteId) {
+    // Buscamos los pagos COMPLETADOS restantes de este atleta para mensualidades
+    const { data: remainingPayments } = await supabase
+      .from('payments')
+      .select('amount, product_id, created_at, products(price, end_date)')
+      .eq('athlete_id', athleteId)
+      .eq('status', 'Completado')
+      .ilike('concept', '%mensualidad%')
+      .order('created_at', { ascending: false })
+
+    if (!remainingPayments || remainingPayments.length === 0) {
+      await supabase
+        .from('athletes')
+        .update({
+          status: 'Moroso',
+          paid_until: null
+        })
+        .eq('id', athleteId)
+    } else {
+      let highestDate: Date | null = null
+      for (const p of remainingPayments) {
+        const prod = Array.isArray(p.products) ? p.products[0] : p.products
+        if (prod?.end_date) {
+          const d = new Date(prod.end_date)
+          if (!highestDate || d > highestDate) highestDate = d
+        }
+      }
+
+      const today = new Date()
+      if (highestDate) {
+        const isSolventeNow = highestDate.getFullYear() > today.getFullYear() || 
+                             (highestDate.getFullYear() === today.getFullYear() && highestDate.getMonth() >= today.getMonth())
+        await supabase
+          .from('athletes')
+          .update({
+            status: isSolventeNow ? 'Solvente' : 'Moroso',
+            paid_until: highestDate.toISOString().split('T')[0]
+          })
+          .eq('id', athleteId)
+      }
+    }
+  }
+
+  // 4. Revalidar todas las pantallas financieras y de atletas
+  if (athleteId) {
+    revalidatePath(`/admin/athletes/${athleteId}`)
+  }
+  revalidatePath('/admin/athletes')
+  revalidatePath('/admin/payments')
+  revalidatePath('/admin/ledger')
+  revalidatePath('/admin')
+  revalidatePath('/portal/dashboard')
+  revalidatePath('/portal/dashboard/pagos')
+
+  return { success: true }
+}
+
