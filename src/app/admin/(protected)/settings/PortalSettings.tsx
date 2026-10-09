@@ -10,11 +10,13 @@ import {
 } from 'lucide-react'
 import { updatePortalAndCalendarSettings } from './actions'
 import { compressImageClient } from '@/lib/clientImageCompressor'
+import { InstagramIcon, TikTokIcon, FacebookIcon, WhatsAppIcon } from '@/components/ui/SocialIcons'
 
 interface PortalSettingsProps {
   settings: {
     logo_url?: string | null;
     instagram_url?: string | null;
+    tiktok_url?: string | null;
     facebook_url?: string | null;
     whatsapp_number?: string | null;
     calendar_title?: string | null;
@@ -42,6 +44,7 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
 
   // Redes Sociales
   const [instagramUrl, setInstagramUrl] = useState(settings?.instagram_url || '')
+  const [tiktokUrl, setTiktokUrl] = useState(settings?.tiktok_url || '')
   const [facebookUrl, setFacebookUrl] = useState(settings?.facebook_url || '')
   const [whatsappNumber, setWhatsappNumber] = useState(settings?.whatsapp_number || '')
 
@@ -72,6 +75,7 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
     if (settings) {
       setCurrentLogoUrl(settings.logo_url || DEFAULT_BRAND_LOGO)
       setInstagramUrl(settings.instagram_url || '')
+      setTiktokUrl(settings.tiktok_url || '')
       setFacebookUrl(settings.facebook_url || '')
       setWhatsappNumber(settings.whatsapp_number || '')
       setCalendarTitle(settings.calendar_title || 'Calendario Oficial de Ligas Activas')
@@ -175,6 +179,7 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
       formData.append('remove_logo', String(removeLogo))
 
       formData.append('instagram_url', instagramUrl)
+      formData.append('tiktok_url', tiktokUrl)
       formData.append('facebook_url', facebookUrl)
       formData.append('whatsapp_number', whatsappNumber)
 
@@ -207,6 +212,7 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
           setCurrentPdfUrl(res.settings.calendar_pdf_url || null)
           setRetainedImages(Array.isArray(res.settings.calendar_images) ? res.settings.calendar_images : [])
           setInstagramUrl(res.settings.instagram_url || '')
+          setTiktokUrl(res.settings.tiktok_url || '')
           setFacebookUrl(res.settings.facebook_url || '')
           setWhatsappNumber(res.settings.whatsapp_number || '')
           setCalendarTitle(res.settings.calendar_title || 'Calendario Oficial de Ligas Activas')
@@ -461,11 +467,13 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Instagram */}
           <div className="space-y-2">
             <label className="text-xs font-black uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-pink-500"></span>
+              <span className="w-5 h-5 rounded-full bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white flex items-center justify-center p-0.5 shadow-2xs">
+                <InstagramIcon className="w-3.5 h-3.5 fill-current" />
+              </span>
               Perfil de Instagram
             </label>
             <div className="relative">
@@ -473,7 +481,7 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
                 type="url"
                 value={instagramUrl}
                 onChange={e => setInstagramUrl(e.target.value)}
-                placeholder="https://instagram.com/ksasport"
+                placeholder="https://instagram.com/kasasports"
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-semibold text-gray-900 focus:bg-white focus:border-kasa-vinotinto outline-none transition-all pr-10"
               />
               {instagramUrl && (
@@ -482,19 +490,52 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-pink-600"
-                  title="Abrir enlace"
+                  title="Abrir perfil de Instagram"
                 >
                   <ExternalLink className="w-4 h-4" />
                 </a>
               )}
             </div>
-            <p className="text-[11px] text-gray-400">URL completa de la cuenta oficial de Instagram.</p>
+            <p className="text-[11px] text-gray-400">URL de la cuenta oficial de Instagram.</p>
+          </div>
+
+          {/* TikTok */}
+          <div className="space-y-2">
+            <label className="text-xs font-black uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
+              <span className="w-5 h-5 rounded-full bg-black text-white flex items-center justify-center p-0.5 shadow-2xs border border-white/20">
+                <TikTokIcon className="w-3.5 h-3.5" />
+              </span>
+              Perfil de TikTok
+            </label>
+            <div className="relative">
+              <input
+                type="url"
+                value={tiktokUrl}
+                onChange={e => setTiktokUrl(e.target.value)}
+                placeholder="https://tiktok.com/@kasasports"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-semibold text-gray-900 focus:bg-white focus:border-kasa-vinotinto outline-none transition-all pr-10"
+              />
+              {tiktokUrl && (
+                <a 
+                  href={tiktokUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black"
+                  title="Abrir perfil de TikTok"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              )}
+            </div>
+            <p className="text-[11px] text-gray-400">URL del perfil oficial de TikTok (@kasasports).</p>
           </div>
 
           {/* Facebook */}
           <div className="space-y-2">
             <label className="text-xs font-black uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+              <span className="w-5 h-5 rounded-full bg-[#1877F2] text-white flex items-center justify-center p-0.5 shadow-2xs">
+                <FacebookIcon className="w-3.5 h-3.5 fill-current" />
+              </span>
               Página de Facebook
             </label>
             <div className="relative">
@@ -502,7 +543,7 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
                 type="url"
                 value={facebookUrl}
                 onChange={e => setFacebookUrl(e.target.value)}
-                placeholder="https://facebook.com/ksasport"
+                placeholder="https://facebook.com/kasasport"
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-semibold text-gray-900 focus:bg-white focus:border-kasa-vinotinto outline-none transition-all pr-10"
               />
               {facebookUrl && (
@@ -511,20 +552,22 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600"
-                  title="Abrir enlace"
+                  title="Abrir página de Facebook"
                 >
                   <ExternalLink className="w-4 h-4" />
                 </a>
               )}
             </div>
-            <p className="text-[11px] text-gray-400">Enlace a la página o comunidad de Facebook.</p>
+            <p className="text-[11px] text-gray-400">Enlace a la página oficial de Facebook.</p>
           </div>
 
           {/* WhatsApp */}
           <div className="space-y-2">
             <label className="text-xs font-black uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
-              <MessageCircle className="w-4 h-4 text-emerald-600" />
-              WhatsApp Oficial (Tryouts y Consultas)
+              <span className="w-5 h-5 rounded-full bg-[#25D366] text-white flex items-center justify-center p-0.5 shadow-2xs">
+                <WhatsAppIcon className="w-3.5 h-3.5 fill-current" />
+              </span>
+              WhatsApp Oficial (Tryouts)
             </label>
             <div className="relative">
               <input
@@ -547,7 +590,7 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
               )}
             </div>
             <p className="text-[11px] text-gray-400">
-              Formato internacional con código de país (sin el signo +). Ej: <strong>584128505629</strong>.
+              Formato internacional sin + (Ej: <strong>584125012771</strong>).
             </p>
           </div>
         </div>

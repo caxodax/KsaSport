@@ -67,7 +67,7 @@ export default function BrandLogo({
   // Variantes con contenedor Badge estilizado para fondos oscuros o vinotinto
   const badgeClasses = variant === 'badge-dark'
     ? 'bg-slate-900/90 border border-kasa-dorado/30 shadow-sm'
-    : 'bg-white/95 border border-white/40 shadow-xs backdrop-blur-xs'
+    : 'bg-white border border-slate-200/80 shadow-xs backdrop-blur-xs'
 
   return (
     <div

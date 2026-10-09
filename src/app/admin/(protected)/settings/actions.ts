@@ -99,6 +99,7 @@ export async function updatePortalAndCalendarSettings(formData: FormData) {
     await checkAdminPermission('manage_settings')
 
     const instagram_url = (formData.get('instagram_url') as string || '').trim()
+    const tiktok_url = (formData.get('tiktok_url') as string || '').trim()
     const facebook_url = (formData.get('facebook_url') as string || '').trim()
     const rawWhatsapp = (formData.get('whatsapp_number') as string || '').trim()
     const whatsapp_number = rawWhatsapp.replace(/[^0-9]/g, '')
@@ -161,6 +162,7 @@ export async function updatePortalAndCalendarSettings(formData: FormData) {
     const supabase = getServiceSupabase()
     const updatePayload: Record<string, any> = {
       instagram_url,
+      tiktok_url,
       facebook_url,
       whatsapp_number,
       calendar_title,
@@ -179,7 +181,7 @@ export async function updatePortalAndCalendarSettings(formData: FormData) {
       updatePayload.logo_url = brand_logo_url
     }
 
-    const { data: updatedSettings, error } = await supabase
+    let { data: updatedSettings, error } = await supabase
       .from('club_settings')
       .update(updatePayload)
       .eq('id', 1)
@@ -188,6 +190,30 @@ export async function updatePortalAndCalendarSettings(formData: FormData) {
 
     if (error) {
       console.error('Error updating portal and calendar settings:', error)
+      if (error.code === '42703' || error.message.includes('tiktok_url')) {
+        // Si la columna tiktok_url aún no existe en Supabase, reintentar sin ella para guardar el resto
+        const fallbackPayload = { ...updatePayload }
+        delete fallbackPayload.tiktok_url
+        const retry = await supabase
+          .from('club_settings')
+          .update(fallbackPayload)
+          .eq('id', 1)
+          .select('*')
+          .single()
+
+        if (!retry.error) {
+          revalidatePath('/admin/settings')
+          revalidatePath('/admin')
+          revalidatePath('/calendario')
+          revalidatePath('/portal')
+          revalidatePath('/login')
+          revalidatePath('/')
+          return {
+            error: 'Para guardar el enlace de TikTok, ejecuta el script migration_tiktok_social.sql en el SQL Editor de Supabase (las demás configuraciones se guardaron correctamente).'
+          }
+        }
+      }
+
       if (error.code === '42703' || error.message.includes('logo_url')) {
         return {
           error: 'La columna de logotipo aún no existe en la base de datos. Por favor ejecuta el script migration_brand_logo.sql en el SQL Editor de Supabase.'

@@ -22,6 +22,7 @@ export interface ClubSettings {
   last_bcv_eur?: number;
   bcv_updated_at?: string;
   instagram_url?: string;
+  tiktok_url?: string;
   facebook_url?: string;
   whatsapp_number?: string;
   calendar_title?: string;
