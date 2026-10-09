@@ -6,7 +6,7 @@ import {
   Globe, MessageCircle, Share2, Calendar, FileText, 
   Upload, Trash2, ExternalLink, Save, CheckCircle2, 
   AlertCircle, Loader2, Plus, Eye, Image as ImageIcon,
-  RotateCcw, Sparkles, Users, Trophy, X
+  RotateCcw, Sparkles, Users, Trophy, X, LayoutGrid, List
 } from 'lucide-react'
 import { updatePortalAndCalendarSettings } from './actions'
 import { compressImageClient } from '@/lib/clientImageCompressor'
@@ -437,80 +437,61 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
         </div>
       )}
 
-      {/* BARRA DE NAVEGACIÓN POR SUB-PESTAÑAS (TABS RESPONSIVAS) */}
-      <div className="bg-slate-100 p-1.5 rounded-2xl border border-slate-200/80 flex items-center gap-1.5 overflow-x-auto no-scrollbar shadow-2xs">
-        {/* Tab 1: Calendario de Ligas */}
+      {/* Selector de Pestañas Simple y Limpio */}
+      <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl border border-slate-200/80 overflow-x-auto no-scrollbar">
         <button
           type="button"
           onClick={() => setActiveSubTab('calendar')}
-          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
             activeSubTab === 'calendar'
-              ? 'bg-white text-gray-950 shadow-xs border border-gray-200/80 font-black'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-white/60'
+              ? 'bg-white text-gray-900 shadow-xs border border-slate-200/60 font-black'
+              : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <Calendar className={`w-4 h-4 ${activeSubTab === 'calendar' ? 'text-kasa-vinotinto' : 'text-gray-400'}`} />
-          <span>Calendario de Ligas</span>
-          <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-black ${
-            activeSubTab === 'calendar' ? 'bg-kasa-vinotinto/10 text-kasa-vinotinto' : 'bg-gray-200 text-gray-600'
-          }`}>
-            {retainedImages.length + newImageFiles.length}
-          </span>
-          <span className={`w-2 h-2 rounded-full ${calendarIsActive ? 'bg-emerald-500' : 'bg-gray-400'}`} title={calendarIsActive ? 'Publicado' : 'En pausa'} />
+          <Calendar className="w-3.5 h-3.5 text-kasa-vinotinto" />
+          <span>Calendario</span>
+          <span className="text-[10px] text-slate-400 font-mono">({retainedImages.length + newImageFiles.length})</span>
         </button>
 
-        {/* Tab 2: Scouting y Tryouts */}
         <button
           type="button"
           onClick={() => setActiveSubTab('tryouts')}
-          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
             activeSubTab === 'tryouts'
-              ? 'bg-white text-gray-950 shadow-xs border border-gray-200/80 font-black'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-white/60'
+              ? 'bg-white text-gray-900 shadow-xs border border-slate-200/60 font-black'
+              : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <Users className={`w-4 h-4 ${activeSubTab === 'tryouts' ? 'text-kasa-vinotinto' : 'text-gray-400'}`} />
-          <span>Scouting & Tryouts</span>
-          <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-black ${
-            activeSubTab === 'tryouts' ? 'bg-kasa-vinotinto/10 text-kasa-vinotinto' : 'bg-gray-200 text-gray-600'
-          }`}>
-            {tryoutsRetainedImages.length + tryoutsNewImageFiles.length}
-          </span>
-          <span className={`w-2 h-2 rounded-full ${tryoutsIsActive ? 'bg-emerald-500' : 'bg-gray-400'}`} title={tryoutsIsActive ? 'Publicado' : 'En pausa'} />
+          <Users className="w-3.5 h-3.5 text-kasa-vinotinto" />
+          <span>Tryouts</span>
+          <span className="text-[10px] text-slate-400 font-mono">({tryoutsRetainedImages.length + tryoutsNewImageFiles.length})</span>
         </button>
 
-        {/* Tab 3: Drafts Kickingball */}
         <button
           type="button"
           onClick={() => setActiveSubTab('drafts')}
-          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
             activeSubTab === 'drafts'
-              ? 'bg-white text-gray-950 shadow-xs border border-gray-200/80 font-black'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-white/60'
+              ? 'bg-white text-gray-900 shadow-xs border border-slate-200/60 font-black'
+              : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <Trophy className={`w-4 h-4 ${activeSubTab === 'drafts' ? 'text-kasa-vinotinto' : 'text-gray-400'}`} />
-          <span>Drafts Kickingball</span>
-          <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-black ${
-            activeSubTab === 'drafts' ? 'bg-kasa-vinotinto/10 text-kasa-vinotinto' : 'bg-gray-200 text-gray-600'
-          }`}>
-            {draftsRetainedImages.length + draftsNewImageFiles.length}
-          </span>
-          <span className={`w-2 h-2 rounded-full ${draftsIsActive ? 'bg-emerald-500' : 'bg-gray-400'}`} title={draftsIsActive ? 'Publicado' : 'En pausa'} />
+          <Trophy className="w-3.5 h-3.5 text-kasa-vinotinto" />
+          <span>Drafts</span>
+          <span className="text-[10px] text-slate-400 font-mono">({draftsRetainedImages.length + draftsNewImageFiles.length})</span>
         </button>
 
-        {/* Tab 4: Marca y Redes */}
         <button
           type="button"
           onClick={() => setActiveSubTab('branding')}
-          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
             activeSubTab === 'branding'
-              ? 'bg-white text-gray-950 shadow-xs border border-gray-200/80 font-black'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-white/60'
+              ? 'bg-white text-gray-900 shadow-xs border border-slate-200/60 font-black'
+              : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <Share2 className={`w-4 h-4 ${activeSubTab === 'branding' ? 'text-kasa-vinotinto' : 'text-gray-400'}`} />
-          <span>Marca & Redes</span>
+          <Share2 className="w-3.5 h-3.5 text-kasa-vinotinto" />
+          <span>Redes & Logo</span>
         </button>
       </div>
 
@@ -1111,49 +1092,49 @@ function EventCardSection({
   onUndoRemovePdf,
   onOpenPreview
 }: EventCardSectionProps) {
+  // Selector de vista: 'list' (compacto ahorrador de espacio) o 'grid' (miniaturas)
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+
   return (
-    <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-gray-100 shadow-sm space-y-6 w-full min-w-0">
+    <div className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-200/80 shadow-2xs space-y-5 w-full min-w-0">
       
-      {/* Cabecera de la Sección */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
-        <div className="flex items-start sm:items-center gap-3 min-w-0">
-          <div className="p-2.5 bg-kasa-vinotinto/10 rounded-2xl text-kasa-vinotinto shrink-0">
+      {/* Cabecera Limpia y Directa */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="p-2 bg-kasa-vinotinto/10 rounded-xl text-kasa-vinotinto shrink-0">
             {icon}
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-lg sm:text-xl font-black text-gray-900 break-words">{title}</h3>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
+              <h3 className="text-base sm:text-lg font-black text-gray-900 truncate">{title}</h3>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
                 {badgeLabel}
               </span>
             </div>
-            <p className="text-xs text-gray-500 mt-0.5 break-words">
+            <p className="text-xs text-slate-400 truncate mt-0.5">
               {subtitle}
             </p>
           </div>
         </div>
 
-        {/* Toggle Activo / Pausado */}
-        <div className="flex items-center justify-between sm:justify-start gap-3 bg-gray-50 p-2 rounded-2xl border border-gray-200 shrink-0">
-          <span className="text-xs font-bold text-gray-700">Estado Público:</span>
-          <button
-            type="button"
-            onClick={onToggleActive}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-              isActive 
-                ? 'bg-emerald-600 text-white shadow-xs' 
-                : 'bg-gray-300 text-gray-700'
-            }`}
-          >
-            {isActive ? '● Publicado' : '○ En Pausa'}
-          </button>
-        </div>
+        {/* Toggle Activo / Pausa */}
+        <button
+          type="button"
+          onClick={onToggleActive}
+          className={`self-start sm:self-auto px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer shrink-0 ${
+            isActive 
+              ? 'bg-emerald-600 text-white shadow-2xs hover:bg-emerald-700' 
+              : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+          }`}
+        >
+          {isActive ? '● Publicado' : '○ En Pausa'}
+        </button>
       </div>
 
       {/* Título y Temporada */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-        <div className="space-y-2">
-          <label className="text-xs font-black uppercase tracking-wider text-gray-700">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-black uppercase tracking-wider text-slate-600">
             {titleLabel}
           </label>
           <input
@@ -1161,13 +1142,13 @@ function EventCardSection({
             value={titleValue}
             onChange={e => onChangeTitle(e.target.value)}
             placeholder={titlePlaceholder}
-            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-semibold text-gray-900 focus:bg-white focus:border-kasa-vinotinto outline-none transition-all"
+            className="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm font-semibold text-gray-900 focus:bg-white focus:border-kasa-vinotinto outline-none transition-all"
             required
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-xs font-black uppercase tracking-wider text-gray-700">
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-black uppercase tracking-wider text-slate-600">
             {seasonLabel}
           </label>
           <input
@@ -1175,242 +1156,342 @@ function EventCardSection({
             value={seasonValue}
             onChange={e => onChangeSeason(e.target.value)}
             placeholder={seasonPlaceholder}
-            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-semibold text-gray-900 focus:bg-white focus:border-kasa-vinotinto outline-none transition-all"
+            className="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm font-semibold text-gray-900 focus:bg-white focus:border-kasa-vinotinto outline-none transition-all"
           />
         </div>
       </div>
 
-      {/* Descripción */}
-      <div className="space-y-2">
-        <label className="text-xs font-black uppercase tracking-wider text-gray-700">
+      {/* Descripción Breve */}
+      <div className="space-y-1.5">
+        <label className="text-[11px] font-black uppercase tracking-wider text-slate-600">
           {descLabel}
         </label>
         <textarea
-          rows={3}
+          rows={2}
           value={descValue}
           onChange={e => onChangeDesc(e.target.value)}
           placeholder={descPlaceholder}
-          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm text-gray-900 focus:bg-white focus:border-kasa-vinotinto outline-none transition-all resize-none"
+          className="w-full px-3.5 py-2 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-gray-900 focus:bg-white focus:border-kasa-vinotinto outline-none transition-all resize-none"
         />
       </div>
 
-      {/* GESTOR DE IMÁGENES Y AFICHES REDISEÑADO (COMPACTO Y ELEGANTE) */}
-      <div className="space-y-4 pt-4 border-t border-gray-100">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/80 p-3 sm:p-4 rounded-2xl border border-slate-200/70">
-          <div className="min-w-0">
-            <h4 className="text-sm font-black text-gray-900 flex items-center gap-2">
-              <ImageIcon className="w-4 h-4 text-kasa-dorado-dark shrink-0" />
-              <span>{imagesHeading}</span>
-              <span className="text-[10px] font-mono font-bold text-slate-700 bg-white border border-slate-200 px-2 py-0.5 rounded-full shadow-2xs">
-                {retainedImages.length + newImageFiles.length} afiches
-              </span>
+      {/* GESTOR DE AFICHES CON SWITCHER GRID / LIST */}
+      <div className="space-y-3 pt-3 border-t border-slate-100">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <ImageIcon className="w-4 h-4 text-kasa-dorado-dark shrink-0" />
+            <h4 className="text-xs sm:text-sm font-black text-gray-900 truncate">
+              {imagesHeading}
             </h4>
-            <p className="text-[11px] text-gray-500 mt-0.5 break-words">
-              {imagesHelpText}
-            </p>
+            <span className="text-[10px] font-mono font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full shrink-0">
+              {retainedImages.length + newImageFiles.length}
+            </span>
           </div>
 
-          <button
-            type="button"
-            onClick={() => imageInputRef.current?.click()}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-kasa-vinotinto hover:bg-red-950 text-white font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Subir Afiches</span>
-          </button>
-          <input
-            ref={imageInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            multiple
-            className="hidden"
-            onChange={onAddImages}
-          />
-        </div>
-
-        {/* Galería Compacta de Miniaturas */}
-        <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5 sm:gap-3">
-          {/* Botón Integrado de Añadir Más */}
-          <button
-            type="button"
-            onClick={() => imageInputRef.current?.click()}
-            className="relative aspect-[3/4] max-h-48 sm:max-h-52 rounded-xl border-2 border-dashed border-slate-300 hover:border-kasa-vinotinto hover:bg-red-50/20 transition-all flex flex-col items-center justify-center p-2 text-center cursor-pointer group"
-          >
-            <div className="w-8 h-8 rounded-full bg-slate-100 group-hover:bg-red-100/70 text-slate-500 group-hover:text-kasa-vinotinto flex items-center justify-center mb-1.5 transition-colors">
-              <Plus className="w-4 h-4" />
-            </div>
-            <span className="text-[11px] font-bold text-slate-700 group-hover:text-kasa-vinotinto leading-tight">
-              Añadir afiche
-            </span>
-            <span className="text-[9px] text-slate-400 mt-0.5">
-              JPG, PNG, WebP
-            </span>
-          </button>
-
-          {/* Existentes */}
-          {retainedImages.map((url, idx) => (
-            <div 
-              key={`retained-${idx}`} 
-              className="group relative aspect-[3/4] max-h-48 sm:max-h-52 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-2xs hover:shadow-md transition-all cursor-pointer"
-              onClick={() => onOpenPreview(url)}
-            >
-              <img 
-                src={url} 
-                alt={`Afiche ${idx + 1}`} 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-              />
-              
-              <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-white text-[9px] font-mono font-bold tracking-tight shadow-xs pointer-events-none">
-                #{idx + 1}
-              </span>
-
-              <div 
-                className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-1.5 flex items-center justify-end gap-1.5 transition-opacity"
-                onClick={e => e.stopPropagation()}
-              >
-                <button
-                  type="button"
-                  onClick={() => onOpenPreview(url)}
-                  className="w-7 h-7 rounded-lg bg-white/90 hover:bg-white text-gray-900 shadow-xs flex items-center justify-center cursor-pointer active:scale-90 transition-transform"
-                  title="Ver en pantalla completa"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onRemoveRetained(idx)}
-                  className="w-7 h-7 rounded-lg bg-red-600 hover:bg-red-700 text-white shadow-xs flex items-center justify-center cursor-pointer active:scale-90 transition-transform"
-                  title="Eliminar afiche"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          ))}
-
-          {/* Nuevas por subir */}
-          {newImageFiles.map((item, idx) => (
-            <div 
-              key={`new-${idx}`} 
-              className="group relative aspect-[3/4] max-h-48 sm:max-h-52 rounded-xl overflow-hidden border-2 border-dashed border-emerald-500 bg-emerald-50/40 shadow-2xs hover:shadow-md transition-all cursor-pointer"
-              onClick={() => onOpenPreview(item.preview)}
-            >
-              <img 
-                src={item.preview} 
-                alt={`Nuevo ${idx + 1}`} 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-              />
-              
-              <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-emerald-600 text-white text-[9px] font-bold shadow-xs pointer-events-none">
-                Nuevo
-              </span>
-
-              <div 
-                className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-1.5 flex items-center justify-end gap-1.5 transition-opacity"
-                onClick={e => e.stopPropagation()}
-              >
-                <button
-                  type="button"
-                  onClick={() => onOpenPreview(item.preview)}
-                  className="w-7 h-7 rounded-lg bg-white/90 hover:bg-white text-gray-900 shadow-xs flex items-center justify-center cursor-pointer active:scale-90 transition-transform"
-                  title="Ver en pantalla completa"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onRemoveNew(idx)}
-                  className="w-7 h-7 rounded-lg bg-red-600 hover:bg-red-700 text-white shadow-xs flex items-center justify-center cursor-pointer active:scale-90 transition-transform"
-                  title="Quitar"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* GESTOR DE PDF DESCARGABLE */}
-      <div className="space-y-3 pt-4 border-t border-gray-100">
-        <div>
-          <h4 className="text-sm font-black text-gray-900 flex items-center gap-2">
-            <FileText className="w-4 h-4 text-kasa-vinotinto shrink-0" />
-            <span>{pdfHeading}</span>
-          </h4>
-          <p className="text-xs text-gray-400 mt-0.5 break-words">
-            {pdfHelpText}
-          </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 bg-gray-50 p-3.5 sm:p-4 rounded-2xl border border-gray-200">
-          {removePdf ? (
-            <div className="flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-amber-800 bg-amber-50/80 p-3 rounded-xl border border-amber-200">
-              <span className="font-semibold break-words">El documento PDF se eliminará al guardar los cambios.</span>
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Switcher Vista Cuadrícula / Lista */}
+            <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
               <button
                 type="button"
-                onClick={onUndoRemovePdf}
-                className="font-black underline text-amber-900 hover:text-black cursor-pointer inline-flex items-center gap-1.5 self-start sm:self-auto"
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded-md transition-all cursor-pointer ${
+                  viewMode === 'grid'
+                    ? 'bg-white text-gray-900 shadow-2xs font-bold'
+                    : 'text-slate-400 hover:text-slate-700'
+                }`}
+                title="Vista Cuadrícula"
               >
-                <RotateCcw className="w-3.5 h-3.5" /> Deshacer
+                <LayoutGrid className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 rounded-md transition-all cursor-pointer ${
+                  viewMode === 'list'
+                    ? 'bg-white text-gray-900 shadow-2xs font-bold'
+                    : 'text-slate-400 hover:text-slate-700'
+                }`}
+                title="Vista Lista (Ahorra espacio)"
+              >
+                <List className="w-3.5 h-3.5" />
               </button>
             </div>
-          ) : newPdfFile ? (
-            <div className="flex-1 flex items-center gap-3 min-w-0">
-              <FileText className="w-8 h-8 text-emerald-600 shrink-0" />
-              <div className="truncate min-w-0">
-                <p className="text-xs font-bold text-gray-900 truncate">{newPdfFile.name}</p>
-                <p className="text-[10px] text-emerald-600 font-bold truncate">Nuevo archivo seleccionado (Pendiente de guardar)</p>
-              </div>
-            </div>
-          ) : currentPdfUrl ? (
-            <div className="flex-1 flex items-center gap-3 min-w-0">
-              <FileText className="w-8 h-8 text-red-600 shrink-0" />
-              <div className="truncate min-w-0">
-                <p className="text-xs font-bold text-gray-900 truncate">{pdfDefaultFileName}</p>
-                <a
-                  href={currentPdfUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[11px] text-kasa-vinotinto font-bold hover:underline inline-flex items-center gap-1 mt-0.5"
-                >
-                  Ver archivo actual <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
-            </div>
-          ) : (
-            <div className="flex-1 text-xs text-gray-500 font-medium">
-              No hay ningún PDF publicado actualmente.
-            </div>
-          )}
 
-          <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-200">
+            {/* Botón Subir */}
             <button
               type="button"
-              onClick={() => pdfInputRef.current?.click()}
-              className="flex-1 sm:flex-none px-4 py-2.5 bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 font-bold text-xs rounded-xl shadow-2xs transition-colors cursor-pointer text-center"
+              onClick={() => imageInputRef.current?.click()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-kasa-vinotinto hover:bg-red-950 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer"
             >
-              {currentPdfUrl || newPdfFile ? 'Reemplazar PDF' : 'Subir Archivo PDF'}
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden xs:inline">Subir</span>
             </button>
             <input
-              ref={pdfInputRef}
+              ref={imageInputRef}
               type="file"
-              accept="application/pdf"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
               className="hidden"
-              onChange={onPdfChange}
+              onChange={onAddImages}
             />
+          </div>
+        </div>
 
-            {(currentPdfUrl || newPdfFile) && (
-              <button
-                type="button"
-                onClick={onRemovePdf}
-                className="p-2.5 text-red-600 hover:bg-red-50 rounded-xl transition-colors shrink-0"
-                title="Eliminar PDF"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+        {/* 1. MODO LISTA (COMPACTO Y ULTRA AHORRADOR DE ESPACIO) */}
+        {viewMode === 'list' && (
+          <div className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100 overflow-hidden shadow-2xs">
+            {/* Fila de subida rápida */}
+            <div 
+              onClick={() => imageInputRef.current?.click()}
+              className="p-2.5 bg-slate-50/70 hover:bg-slate-100 cursor-pointer flex items-center justify-between transition-colors"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-slate-500 bg-white">
+                  <Plus className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-xs font-bold text-slate-700">+ Añadir afiches (JPG, PNG, WebP)</span>
+              </div>
+              <span className="text-[10px] font-bold text-kasa-vinotinto bg-red-50 border border-red-100 px-2 py-0.5 rounded-md">
+                Examinar
+              </span>
+            </div>
+
+            {/* Existentes en lista */}
+            {retainedImages.map((url, idx) => (
+              <div key={`retained-list-${idx}`} className="p-2 sm:p-2.5 flex items-center justify-between gap-3 hover:bg-slate-50/60 transition-colors">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div 
+                    className="relative w-8 h-10 rounded-md overflow-hidden border border-slate-200 bg-slate-100 shrink-0 cursor-pointer group"
+                    onClick={() => onOpenPreview(url)}
+                  >
+                    <img src={url} alt={`Afiche ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                    <span className="absolute bottom-0 inset-x-0 bg-black/70 text-[7px] font-mono text-center text-white font-bold">
+                      #{idx + 1}
+                    </span>
+                  </div>
+                  <div className="truncate min-w-0">
+                    <p className="text-xs font-bold text-gray-900 truncate">Afiche Oficial #{idx + 1}</p>
+                    <p className="text-[10px] text-slate-400 truncate">Publicado en portal</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => onOpenPreview(url)}
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-gray-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                    title="Ver grande"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onRemoveRetained(idx)}
+                    className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+                    title="Eliminar afiche"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {/* Nuevas en lista */}
+            {newImageFiles.map((item, idx) => (
+              <div key={`new-list-${idx}`} className="p-2 sm:p-2.5 flex items-center justify-between gap-3 bg-emerald-50/40 hover:bg-emerald-50/70 transition-colors">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div 
+                    className="relative w-8 h-10 rounded-md overflow-hidden border border-emerald-400 bg-emerald-50 shrink-0 cursor-pointer group"
+                    onClick={() => onOpenPreview(item.preview)}
+                  >
+                    <img src={item.preview} alt={`Nuevo ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                    <span className="absolute bottom-0 inset-x-0 bg-emerald-600 text-[7px] text-center text-white font-bold">
+                      Nuevo
+                    </span>
+                  </div>
+                  <div className="truncate min-w-0">
+                    <p className="text-xs font-bold text-emerald-950 truncate">{item.file.name}</p>
+                    <p className="text-[10px] text-emerald-600 font-bold truncate">Por guardar</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => onOpenPreview(item.preview)}
+                    className="p-1.5 rounded-lg text-emerald-700 hover:bg-emerald-100/60 transition-colors cursor-pointer"
+                    title="Ver grande"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onRemoveNew(idx)}
+                    className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+                    title="Quitar"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {retainedImages.length === 0 && newImageFiles.length === 0 && (
+              <div className="p-4 text-center text-xs text-slate-400">
+                {emptyImagesText}
+              </div>
             )}
           </div>
+        )}
+
+        {/* 2. MODO CUADRÍCULA (MINIATURAS VISUALES) */}
+        {viewMode === 'grid' && (
+          <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-2.5">
+            {/* Botón Integrado de Añadir */}
+            <button
+              type="button"
+              onClick={() => imageInputRef.current?.click()}
+              className="relative aspect-[3/4] max-h-40 rounded-xl border border-dashed border-slate-300 hover:border-kasa-vinotinto hover:bg-red-50/20 transition-all flex flex-col items-center justify-center p-2 text-center cursor-pointer group"
+            >
+              <div className="w-7 h-7 rounded-full bg-slate-100 group-hover:bg-red-100/70 text-slate-500 group-hover:text-kasa-vinotinto flex items-center justify-center mb-1 transition-colors">
+                <Plus className="w-3.5 h-3.5" />
+              </div>
+              <span className="text-[11px] font-bold text-slate-700 group-hover:text-kasa-vinotinto leading-tight">
+                Añadir
+              </span>
+            </button>
+
+            {/* Existentes en cuadrícula */}
+            {retainedImages.map((url, idx) => (
+              <div 
+                key={`retained-grid-${idx}`} 
+                className="group relative aspect-[3/4] max-h-40 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-2xs hover:shadow-md transition-all cursor-pointer"
+                onClick={() => onOpenPreview(url)}
+              >
+                <img 
+                  src={url} 
+                  alt={`Afiche ${idx + 1}`} 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                />
+                
+                <span className="absolute top-1 left-1 px-1.5 py-0.2 rounded-md bg-black/70 backdrop-blur-xs text-white text-[9px] font-mono font-bold tracking-tight shadow-xs pointer-events-none">
+                  #{idx + 1}
+                </span>
+
+                <div 
+                  className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-1 flex items-center justify-end gap-1 transition-opacity"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    onClick={() => onOpenPreview(url)}
+                    className="w-6 h-6 rounded-md bg-white/90 hover:bg-white text-gray-900 shadow-xs flex items-center justify-center cursor-pointer active:scale-90 transition-transform"
+                    title="Ver en grande"
+                  >
+                    <Eye className="w-3 h-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onRemoveRetained(idx)}
+                    className="w-6 h-6 rounded-md bg-red-600 hover:bg-red-700 text-white shadow-xs flex items-center justify-center cursor-pointer active:scale-90 transition-transform"
+                    title="Eliminar afiche"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {/* Nuevas en cuadrícula */}
+            {newImageFiles.map((item, idx) => (
+              <div 
+                key={`new-grid-${idx}`} 
+                className="group relative aspect-[3/4] max-h-40 rounded-xl overflow-hidden border-2 border-dashed border-emerald-500 bg-emerald-50/40 shadow-2xs hover:shadow-md transition-all cursor-pointer"
+                onClick={() => onOpenPreview(item.preview)}
+              >
+                <img 
+                  src={item.preview} 
+                  alt={`Nuevo ${idx + 1}`} 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                />
+                
+                <span className="absolute top-1 left-1 px-1.5 py-0.2 rounded-md bg-emerald-600 text-white text-[9px] font-bold shadow-xs pointer-events-none">
+                  Nuevo
+                </span>
+
+                <div 
+                  className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-1 flex items-center justify-end gap-1 transition-opacity"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    onClick={() => onOpenPreview(item.preview)}
+                    className="w-6 h-6 rounded-md bg-white/90 hover:bg-white text-gray-900 shadow-xs flex items-center justify-center cursor-pointer"
+                    title="Ver en grande"
+                  >
+                    <Eye className="w-3 h-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onRemoveNew(idx)}
+                    className="w-6 h-6 rounded-md bg-red-600 hover:bg-red-700 text-white shadow-xs flex items-center justify-center cursor-pointer"
+                    title="Quitar"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* GESTOR DE PDF DESCARGABLE (COMPACTO Y MINIMALISTA) */}
+      <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-slate-50/80 p-2.5 sm:p-3 rounded-xl border border-slate-200/60">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <FileText className="w-5 h-5 text-kasa-vinotinto shrink-0" />
+          <div className="truncate min-w-0">
+            <span className="text-xs font-black text-gray-900 block truncate">{pdfHeading}</span>
+            {removePdf ? (
+              <span className="text-[10px] text-amber-700 font-bold">Se eliminará al guardar</span>
+            ) : newPdfFile ? (
+              <span className="text-[10px] text-emerald-600 font-bold truncate">{newPdfFile.name} (Por guardar)</span>
+            ) : currentPdfUrl ? (
+              <a href={currentPdfUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-kasa-vinotinto font-bold hover:underline inline-flex items-center gap-1">
+                {pdfDefaultFileName} <ExternalLink className="w-2.5 h-2.5" />
+              </a>
+            ) : (
+              <span className="text-[10px] text-slate-400">Ningún PDF publicado</span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
+          <button
+            type="button"
+            onClick={() => pdfInputRef.current?.click()}
+            className="px-2.5 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-lg shadow-2xs transition-colors cursor-pointer"
+          >
+            {currentPdfUrl || newPdfFile ? 'Cambiar PDF' : 'Subir PDF'}
+          </button>
+          <input
+            ref={pdfInputRef}
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            onChange={onPdfChange}
+          />
+
+          {(currentPdfUrl || newPdfFile) && (
+            <button
+              type="button"
+              onClick={removePdf ? onUndoRemovePdf : onRemovePdf}
+              className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+              title={removePdf ? "Deshacer eliminación" : "Eliminar PDF"}
+            >
+              {removePdf ? <RotateCcw className="w-3.5 h-3.5" /> : <Trash2 className="w-3.5 h-3.5" />}
+            </button>
+          )}
         </div>
       </div>
 

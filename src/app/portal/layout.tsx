@@ -16,7 +16,7 @@ export default async function PortalLayout({
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col w-full max-w-full overflow-x-clip">
-      <nav className="bg-kasa-vinotinto text-white shadow-md w-full">
+      <nav className="bg-kasa-vinotinto text-white shadow-md w-full sticky top-0 z-40 border-b border-white/10 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2.5 group">
             <BrandLogo 

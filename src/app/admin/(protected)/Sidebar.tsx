@@ -72,8 +72,8 @@ export default function Sidebar({
 
   return (
     <>
-      {/* Mobile Top Bar */}
-      <div className="md:hidden bg-kasa-vinotinto text-white p-4 flex justify-between items-center shadow-md z-20 relative">
+      {/* Mobile Top Bar (Fijado permanentemente en móvil) */}
+      <div className="md:hidden bg-kasa-vinotinto text-white px-4 py-3 flex justify-between items-center shadow-md z-30 sticky top-0 border-b border-white/10 backdrop-blur-md">
         <div className="flex items-center gap-2.5">
           <BrandLogo src={logoUrl} size="xs" variant="badge" />
           <h1 className="font-bold tracking-tight text-lg">Kasa Sports</h1>
@@ -89,14 +89,14 @@ export default function Sidebar({
       {/* Backdrop for mobile */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-20 md:hidden" 
+          className="fixed inset-0 bg-black/60 z-40 md:hidden" 
           onClick={closeMenu}
         />
       )}
 
       {/* Sidebar Content (Desktop & Mobile Drawer) */}
       <aside className={`
-        fixed md:sticky top-0 inset-y-0 left-0 z-30 w-64 bg-kasa-vinotinto text-white flex flex-col h-screen transform transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none
+        fixed md:sticky top-0 inset-y-0 left-0 z-50 md:z-30 w-64 bg-kasa-vinotinto text-white flex flex-col h-screen transform transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         <div className="p-5 hidden md:flex items-center gap-3 border-b border-white/10">
