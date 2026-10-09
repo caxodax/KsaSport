@@ -3,6 +3,7 @@ import { CircleDollarSign, TrendingUp, CreditCard, ShoppingCart, BarChart3, Rece
 import DateRangeFilter from '../DateRangeFilter';
 import { parseDateRange } from '@/lib/dateRange';
 import ExportLedgerButton from './ExportLedgerButton';
+import InstallmentTrackingTable from './InstallmentTrackingTable';
 import type { LedgerExportData } from '@/lib/exportExcel';
 import { findParentProduct, getEffectiveOptInProductId } from '@/lib/productHierarchy';
 
@@ -202,362 +203,208 @@ export default async function LedgerPage({
   };
 
   return (
-    <div className="p-4 sm:p-8 bg-gray-50/50 min-h-screen space-y-6">
-      {/* 1. Encabezado Analítico y Acción Principal */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-2xl border border-gray-200/80 shadow-xs">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-green-100 rounded-xl shrink-0">
-              <BarChart3 className="w-7 h-7 sm:w-8 sm:h-8 text-green-700" />
-            </div>
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
-                Reportes Financieros (Libro Mayor)
-              </h2>
-              <div className="flex flex-wrap items-center gap-2 mt-1">
-                <p className="text-gray-500 text-xs sm:text-sm">
-                  Análisis de ingresos reales validados en la plataforma.
-                </p>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-green-50 text-green-700 border border-green-200 rounded-full text-xs font-bold shadow-2xs">
-                  <Calendar className="w-3.5 h-3.5 text-green-600" />
-                  {formattedRange}
-                </span>
-              </div>
-            </div>
+    <div className="p-3 sm:p-6 lg:p-8 bg-slate-50/60 min-h-screen space-y-5">
+      {/* 1. Encabezado Analítico y Filtro Rápido */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="p-2.5 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-100 shrink-0">
+            <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-        </div>
-
-        <div className="shrink-0 w-full sm:w-auto">
-          <ExportLedgerButton data={exportPayload} />
-        </div>
-      </div>
-
-      {/* 2. Barra de Filtro de Fechas */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-200/80 shadow-2xs">
-        <div className="text-xs sm:text-sm font-bold text-gray-700 flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-green-600" />
-          <span>Filtrar período de ingresos:</span>
-        </div>
-        <div className="w-full lg:w-auto">
-          <DateRangeFilter />
-        </div>
-      </div>
-
-      {/* Tarjetas KPI Premium */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        
-        {/* KPI: Ingreso Total */}
-        <div className="bg-gradient-to-br from-green-600 to-emerald-800 rounded-3xl p-6 shadow-xl shadow-green-900/20 text-white relative overflow-hidden">
-          <div className="absolute -right-4 -top-4 opacity-20">
-            {eurRevenue > 0 && usdRevenue === 0 ? (
-              <Euro className="w-32 h-32" />
-            ) : (
-              <CircleDollarSign className="w-32 h-32" />
-            )}
-          </div>
-          <div className="relative z-10">
-            <p className="text-green-100 font-bold uppercase tracking-wider text-sm mb-1">Ingreso Total Validado</p>
-            <h3 className="text-4xl font-black tracking-tight">{formatRevenueStr()}</h3>
-            <div className="mt-4 flex items-center gap-2">
-              <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 backdrop-blur-md">
-                <TrendingUp className="w-3 h-3" /> Histórico
+          <div className="min-w-0">
+            <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight truncate">
+              Reportes Financieros (Libro Mayor)
+            </h2>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-xs text-slate-400">Período:</span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md text-xs font-mono font-bold">
+                <Calendar className="w-3 h-3 text-slate-500" />
+                {formattedRange}
               </span>
             </div>
           </div>
         </div>
 
-        {/* KPI: Transacciones */}
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-blue-50 rounded-2xl">
-              <Receipt className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-          <div>
-            <p className="text-gray-500 font-bold uppercase tracking-wider text-xs mb-1">Total Transacciones</p>
-            <h3 className="text-3xl font-black text-gray-900">{transactionCount}</h3>
-          </div>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+          <DateRangeFilter />
+          <ExportLedgerButton data={exportPayload} />
         </div>
-
-        {/* KPI: Ticket Promedio */}
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-purple-50 rounded-2xl">
-              <CreditCard className="w-6 h-6 text-purple-600" />
-            </div>
-          </div>
-          <div>
-            <p className="text-gray-500 font-bold uppercase tracking-wider text-xs mb-1">Ticket Promedio</p>
-            <h3 className="text-3xl font-black text-gray-900">{ticketSymbol}{averageTicket.toFixed(2)}</h3>
-          </div>
-        </div>
-
-        {/* KPI: Productos Activos */}
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-orange-50 rounded-2xl">
-              <ShoppingCart className="w-6 h-6 text-orange-600" />
-            </div>
-          </div>
-          <div>
-            <p className="text-gray-500 font-bold uppercase tracking-wider text-xs mb-1">Productos Vendidos</p>
-            <h3 className="text-3xl font-black text-gray-900">{sortedProducts.length}</h3>
-          </div>
-        </div>
-
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        
-        {/* Gráfico/Lista: Por Método de Pago */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 lg:col-span-1">
-          <h3 className="text-lg font-black text-gray-900 mb-6 flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-gray-400" />
-            Ingresos por Método
-          </h3>
-          <div className="space-y-6">
-            {sortedMethods.map(([method, data]) => {
-              const percentage = totalRevenue > 0 ? (data.total / totalRevenue) * 100 : 0;
-              return (
-                <div key={method}>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="font-bold text-gray-700">{method}</span>
-                    <span className="font-black text-gray-900">{data.rateType === 'EUR' ? '€' : '$'}{data.total.toFixed(2)}</span>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                    <div 
-                      className="bg-indigo-500 h-2.5 rounded-full transition-all duration-1000" 
-                      style={{ width: `${percentage}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1.5 font-medium">{data.count} pagos ({percentage.toFixed(1)}%)</p>
-                </div>
-              );
-            })}
-            {sortedMethods.length === 0 && (
-              <div className="text-center py-10">
-                <CreditCard className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                <p className="font-semibold text-gray-600 text-sm">Sin transacciones</p>
-                <p className="text-xs text-gray-400 mt-0.5">No hay pagos registrados en este período de fechas.</p>
-              </div>
-            )}
+      {/* 2. Tarjetas KPI Equilibradas (Grid 2x2 en móvil, 4 en desktop) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {/* KPI 1: Ingreso Total */}
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-emerald-200/80 shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Ingreso Total</span>
+            <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700">
+              <CircleDollarSign className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2.5">
+            <h3 className="text-xl sm:text-2xl font-black text-emerald-950 font-mono tracking-tight">
+              {formatRevenueStr()}
+            </h3>
+            <p className="text-[11px] text-emerald-600/80 font-medium mt-0.5">Validado en sistema</p>
           </div>
         </div>
 
-        {/* Libro Mayor Completo (Desglose por Producto) */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 lg:col-span-2 overflow-hidden flex flex-col">
-          <div className="p-6 border-b border-gray-100">
-            <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
-              <ShoppingCart className="w-5 h-5 text-gray-400" />
-              Libro Mayor por Producto (Mejores Ventas)
-            </h3>
+        {/* KPI 2: Transacciones */}
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Transacciones</span>
+            <div className="p-1.5 rounded-lg bg-slate-100 text-slate-700">
+              <Receipt className="w-4 h-4" />
+            </div>
           </div>
-          
-          <div className="flex-1 flex flex-col">
-            {/* VISTA MÓVIL: TARJETAS COMPACTAS */}
-            <div className="md:hidden divide-y divide-gray-100 bg-gray-50/30 p-3 sm:p-4 space-y-2.5">
-              {sortedProducts.length > 0 ? (
-                sortedProducts.map(([product, data]) => (
-                  <div key={product} className="bg-white p-3.5 rounded-2xl border border-gray-100 shadow-2xs flex items-center justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-bold text-gray-900 text-sm truncate" title={product}>{product}</p>
-                      <p className="text-xs text-gray-400 font-semibold mt-0.5">
-                        {data.count} {data.count === 1 ? 'transacción' : 'transacciones'}
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <span className="font-black text-green-700 text-sm sm:text-base font-mono">
+          <div className="mt-2.5">
+            <h3 className="text-xl sm:text-2xl font-black text-gray-900 font-mono tracking-tight">
+              {transactionCount}
+            </h3>
+            <p className="text-[11px] text-slate-400 font-medium mt-0.5">Pagos completados</p>
+          </div>
+        </div>
+
+        {/* KPI 3: Ticket Promedio */}
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Ticket Promedio</span>
+            <div className="p-1.5 rounded-lg bg-slate-100 text-slate-700">
+              <CreditCard className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2.5">
+            <h3 className="text-xl sm:text-2xl font-black text-gray-900 font-mono tracking-tight">
+              {ticketSymbol}{averageTicket.toFixed(2)}
+            </h3>
+            <p className="text-[11px] text-slate-400 font-medium mt-0.5">Monto medio por pago</p>
+          </div>
+        </div>
+
+        {/* KPI 4: Conceptos Vendidos */}
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Conceptos</span>
+            <div className="p-1.5 rounded-lg bg-slate-100 text-slate-700">
+              <ShoppingCart className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2.5">
+            <h3 className="text-xl sm:text-2xl font-black text-gray-900 font-mono tracking-tight">
+              {sortedProducts.length}
+            </h3>
+            <p className="text-[11px] text-slate-400 font-medium mt-0.5">Productos con cobro</p>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Desglose de Métodos y Libro Mayor por Producto */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        {/* Métodos de Pago */}
+        <div className="bg-white rounded-2xl shadow-2xs border border-slate-200/80 p-4 sm:p-5 lg:col-span-1 flex flex-col justify-between">
+          <div>
+            <h3 className="text-sm font-black text-gray-900 mb-4 flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-slate-400" />
+              <span>Ingresos por Método</span>
+            </h3>
+            <div className="space-y-3">
+              {sortedMethods.map(([method, data]) => {
+                const percentage = totalRevenue > 0 ? (data.total / totalRevenue) * 100 : 0;
+                return (
+                  <div key={method} className="space-y-1">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-bold text-slate-700 truncate pr-2">{method}</span>
+                      <span className="font-mono font-black text-gray-900 shrink-0">
                         {data.rateType === 'EUR' ? '€' : '$'}{data.total.toFixed(2)}
                       </span>
                     </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <ShoppingCart className="w-8 h-8 text-gray-300 mx-auto mb-1.5" />
-                  <p className="font-semibold text-gray-600 text-xs">Sin ingresos por producto</p>
-                </div>
-              )}
-            </div>
-
-            {/* VISTA DESKTOP: TABLA ESTRUCTURADA */}
-            <div className="hidden md:block overflow-auto">
-              <table className="min-w-full divide-y divide-gray-100">
-                <thead className="bg-gray-50/50">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-black text-gray-500 uppercase tracking-widest">Producto / Concepto</th>
-                    <th className="px-6 py-4 text-center text-xs font-black text-gray-500 uppercase tracking-widest">Transacciones</th>
-                    <th className="px-6 py-4 text-right text-xs font-black text-gray-500 uppercase tracking-widest">Ingreso</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-50">
-                  {sortedProducts.map(([product, data]) => (
-                    <tr key={product} className="hover:bg-gray-50/80 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-bold text-gray-900">{product}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700">
-                          {data.count}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <span className="font-black text-green-700 text-base">{data.rateType === 'EUR' ? '€' : '$'}{data.total.toFixed(2)}</span>
-                      </td>
-                    </tr>
-                  ))}
-                  {sortedProducts.length === 0 && (
-                    <tr>
-                      <td colSpan={3} className="px-6 py-12 text-center">
-                        <ShoppingCart className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                        <p className="font-semibold text-gray-600 text-sm">Sin ingresos por producto</p>
-                        <p className="text-xs text-gray-400 mt-0.5">No se registraron ventas en el período seleccionado.</p>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        
-      </div>
-
-      {/* Deudas y Abonos Activos */}
-      {installmentSummary.length > 0 && (
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-8">
-          <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
-                <Users className="w-5 h-5 text-gray-400" />
-                Seguimiento de Abonos y Deudas
-              </h3>
-              <p className="text-sm text-gray-500 mt-1">
-                Progreso de cobranza para productos que permiten cuotas (Mensualidades, etc).
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex flex-col">
-            {/* VISTA MÓVIL: TARJETAS DE SEGUIMIENTO TÁCTILES */}
-            <div className="md:hidden divide-y divide-gray-100 bg-gray-50/30 p-3 sm:p-4 space-y-3">
-              {installmentSummary.map(prod => {
-                const pct = prod.totalFacturado > 0 ? Math.min(100, (prod.totalAbonado / prod.totalFacturado) * 100) : 0;
-                return (
-                  <div key={prod.id} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-2xs space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <h4 className="font-black text-gray-900 text-sm leading-snug">{prod.name}</h4>
-                          <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 uppercase">
-                            {prod.rateType}
-                          </span>
-                        </div>
-                        {prod.enrolledAthletes && prod.enrolledAthletes.length > 0 && (
-                          <p className="text-[11px] text-slate-500 font-medium mt-1 line-clamp-1">
-                            Inscritas ({prod.athleteCount}): <span className="text-slate-700 font-semibold">{prod.enrolledAthletes.join(', ')}</span>
-                          </p>
-                        )}
-                      </div>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase shrink-0 ${
-                        pct >= 100 
-                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
-                          : 'bg-amber-50 text-amber-800 border border-amber-200'
-                      }`}>
-                        {pct >= 100 ? 'Completado' : `${pct.toFixed(0)}% Cobranza`}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2 bg-gray-50/80 p-2.5 rounded-xl border border-gray-100 text-center text-xs">
-                      <div>
-                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Facturado</span>
-                        <span className="font-bold text-gray-700 font-mono">{prod.currencySymbol}{prod.totalFacturado.toFixed(2)}</span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-green-600 font-bold uppercase block">Abonado</span>
-                        <span className="font-black text-green-700 font-mono">{prod.currencySymbol}{prod.totalAbonado.toFixed(2)}</span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-red-600 font-bold uppercase block">Pendiente</span>
-                        <span className="font-black text-red-700 font-mono">{prod.currencySymbol}{prod.saldoPendiente.toFixed(2)}</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between text-[11px] font-bold text-gray-500 mb-1">
-                        <span>Avance de Cobranza ({prod.athleteCount} atletas)</span>
-                        <span className="text-gray-900 font-black">{pct.toFixed(0)}%</span>
-                      </div>
-                      <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                        <div
-                          className={`h-2.5 rounded-full transition-all duration-700 ${pct >= 100 ? 'bg-emerald-500' : 'bg-amber-500'}`}
-                          style={{ width: `${pct}%` }}
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                        <div 
+                          className="bg-indigo-600 h-1.5 rounded-full transition-all duration-700" 
+                          style={{ width: `${percentage}%` }}
                         />
                       </div>
+                      <span className="text-[10px] text-slate-400 font-mono w-10 text-right shrink-0">
+                        {percentage.toFixed(1)}%
+                      </span>
                     </div>
                   </div>
                 );
               })}
-            </div>
-
-            {/* VISTA DESKTOP: TABLA COMPLETA */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-100">
-                <thead className="bg-white">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-black text-gray-500 uppercase tracking-widest">Producto</th>
-                    <th className="px-6 py-4 text-center text-xs font-black text-gray-500 uppercase tracking-widest">Atletas</th>
-                    <th className="px-6 py-4 text-right text-xs font-black text-gray-500 uppercase tracking-widest">Facturado</th>
-                    <th className="px-6 py-4 text-right text-xs font-black text-green-600 uppercase tracking-widest">Abonado</th>
-                    <th className="px-6 py-4 text-right text-xs font-black text-red-600 uppercase tracking-widest">Pendiente</th>
-                    <th className="px-6 py-4 text-center text-xs font-black text-gray-500 uppercase tracking-widest">Cobranza</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-50">
-                  {installmentSummary.map(prod => {
-                    const pct = prod.totalFacturado > 0 ? Math.min(100, (prod.totalAbonado / prod.totalFacturado) * 100) : 0;
-                    return (
-                      <tr key={prod.id} className="hover:bg-gray-50/80 transition-colors">
-                        <td className="px-6 py-5">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-gray-900">{prod.name}</span>
-                            <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 uppercase tracking-wider">
-                              {prod.rateType}
-                            </span>
-                          </div>
-                          {prod.enrolledAthletes && prod.enrolledAthletes.length > 0 && (
-                            <p className="text-xs text-slate-500 font-medium mt-1">
-                              Inscritas: <span className="text-slate-700 font-semibold">{prod.enrolledAthletes.join(', ')}</span>
-                            </p>
-                          )}
-                        </td>
-                        <td className="px-6 py-5 text-center">
-                          <span className="text-sm font-bold text-gray-600">{prod.athleteCount}</span>
-                        </td>
-                        <td className="px-6 py-5 text-right">
-                          <span className="text-sm font-bold text-gray-500">{prod.currencySymbol}{prod.totalFacturado.toFixed(2)}</span>
-                        </td>
-                        <td className="px-6 py-5 text-right">
-                          <span className="text-sm font-black text-green-700">{prod.currencySymbol}{prod.totalAbonado.toFixed(2)}</span>
-                        </td>
-                        <td className="px-6 py-5 text-right">
-                          <span className="text-sm font-black text-red-700">{prod.currencySymbol}{prod.saldoPendiente.toFixed(2)}</span>
-                        </td>
-                        <td className="px-6 py-5">
-                          <div className="flex items-center gap-3">
-                            <div className="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden">
-                              <div className={`h-3 rounded-full transition-all duration-1000 ${pct >= 100 ? 'bg-green-500' : 'bg-orange-400'}`} style={{ width: `${pct}%` }}></div>
-                            </div>
-                            <span className="text-xs font-black text-gray-700 w-9 text-right">{pct.toFixed(0)}%</span>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              {sortedMethods.length === 0 && (
+                <div className="text-center py-6 text-xs text-slate-400">
+                  Sin transacciones en este período.
+                </div>
+              )}
             </div>
           </div>
+        </div>
+
+        {/* Libro Mayor por Producto */}
+        <div className="bg-white rounded-2xl shadow-2xs border border-slate-200/80 lg:col-span-2 overflow-hidden flex flex-col">
+          <div className="p-4 sm:p-5 border-b border-slate-100">
+            <h3 className="text-sm font-black text-gray-900 flex items-center gap-2">
+              <ShoppingCart className="w-4 h-4 text-slate-400" />
+              <span>Desglose por Concepto / Producto</span>
+            </h3>
+          </div>
+          
+          <div className="flex-1 overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-100">
+              <thead className="bg-slate-50/70">
+                <tr>
+                  <th className="px-4 sm:px-5 py-3 text-left text-[11px] font-black text-slate-500 uppercase tracking-wider">Concepto</th>
+                  <th className="px-4 py-3 text-center text-[11px] font-black text-slate-500 uppercase tracking-wider">Transacciones</th>
+                  <th className="px-4 sm:px-5 py-3 text-right text-[11px] font-black text-slate-500 uppercase tracking-wider">Ingreso</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-slate-100">
+                {sortedProducts.map(([product, data]) => (
+                  <tr key={product} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="px-4 sm:px-5 py-3 text-xs font-bold text-gray-900">
+                      {product}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-slate-100 text-slate-700">
+                        {data.count}
+                      </span>
+                    </td>
+                    <td className="px-4 sm:px-5 py-3 text-right">
+                      <span className="font-mono font-black text-emerald-700 text-xs sm:text-sm">
+                        {data.rateType === 'EUR' ? '€' : '$'}{data.total.toFixed(2)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                {sortedProducts.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="px-4 py-8 text-center text-xs text-slate-400">
+                      No se registraron ventas en el período seleccionado.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Seguimiento de Abonos y Deudas */}
+      {installmentSummary.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-2xs border border-slate-200/80 overflow-hidden">
+          <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div>
+              <h3 className="text-sm sm:text-base font-black text-gray-900 flex items-center gap-2">
+                <Users className="w-4 h-4 text-slate-500" />
+                <span>Seguimiento de Abonos y Cobranzas</span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Control de cuotas y saldos pendientes por categoría o liga deportiva.
+              </p>
+            </div>
+          </div>
+          
+          <InstallmentTrackingTable items={installmentSummary} />
         </div>
       )}
 
