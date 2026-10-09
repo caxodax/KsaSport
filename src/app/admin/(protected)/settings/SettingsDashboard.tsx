@@ -31,6 +31,18 @@ export interface ClubSettings {
   calendar_images?: string[];
   calendar_pdf_url?: string;
   calendar_is_active?: boolean;
+  tryouts_title?: string;
+  tryouts_season?: string;
+  tryouts_description?: string;
+  tryouts_images?: string[];
+  tryouts_pdf_url?: string;
+  tryouts_is_active?: boolean;
+  drafts_title?: string;
+  drafts_season?: string;
+  drafts_description?: string;
+  drafts_images?: string[];
+  drafts_pdf_url?: string;
+  drafts_is_active?: boolean;
   logo_url?: string | null;
 }
 

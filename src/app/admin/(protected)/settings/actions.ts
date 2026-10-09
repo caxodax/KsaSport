@@ -145,7 +145,7 @@ export async function updatePortalAndCalendarSettings(formData: FormData) {
       }
     }
 
-    // PDF Oficial
+    // PDF Oficial del Calendario
     const removePdf = formData.get('remove_pdf') === 'true'
     const newPdfFile = formData.get('calendar_pdf') as File | null
     let calendar_pdf_url: string | null = undefined as any
@@ -159,6 +159,84 @@ export async function updatePortalAndCalendarSettings(formData: FormData) {
       calendar_pdf_url = null
     }
 
+    // --- SECCIÓN 2: SCOUTING Y TRYOUTS ---
+    const tryouts_title = (formData.get('tryouts_title') as string || 'Scouting y Tryouts Oficiales').trim()
+    const tryouts_season = (formData.get('tryouts_season') as string || 'Temporada 2026').trim()
+    const tryouts_description = (formData.get('tryouts_description') as string || '').trim()
+    const tryouts_is_active = formData.get('tryouts_is_active') === 'true'
+
+    let tryouts_images: string[] = []
+    const tryoutsRetainedJson = formData.get('tryouts_retained_images') as string
+    if (tryoutsRetainedJson) {
+      try {
+        tryouts_images = JSON.parse(tryoutsRetainedJson)
+      } catch {
+        tryouts_images = []
+      }
+    }
+
+    const tryoutsNewFiles = formData.getAll('tryouts_new_images') as File[]
+    for (const file of tryoutsNewFiles) {
+      if (file && file.size > 0) {
+        const uploadedUrl = await uploadImageToCloudflare(file, 'tryouts')
+        if (uploadedUrl) {
+          tryouts_images.push(uploadedUrl)
+        }
+      }
+    }
+
+    const tryoutsRemovePdf = formData.get('tryouts_remove_pdf') === 'true'
+    const tryoutsNewPdfFile = formData.get('tryouts_pdf') as File | null
+    let tryouts_pdf_url: string | null = undefined as any
+
+    if (tryoutsNewPdfFile && tryoutsNewPdfFile.size > 0) {
+      const uploadedPdfUrl = await uploadImageToCloudflare(tryoutsNewPdfFile, 'tryouts')
+      if (uploadedPdfUrl) {
+        tryouts_pdf_url = uploadedPdfUrl
+      }
+    } else if (tryoutsRemovePdf) {
+      tryouts_pdf_url = null
+    }
+
+    // --- SECCIÓN 3: DRAFTS DE KICKINGBALL ---
+    const drafts_title = (formData.get('drafts_title') as string || 'Drafts de Kickingball').trim()
+    const drafts_season = (formData.get('drafts_season') as string || 'Temporada 2026').trim()
+    const drafts_description = (formData.get('drafts_description') as string || '').trim()
+    const drafts_is_active = formData.get('drafts_is_active') === 'true'
+
+    let drafts_images: string[] = []
+    const draftsRetainedJson = formData.get('drafts_retained_images') as string
+    if (draftsRetainedJson) {
+      try {
+        drafts_images = JSON.parse(draftsRetainedJson)
+      } catch {
+        drafts_images = []
+      }
+    }
+
+    const draftsNewFiles = formData.getAll('drafts_new_images') as File[]
+    for (const file of draftsNewFiles) {
+      if (file && file.size > 0) {
+        const uploadedUrl = await uploadImageToCloudflare(file, 'drafts')
+        if (uploadedUrl) {
+          drafts_images.push(uploadedUrl)
+        }
+      }
+    }
+
+    const draftsRemovePdf = formData.get('drafts_remove_pdf') === 'true'
+    const draftsNewPdfFile = formData.get('drafts_pdf') as File | null
+    let drafts_pdf_url: string | null = undefined as any
+
+    if (draftsNewPdfFile && draftsNewPdfFile.size > 0) {
+      const uploadedPdfUrl = await uploadImageToCloudflare(draftsNewPdfFile, 'drafts')
+      if (uploadedPdfUrl) {
+        drafts_pdf_url = uploadedPdfUrl
+      }
+    } else if (draftsRemovePdf) {
+      drafts_pdf_url = null
+    }
+
     const supabase = getServiceSupabase()
     const updatePayload: Record<string, any> = {
       instagram_url,
@@ -170,11 +248,29 @@ export async function updatePortalAndCalendarSettings(formData: FormData) {
       calendar_description,
       calendar_images: images,
       calendar_is_active,
+      tryouts_title,
+      tryouts_season,
+      tryouts_description,
+      tryouts_images,
+      tryouts_is_active,
+      drafts_title,
+      drafts_season,
+      drafts_description,
+      drafts_images,
+      drafts_is_active,
       updated_at: new Date().toISOString()
     }
 
     if (calendar_pdf_url !== undefined) {
       updatePayload.calendar_pdf_url = calendar_pdf_url
+    }
+
+    if (tryouts_pdf_url !== undefined) {
+      updatePayload.tryouts_pdf_url = tryouts_pdf_url
+    }
+
+    if (drafts_pdf_url !== undefined) {
+      updatePayload.drafts_pdf_url = drafts_pdf_url
     }
 
     if (brand_logo_url !== undefined) {
@@ -190,10 +286,23 @@ export async function updatePortalAndCalendarSettings(formData: FormData) {
 
     if (error) {
       console.error('Error updating portal and calendar settings:', error)
-      if (error.code === '42703' || error.message.includes('tiktok_url')) {
-        // Si la columna tiktok_url aún no existe en Supabase, reintentar sin ella para guardar el resto
+      if (error.code === '42703' || error.message?.includes('tryouts_') || error.message?.includes('drafts_') || error.message?.includes('tiktok_url')) {
+        // Si faltan columnas de tryouts/drafts o tiktok en Supabase, reintentar sin ellas para no interrumpir
         const fallbackPayload = { ...updatePayload }
         delete fallbackPayload.tiktok_url
+        delete fallbackPayload.tryouts_title
+        delete fallbackPayload.tryouts_season
+        delete fallbackPayload.tryouts_description
+        delete fallbackPayload.tryouts_images
+        delete fallbackPayload.tryouts_pdf_url
+        delete fallbackPayload.tryouts_is_active
+        delete fallbackPayload.drafts_title
+        delete fallbackPayload.drafts_season
+        delete fallbackPayload.drafts_description
+        delete fallbackPayload.drafts_images
+        delete fallbackPayload.drafts_pdf_url
+        delete fallbackPayload.drafts_is_active
+
         const retry = await supabase
           .from('club_settings')
           .update(fallbackPayload)
@@ -209,7 +318,7 @@ export async function updatePortalAndCalendarSettings(formData: FormData) {
           revalidatePath('/login')
           revalidatePath('/')
           return {
-            error: 'Para guardar el enlace de TikTok, ejecuta el script migration_tiktok_social.sql en el SQL Editor de Supabase (las demás configuraciones se guardaron correctamente).'
+            error: 'Para activar las tarjetas autoadministrables de Tryouts y Drafts, por favor ejecuta el script migration_tryouts_and_drafts.sql en el SQL Editor de Supabase (las demás configuraciones se guardaron correctamente).'
           }
         }
       }
