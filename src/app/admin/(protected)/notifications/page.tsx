@@ -17,7 +17,7 @@ export default async function NotificationsPage() {
   ] = await Promise.all([
     supabase.from('push_subscriptions').select('*', { count: 'exact', head: true }),
     supabase.from('push_subscriptions').select('*', { count: 'exact', head: true }).not('athlete_id', 'is', null),
-    supabase.from('push_notifications_log').select('*').order('created_at', { ascending: false }).limit(30),
+    supabase.from('push_notifications_log').select('*').order('created_at', { ascending: false }).limit(200),
     supabase.from('teams').select('id, name, category').order('name'),
     supabase.from('athletes').select('id, name, cedula').order('name'),
   ]);
