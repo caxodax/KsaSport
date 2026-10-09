@@ -466,8 +466,9 @@ export default function NotificationsHub({
                     onChange={(e) => setTargetFilter(e.target.value)}
                     className="w-full px-3 py-2 bg-white text-xs font-bold rounded-xl border border-slate-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-kasa-vinotinto/20"
                   >
+                    <option value="Solvente">🟢 Atletas Solventes (Al día y Exonerados)</option>
                     <option value="Moroso">🔴 Atletas Morosos (Recordatorio de Cobro)</option>
-                    <option value="Solvente">🟢 Atletas Solventes (Al día)</option>
+                    <option value="Exonerado">🤝 Atletas Exonerados / Con Alianza</option>
                     <option value="Inactivo">⚫ Atletas Inactivos</option>
                   </select>
                 </div>
@@ -663,7 +664,13 @@ export default function NotificationsHub({
                         : log.target_type === 'team' 
                         ? '🏆 Equipo' 
                         : log.target_type === 'status' 
-                        ? '💳 Estatus' 
+                        ? log.target_filter === 'Solvente'
+                          ? '🟢 Solventes'
+                          : log.target_filter === 'Moroso'
+                          ? '🔴 Morosos'
+                          : log.target_filter === 'Exonerado'
+                          ? '🤝 Exonerados'
+                          : `💳 ${log.target_filter}`
                         : '👤 Atleta'}
                     </span>
                   </div>

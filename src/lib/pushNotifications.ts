@@ -97,12 +97,58 @@ export async function sendTargetedPush(options: TargetPushOptions) {
     }
     query = query.in('athlete_id', athleteIds);
   } else if (targetType === 'status' && targetFilter) {
-    // Obtener atletas por estatus financiero (Solvente, Moroso, Inactivo)
-    const { data: statusAthletes } = await supabase
-      .from('athletes')
-      .select('id')
-      .eq('status', targetFilter);
-    const athleteIds = statusAthletes?.map((a) => a.id) || [];
+    let athleteIds: string[] = [];
+
+    if (targetFilter === 'Solvente') {
+      // Atletas solventes Y atletas exonerados (con alianza o con exoneraciones registradas)
+      const [{ data: solventes }, { data: alianzas }, { data: exemptRecords }] = await Promise.all([
+        supabase.from('athletes').select('id').eq('status', 'Solvente'),
+        supabase.from('athletes').select('id').eq('has_alliance', true),
+        supabase.from('athlete_exemptions').select('athlete_id'),
+      ]);
+
+      const targetIdSet = new Set<string>();
+      solventes?.forEach((a) => targetIdSet.add(a.id));
+      alianzas?.forEach((a) => targetIdSet.add(a.id));
+      exemptRecords?.forEach((e) => targetIdSet.add(e.athlete_id));
+
+      athleteIds = Array.from(targetIdSet);
+    } else if (targetFilter === 'Moroso') {
+      // Atletas morosos pero excluyendo rigurosamente a quienes tengan alianza o exoneración
+      const [{ data: morosos }, { data: alianzas }, { data: exemptRecords }] = await Promise.all([
+        supabase.from('athletes').select('id').eq('status', 'Moroso'),
+        supabase.from('athletes').select('id').eq('has_alliance', true),
+        supabase.from('athlete_exemptions').select('athlete_id'),
+      ]);
+
+      const excludedSet = new Set<string>();
+      alianzas?.forEach((a) => excludedSet.add(a.id));
+      exemptRecords?.forEach((e) => excludedSet.add(e.athlete_id));
+
+      athleteIds = (morosos || [])
+        .map((a) => a.id)
+        .filter((id) => !excludedSet.has(id));
+    } else if (targetFilter === 'Exonerado') {
+      // Específicamente atletas con alianza o exoneraciones vigentes
+      const [{ data: alianzas }, { data: exemptRecords }] = await Promise.all([
+        supabase.from('athletes').select('id').eq('has_alliance', true),
+        supabase.from('athlete_exemptions').select('athlete_id'),
+      ]);
+
+      const targetIdSet = new Set<string>();
+      alianzas?.forEach((a) => targetIdSet.add(a.id));
+      exemptRecords?.forEach((e) => targetIdSet.add(e.athlete_id));
+
+      athleteIds = Array.from(targetIdSet);
+    } else {
+      // Otros estatus (ej. Inactivo)
+      const { data: statusAthletes } = await supabase
+        .from('athletes')
+        .select('id')
+        .eq('status', targetFilter);
+      athleteIds = statusAthletes?.map((a) => a.id) || [];
+    }
+
     if (athleteIds.length === 0) {
       return { success: true, sentCount: 0, totalTargeted: 0 };
     }
