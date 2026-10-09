@@ -73,7 +73,11 @@ export default async function AthletesPage({
     athletesQuery = athletesQuery.eq('teams.category', categoryFilter);
   }
   if (statusFilter) {
-    athletesQuery = athletesQuery.eq('status', statusFilter);
+    if (statusFilter === 'Exonerado' || statusFilter === 'Alianza') {
+      athletesQuery = athletesQuery.eq('has_alliance', true);
+    } else {
+      athletesQuery = athletesQuery.eq('status', statusFilter);
+    }
   }
 
   const { data: athletes, error, count } = await athletesQuery

@@ -84,12 +84,13 @@ export default async function DashboardPage({
   // Mapas para asociar el estatus de producto a cada atleta
   const athleteProductMap = new Map<
     string,
-    { status: 'paid' | 'unpaid' | 'pending'; paidAmount: number; targetAmount: number }
+    { status: 'paid' | 'unpaid' | 'pending' | 'exempt'; paidAmount: number; targetAmount: number }
   >();
 
   const paidAthleteIds: string[] = [];
   const unpaidAthleteIds: string[] = [];
   const pendingAthleteIds: string[] = [];
+  const exemptAthleteIds: string[] = [];
 
   // Desglose para la tabla secundaria
   interface BreakdownRow {
@@ -194,6 +195,9 @@ export default async function DashboardPage({
 
       // Calcular precio exigible (restando exoneraciones específicas o de torneo padre)
       let athleteTargetPrice = 0;
+      let athleteHasExemptions = false;
+      let exemptProductsCount = 0;
+
       applicableProducts.forEach((p) => {
         const parentProd = findParentProduct(p, allProductsData || []);
         const isExempt =
@@ -202,8 +206,13 @@ export default async function DashboardPage({
         
         if (!isExempt) {
           athleteTargetPrice += Number(p.price);
+        } else {
+          athleteHasExemptions = true;
+          exemptProductsCount++;
         }
       });
+
+      const isFullyExempt = applicableProducts.length > 0 && exemptProductsCount === applicableProducts.length;
 
       // Pagos de esta atleta para los productos aplicables
       const athleteCompletedPayments = (productPayments || []).filter(
@@ -231,7 +240,22 @@ export default async function DashboardPage({
         }
       });
 
-      if (paidTotal >= athleteTargetPrice && athleteTargetPrice > 0) {
+      if (isFullyExempt || (athleteTargetPrice === 0 && athleteHasExemptions)) {
+        // Exonerada (Beca, patrocinio o convenio de alianza comercial)
+        totalSolventesMes++;
+        exemptAthleteIds.push(athlete.id);
+
+        athleteProductMap.set(athlete.id, {
+          status: 'exempt',
+          paidAmount: paidTotal,
+          targetAmount: 0,
+        });
+
+        applicableProducts.forEach((p) => {
+          const pStat = productStatsMap.get(p.id);
+          if (pStat) pStat.solventes++;
+        });
+      } else if (paidTotal >= athleteTargetPrice && athleteTargetPrice > 0) {
         // Pagó completo
         totalSolventesMes++;
         paidAthleteIds.push(athlete.id);
@@ -299,7 +323,7 @@ export default async function DashboardPage({
       }
     });
 
-    const evaluatedAthleteIds = new Set([...paidAthleteIds, ...unpaidAthleteIds, ...pendingAthleteIds]);
+    const evaluatedAthleteIds = new Set([...paidAthleteIds, ...unpaidAthleteIds, ...pendingAthleteIds, ...exemptAthleteIds]);
     totalPoblacion = evaluatedAthleteIds.size;
 
     breakdownRows = Array.from(productStatsMap.values()).map((p) => ({
@@ -439,8 +463,8 @@ export default async function DashboardPage({
   // CONSULTA PAGINADA DE ATLETAS PARA LA TABLA
   // =========================================================================
   const athletesSelect = categoryFilter
-    ? 'id, name, cedula, status, team_id, teams!inner(id, name, category)'
-    : 'id, name, cedula, status, team_id, teams(id, name, category)';
+    ? 'id, name, cedula, status, has_alliance, team_id, teams!inner(id, name, category)'
+    : 'id, name, cedula, status, has_alliance, team_id, teams(id, name, category)';
 
   let athletesQuery = supabase
     .from('athletes')
@@ -468,16 +492,22 @@ export default async function DashboardPage({
       athletesQuery = athletesQuery.in('id', paidAthleteIds.length > 0 ? paidAthleteIds : ['00000000-0000-0000-0000-000000000000']);
     } else if (paymentStatusFilter === 'unpaid') {
       athletesQuery = athletesQuery.in('id', unpaidAthleteIds.length > 0 ? unpaidAthleteIds : ['00000000-0000-0000-0000-000000000000']);
+    } else if (paymentStatusFilter === 'exempt') {
+      athletesQuery = athletesQuery.in('id', exemptAthleteIds.length > 0 ? exemptAthleteIds : ['00000000-0000-0000-0000-000000000000']);
     } else if (paymentStatusFilter === 'pending') {
       athletesQuery = athletesQuery.in('id', pendingAthleteIds.length > 0 ? pendingAthleteIds : ['00000000-0000-0000-0000-000000000000']);
     } else {
       // Todos los evaluados en este producto
-      const allProductAthleteIds = [...paidAthleteIds, ...unpaidAthleteIds, ...pendingAthleteIds];
+      const allProductAthleteIds = [...paidAthleteIds, ...unpaidAthleteIds, ...pendingAthleteIds, ...exemptAthleteIds];
       athletesQuery = athletesQuery.in('id', allProductAthleteIds.length > 0 ? allProductAthleteIds : ['00000000-0000-0000-0000-000000000000']);
     }
   } else {
     if (statusFilter) {
-      athletesQuery = athletesQuery.eq('status', statusFilter);
+      if (statusFilter === 'Exonerado' || statusFilter === 'Alianza') {
+        athletesQuery = athletesQuery.eq('has_alliance', true);
+      } else {
+        athletesQuery = athletesQuery.eq('status', statusFilter);
+      }
     }
   }
 
@@ -819,6 +849,8 @@ export default async function DashboardPage({
                         ? 'border-emerald-500'
                         : productInfo?.status === 'pending'
                         ? 'border-amber-500'
+                        : productInfo?.status === 'exempt'
+                        ? 'border-amber-400'
                         : 'border-red-500'
                       : athlete.status === 'Solvente'
                       ? 'border-emerald-500'
@@ -829,9 +861,16 @@ export default async function DashboardPage({
                 >
                   <div className="flex justify-between items-start gap-2">
                     <div>
-                      <h4 className="font-bold text-gray-900 text-base leading-tight">
-                        {athlete.name}
-                      </h4>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h4 className="font-bold text-gray-900 text-base leading-tight">
+                          {athlete.name}
+                        </h4>
+                        {athlete.has_alliance && (
+                          <span className="bg-amber-100/90 text-amber-900 border border-amber-300 text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider shadow-2xs">
+                            🤝 Alianza
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-1">
                         <p className="text-xs text-gray-500 font-medium">
                           C.I. {formatCedula(athlete.cedula)}
@@ -851,6 +890,8 @@ export default async function DashboardPage({
                             : 'bg-emerald-50 text-emerald-800 border-emerald-200'
                           : productInfo?.status === 'pending'
                           ? 'bg-amber-50 text-amber-800 border-amber-200'
+                          : productInfo?.status === 'exempt'
+                          ? 'bg-amber-50 text-amber-900 border-amber-300'
                           : 'bg-red-50 text-red-800 border-red-200'
                       }`}>
                         {productInfo?.status === 'paid' && (
@@ -859,6 +900,7 @@ export default async function DashboardPage({
                             : `✅ Pagó ($${productInfo.paidAmount.toFixed(2)})`
                         )}
                         {productInfo?.status === 'pending' && '⏳ En Revisión'}
+                        {productInfo?.status === 'exempt' && '🤝 Exonerado'}
                         {productInfo?.status === 'unpaid' && `❌ Debe ($${productInfo.targetAmount.toFixed(2)})`}
                         {!productInfo && 'Sin Datos'}
                       </span>
@@ -924,7 +966,14 @@ export default async function DashboardPage({
                   return (
                     <tr key={athlete.id} className="hover:bg-gray-50/80 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-bold text-gray-900">{athlete.name}</div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-gray-900">{athlete.name}</span>
+                          {athlete.has_alliance && (
+                            <span className="bg-amber-100/90 text-amber-900 border border-amber-300 text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider shadow-2xs">
+                              🤝 Alianza
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-xs text-gray-600 font-mono font-bold">
@@ -957,6 +1006,8 @@ export default async function DashboardPage({
                                   : 'bg-emerald-50 text-emerald-800 border-emerald-200'
                                 : productInfo?.status === 'pending'
                                 ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                : productInfo?.status === 'exempt'
+                                ? 'bg-amber-50 text-amber-900 border-amber-300'
                                 : 'bg-red-50 text-red-800 border-red-200'
                             }`}>
                               {productInfo?.status === 'paid' && (
@@ -965,6 +1016,7 @@ export default async function DashboardPage({
                                   : `✅ Pagó ($${productInfo.paidAmount.toFixed(2)})`
                               )}
                               {productInfo?.status === 'pending' && '⏳ En Revisión'}
+                              {productInfo?.status === 'exempt' && '🤝 Exonerado'}
                               {productInfo?.status === 'unpaid' && `❌ Sin Pago ($${productInfo.targetAmount.toFixed(2)})`}
                               {!productInfo && 'Sin Datos'}
                             </span>

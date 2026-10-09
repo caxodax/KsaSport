@@ -157,11 +157,12 @@ export default function DashboardFilters({
           <select 
             value={paymentStatus}
             onChange={(e) => setPaymentStatus(e.target.value)}
-            className="w-full rounded-md border-2 border-amber-500 bg-amber-50/50 text-amber-950 font-bold px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
+            className="w-full rounded-md border-2 border-amber-500 bg-amber-50/50 text-amber-950 font-bold px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-amber-500 transition-colors cursor-pointer"
           >
             <option value="">Estado: Todos</option>
             <option value="paid">✅ Pagaron Producto</option>
             <option value="unpaid">❌ Faltan por Pagar</option>
+            <option value="exempt">🤝 Exonerados</option>
             <option value="pending">⏳ En Revisión</option>
           </select>
         </div>
@@ -172,12 +173,13 @@ export default function DashboardFilters({
             <select 
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-1.5 bg-white text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto transition-colors"
+              className="w-full rounded-md border border-gray-300 px-3 py-1.5 bg-white text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto transition-colors cursor-pointer"
             >
               <option value="">Estatus General</option>
               <option value="Solvente">Solvente</option>
               <option value="Moroso">Moroso</option>
               <option value="Inactivo">Inactivo</option>
+              <option value="Exonerado">🤝 Exonerado (Alianza)</option>
             </select>
           </div>
         )

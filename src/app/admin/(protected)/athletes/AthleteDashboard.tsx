@@ -329,6 +329,7 @@ export default function AthleteDashboard({
               <option value="Solvente">🟢 Solventes</option>
               <option value="Moroso">🔴 Morosos</option>
               <option value="Inactivo">⚫ Inactivos</option>
+              <option value="Exonerado">🤝 Exonerados / Alianza</option>
             </select>
           </div>
 
@@ -502,19 +503,26 @@ export default function AthleteDashboard({
                   </div>
 
                   {/* Estatus Financiero y Fecha con Alto Contraste */}
-                  <div className="mt-3.5 flex items-center justify-between">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black shadow-2xs border ${
-                      isSolvente 
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300/90' 
-                        : isMoroso
-                        ? 'bg-rose-50 text-rose-800 border-rose-300/90'
-                        : 'bg-slate-100 text-slate-700 border-slate-300/90'
-                    }`}>
-                      <span className={`w-2 h-2 rounded-full ${
-                        isSolvente ? 'bg-emerald-500' : isMoroso ? 'bg-rose-500 animate-pulse' : 'bg-slate-400'
-                      }`} />
-                      {athlete.status}
-                    </span>
+                  <div className="mt-3.5 flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black shadow-2xs border ${
+                        isSolvente 
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-300/90' 
+                          : isMoroso
+                          ? 'bg-rose-50 text-rose-800 border-rose-300/90'
+                          : 'bg-slate-100 text-slate-700 border-slate-300/90'
+                      }`}>
+                        <span className={`w-2 h-2 rounded-full ${
+                          isSolvente ? 'bg-emerald-500' : isMoroso ? 'bg-rose-500 animate-pulse' : 'bg-slate-400'
+                        }`} />
+                        {athlete.status}
+                      </span>
+                      {athlete.has_alliance && (
+                        <span className="bg-amber-100/90 text-amber-900 border border-amber-300 text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider shadow-2xs">
+                          🤝 Exonerada
+                        </span>
+                      )}
+                    </div>
 
                     {athlete.paid_until && (
                       <span className="text-[11px] font-bold text-slate-600 bg-slate-100/90 px-2.5 py-0.5 rounded-lg border border-slate-200/70">
@@ -761,21 +769,28 @@ export default function AthleteDashboard({
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-col">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-black w-max border shadow-2xs ${
-                            isSolvente 
-                              ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
-                              : isMoroso
-                              ? 'bg-rose-50 text-rose-800 border-rose-300'
-                              : 'bg-slate-100 text-slate-700 border-slate-300'
-                          }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${
-                              isSolvente ? 'bg-emerald-500' : isMoroso ? 'bg-rose-500 animate-pulse' : 'bg-slate-400'
-                            }`} />
-                            {athlete.status}
-                          </span>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-black w-max border shadow-2xs ${
+                              isSolvente 
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
+                                : isMoroso
+                                ? 'bg-rose-50 text-rose-800 border-rose-300'
+                                : 'bg-slate-100 text-slate-700 border-slate-300'
+                            }`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${
+                                isSolvente ? 'bg-emerald-500' : isMoroso ? 'bg-rose-500 animate-pulse' : 'bg-slate-400'
+                              }`} />
+                              {athlete.status}
+                            </span>
+                            {athlete.has_alliance && (
+                              <span className="bg-amber-100/90 text-amber-900 border border-amber-300 text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider shadow-2xs">
+                                🤝 Exonerada
+                              </span>
+                            )}
+                          </div>
                           {athlete.paid_until && (
-                            <span className="text-[10px] font-bold text-slate-500 mt-1">
+                            <span className="text-[10px] font-bold text-slate-500">
                               {isSolvente ? 'Vence' : 'Pendiente'}: {formatLocalDateShort(athlete.paid_until)}
                             </span>
                           )}
