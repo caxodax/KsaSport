@@ -9,6 +9,7 @@ import AvatarUpload from '@/components/portal/AvatarUpload'
 import OptInCard from '@/components/portal/OptInCard'
 import TransactionHistory from '@/components/portal/TransactionHistory'
 import PushNotificationCard from '@/components/portal/PushNotificationCard'
+import B2BLeadCard from '@/components/portal/B2BLeadCard'
 import { formatCedula } from '@/lib/cedula'
 import { formatLocalDate } from '@/lib/dateUtils'
 
@@ -23,11 +24,21 @@ export default async function PortalDashboard() {
   }
 
   const adminSupabase = getServiceSupabase()
-  const { data: athlete } = await adminSupabase
-    .from('athletes')
-    .select('id, name, cedula, status, avatar_url, paid_until, position, stats_avg, stats_hits, stats_rbi, stats_runs, has_alliance, teams(id, name, logo_url, category)')
-    .eq('user_id', user.id)
-    .single()
+  const [athleteRes, settingsRes] = await Promise.all([
+    adminSupabase
+      .from('athletes')
+      .select('id, name, cedula, status, avatar_url, paid_until, position, stats_avg, stats_hits, stats_rbi, stats_runs, has_alliance, teams(id, name, logo_url, category)')
+      .eq('user_id', user.id)
+      .single(),
+    adminSupabase
+      .from('club_settings')
+      .select('whatsapp_number, logo_url')
+      .eq('id', 1)
+      .maybeSingle()
+  ]);
+
+  const athlete = athleteRes.data;
+  const settings = settingsRes.data;
 
   if (!athlete) {
     redirect('/portal/link-profile')
@@ -85,7 +96,13 @@ export default async function PortalDashboard() {
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center shrink-0">
                   {athlete.avatar_url ? (
-                    <img src={athlete.avatar_url} alt={athlete.name} className="w-full h-full object-cover" />
+                    <img 
+                      src={athlete.avatar_url} 
+                      alt={athlete.name} 
+                      loading="lazy" 
+                      decoding="async" 
+                      className="w-full h-full object-cover" 
+                    />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-rose-950 via-kasa-vinotinto to-amber-600 flex items-center justify-center text-white font-black text-sm">
                       {athlete.name?.slice(0, 2).toUpperCase() || 'KS'}
@@ -100,7 +117,13 @@ export default async function PortalDashboard() {
               <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:gap-1 w-full sm:w-auto justify-between sm:justify-start border-t sm:border-t-0 pt-2 sm:pt-0 border-gray-200">
                 <span className="text-xs font-medium text-gray-700 bg-white px-2.5 py-1 rounded-lg border border-gray-200 flex items-center gap-1.5 shadow-2xs">
                   {team?.logo_url && (
-                    <img src={team.logo_url} alt="" className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
+                    <img 
+                      src={team.logo_url} 
+                      alt="" 
+                      loading="lazy" 
+                      decoding="async" 
+                      className="w-3.5 h-3.5 rounded-full object-cover shrink-0" 
+                    />
                   )}
                   {team?.name || 'Sin equipo'}
                 </span>
@@ -237,6 +260,8 @@ export default async function PortalDashboard() {
             <img 
               src={team.logo_url} 
               alt="" 
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-contain filter contrast-125" 
             />
           </div>
@@ -286,6 +311,8 @@ export default async function PortalDashboard() {
                 <img 
                   src={team.logo_url} 
                   alt={team?.name || 'Escudo del equipo'} 
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover rounded-full" 
                 />
               </div>
@@ -326,6 +353,8 @@ export default async function PortalDashboard() {
                   <img 
                     src={team.logo_url} 
                     alt={team?.name} 
+                    loading="lazy"
+                    decoding="async"
                     className="w-4 h-4 rounded-full object-cover shadow-2xs ring-1 ring-white/30 shrink-0" 
                   />
                 ) : (
@@ -350,16 +379,32 @@ export default async function PortalDashboard() {
             </div>
           </div>
 
-          <div className="shrink-0 flex gap-3 flex-col sm:flex-row items-center w-full md:w-auto">
+          <div className="shrink-0 flex flex-wrap sm:flex-nowrap gap-2.5 items-center w-full md:w-auto">
             <QRModal 
               athleteId={athlete.id} 
               status={athlete.status} 
               teamName={team?.name}
               teamLogoUrl={team?.logo_url}
               athleteName={athlete.name}
-              triggerClassName="w-full sm:w-auto flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 font-bold py-3 px-6 rounded-2xl transition-all shadow-xl active:scale-95 cursor-pointer"
+              athlete={athlete}
+              team={team}
+              initialTab="cromo"
+              triggerLabel="Mi Cromo Pro 3D"
+              triggerClassName="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500/25 to-kasa-dorado/25 hover:from-amber-500/35 hover:to-kasa-dorado/35 text-amber-200 border border-kasa-dorado/40 font-black py-3 px-5 rounded-2xl transition-all shadow-md active:scale-95 cursor-pointer backdrop-blur-md"
             />
-            <Link href="/portal/dashboard/pagos" className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-kasa-dorado to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-kasa-vinotinto font-black py-3 px-6 rounded-2xl transition-all shadow-lg hover:shadow-yellow-500/20 transform hover:-translate-y-0.5">
+            <QRModal 
+              athleteId={athlete.id} 
+              status={athlete.status} 
+              teamName={team?.name}
+              teamLogoUrl={team?.logo_url}
+              athleteName={athlete.name}
+              athlete={athlete}
+              team={team}
+              initialTab="qr"
+              triggerLabel="Carnet QR"
+              triggerClassName="w-full sm:w-auto flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 font-bold py-3 px-5 rounded-2xl transition-all shadow-md active:scale-95 cursor-pointer"
+            />
+            <Link href="/portal/dashboard/pagos" className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-kasa-dorado via-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-kasa-vinotinto font-black py-3 px-6 rounded-2xl transition-all shadow-lg hover:shadow-yellow-500/20 transform hover:-translate-y-0.5 active:scale-95">
               <ShoppingCart className="w-5 h-5" />
               PAGAR
             </Link>
@@ -377,16 +422,16 @@ export default async function PortalDashboard() {
         <div className="lg:col-span-1 space-y-6">
           
           {/* Tarjeta Estatus Deportivo/Financiero */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center relative overflow-hidden group hover:shadow-md transition-shadow">
-            <div className={`absolute top-0 w-full h-1.5 ${athlete.status === 'Solvente' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+          <div className="card-premium p-6 flex flex-col items-center text-center relative overflow-hidden group hover:shadow-premium-hover transition-all">
+            <div className={`absolute top-0 w-full h-1.5 ${athlete.status === 'Solvente' ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
             
             {athlete.status === 'Solvente' ? (
               <>
-                <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <CheckCircle2 className="w-8 h-8 text-green-500" />
+                <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300 border border-emerald-100/80 shadow-2xs">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-600" />
                 </div>
                 <h3 className="text-3xl font-display uppercase tracking-wider text-gray-900 mb-0.5">Solvente</h3>
-                <p className="text-sm text-green-600 font-medium">Luz verde para jugar.</p>
+                <p className="text-sm text-emerald-600 font-bold">Luz verde para jugar.</p>
                 {athlete.paid_until && (
                   <div className="mt-4 bg-gray-50 border border-gray-100 px-4 py-2 rounded-xl text-xs font-bold text-gray-600 flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-gray-400" />
@@ -396,11 +441,11 @@ export default async function PortalDashboard() {
               </>
             ) : (
               <>
-                <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <AlertCircle className="w-8 h-8 text-red-500" />
+                <div className="w-16 h-16 rounded-2xl bg-rose-50 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300 border border-rose-100/80 shadow-2xs">
+                  <AlertCircle className="w-8 h-8 text-rose-600" />
                 </div>
-                <h3 className="text-3xl font-display uppercase tracking-wider text-red-600 mb-0.5">Morosidad</h3>
-                <p className="text-sm text-red-600 font-medium">Participación restringida.</p>
+                <h3 className="text-3xl font-display uppercase tracking-wider text-rose-600 mb-0.5">Morosidad</h3>
+                <p className="text-sm text-rose-600 font-bold">Participación restringida.</p>
                 {athlete.paid_until && (
                   <div className="mt-4 bg-gray-50 border border-gray-100 px-4 py-2 rounded-xl text-xs font-bold text-gray-600 flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-gray-400" />
@@ -412,7 +457,7 @@ export default async function PortalDashboard() {
           </div>
 
           {/* Tarjeta de Estadísticas Dinámica (Athletic Stat Box) */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+          <div className="card-premium p-6 shadow-premium">
             <h3 className="font-black text-gray-900 flex items-center gap-2 mb-4">
               <Activity className="w-5 h-5 text-kasa-dorado-dark" />
               Estadísticas de Temporada
@@ -451,7 +496,7 @@ export default async function PortalDashboard() {
           )}
 
           {/* Tarjeta Créditos KsaSports */}
-          <div className="bg-gradient-to-r from-slate-900 to-zinc-900 rounded-3xl p-5 sm:p-6 text-white shadow-sm border border-zinc-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative overflow-hidden">
+          <div className="bg-gradient-to-r from-slate-900 via-zinc-900 to-slate-950 rounded-3xl p-5 sm:p-6 text-white shadow-premium border border-zinc-800/80 hover:border-kasa-dorado/30 transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative overflow-hidden">
             <div className="flex items-center gap-3.5">
               <div className="w-12 h-12 rounded-2xl bg-white/10 text-kasa-dorado flex items-center justify-center shrink-0 border border-white/10">
                 <CreditCard className="w-6 h-6" />
@@ -460,11 +505,11 @@ export default async function PortalDashboard() {
                 <div className="flex items-center gap-2">
                   <h3 className="font-black text-base text-white">Créditos KsaSports</h3>
                   {Number(foodCredit?.balance || 0) > 0 ? (
-                    <span className="bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] font-black px-2.5 py-0.5 rounded-full">
+                    <span className="bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-black px-2.5 py-0.5 rounded-full">
                       Deuda: €{Number(foodCredit?.balance || 0).toFixed(2)}
                     </span>
                   ) : (
-                    <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-black px-2.5 py-0.5 rounded-full">
+                    <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-black px-2.5 py-0.5 rounded-full">
                       Al día
                     </span>
                   )}
@@ -484,17 +529,17 @@ export default async function PortalDashboard() {
           </div>
 
           {activeDebts.length > 0 && (
-            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden relative">
-              <div className="absolute top-0 left-0 w-1.5 h-full bg-red-500"></div>
+            <div className="card-premium shadow-premium overflow-hidden relative">
+              <div className="absolute top-0 left-0 w-1.5 h-full bg-rose-500"></div>
               <div className="p-6 border-b border-gray-100 bg-gray-50/50 pl-8">
                 <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5 text-red-500" />
+                  <AlertCircle className="w-5 h-5 text-rose-500" />
                   Deudas Activas (Abonos)
                 </h3>
               </div>
               <div className="divide-y divide-gray-100 p-4 sm:p-6 pl-8 space-y-4">
                 {activeDebts.map((debt, idx) => (
-                  <div key={idx} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:border-red-200 transition-colors">
+                  <div key={idx} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-2xs hover:border-rose-200 transition-colors">
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <h4 className="font-bold text-gray-900">{debt.name}</h4>
@@ -527,6 +572,14 @@ export default async function PortalDashboard() {
           </div>
 
         </div>
+      </div>
+
+      {/* TARJETA DE CAPTACIÓN B2B / LLEVA KSASPORT A TU LIGA */}
+      <div className="pt-2">
+        <B2BLeadCard
+          whatsappNumber={settings?.whatsapp_number}
+          sourceContext={`Portal del Atleta (${athlete.name})`}
+        />
       </div>
     </div>
   )

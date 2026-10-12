@@ -104,7 +104,7 @@ export default function Navbar({ settings }: NavbarProps = {}) {
               <a href="#tecnologia" onClick={() => setMobileMenuOpen(false)} className="border-b border-gray-100 pb-4">Tecnología</a>
             </div>
             
-            <div className="mt-auto mb-12 flex flex-col gap-3">
+            <div className="mt-auto mb-10 pb-[env(safe-area-inset-bottom)] flex flex-col gap-3">
               <Link 
                 href="/login" 
                 onClick={() => setMobileMenuOpen(false)}

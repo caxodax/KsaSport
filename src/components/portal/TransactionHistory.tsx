@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Receipt } from 'lucide-react'
 import { formatLocalDate } from '@/lib/dateUtils'
+import EmptyState from '@/components/ui/EmptyState'
 
 type Payment = {
   id: string
@@ -81,10 +82,19 @@ export default function TransactionHistory({ payments }: { payments: Payment[] }
             );
           })
         ) : (
-          <div className="p-12 text-center text-gray-500 flex flex-col items-center justify-center h-full">
-            <Receipt className="w-12 h-12 text-gray-200 mb-3" />
-            <p className="font-medium text-gray-900">Sin Movimientos</p>
-            <p className="text-sm mt-1">No tienes transacciones registradas.</p>
+          <div className="p-8 sm:p-12 flex items-center justify-center">
+            <EmptyState
+              icon={Receipt}
+              title="Sin Movimientos Registrados"
+              description="Aún no tienes pagos reportados ni transacciones registradas en tu cuenta."
+              badgeText="Historial Limpio"
+              action={{
+                label: 'Reportar Nuevo Pago',
+                href: '/portal/dashboard/pagos',
+                variant: 'primary'
+              }}
+              className="border-0 bg-transparent p-0 max-w-sm"
+            />
           </div>
         )}
       </div>

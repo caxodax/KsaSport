@@ -276,6 +276,7 @@ export default function CalendarView({ settings }: CalendarViewProps) {
                 <img
                   src={images[activeIndex]}
                   alt={`Afiche ${getJornadaLabel(activeIndex, images.length)}`}
+                  decoding="async"
                   className="max-h-[62vh] sm:max-h-[72vh] w-auto max-w-full object-contain rounded-2xl shadow-2xl transition-transform duration-300 group-hover:scale-[1.01]"
                 />
 
@@ -331,6 +332,8 @@ export default function CalendarView({ settings }: CalendarViewProps) {
                       <img
                         src={url}
                         alt={`Miniatura ${idx + 1}`}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover"
                       />
                       <span className="absolute bottom-1 right-1 bg-black/80 text-[9px] font-black text-white px-1.5 py-0.5 rounded-sm">
@@ -426,6 +429,7 @@ export default function CalendarView({ settings }: CalendarViewProps) {
             <img
               src={images[lightboxIndex]}
               alt={`Calendario ${getJornadaLabel(lightboxIndex, images.length)}`}
+              decoding="async"
               className="max-h-[86vh] max-w-full w-auto object-contain rounded-2xl shadow-2xl border border-white/10"
             />
             

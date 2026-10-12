@@ -126,7 +126,7 @@ export default function Sidebar({
           })}
         </div>
         
-        <div className="p-4 border-t border-white/10 mt-auto flex justify-between items-center">
+        <div className="p-4 border-t border-white/10 mt-auto flex justify-between items-center pb-[max(1rem,calc(env(safe-area-inset-bottom)+0.5rem))]">
           <div className="flex items-center gap-3 px-3 py-2 w-full overflow-hidden">
             <div className="w-8 h-8 rounded-full bg-kasa-dorado flex items-center justify-center text-kasa-vinotinto font-bold text-sm shrink-0">
               {email ? email.substring(0, 2).toUpperCase() : 'AD'}

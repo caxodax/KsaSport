@@ -8,6 +8,7 @@ import {
   UserCheck, ExternalLink, Zap
 } from 'lucide-react';
 import BrandLogo from '@/components/ui/BrandLogo';
+import B2BLeadCard from '@/components/portal/B2BLeadCard';
 
 export default function DemoCarnetPage() {
   const [isScanning, setIsScanning] = useState(false);
@@ -356,6 +357,13 @@ export default function DemoCarnetPage() {
 
           </div>
 
+        </div>
+
+        {/* BANNER B2B PARA DIRECTORES Y LIGAS EN EL DEMO */}
+        <div className="max-w-4xl mx-auto px-4 mt-8 w-full relative z-10">
+          <B2BLeadCard
+            sourceContext="Simulador Demo de Carnet QR"
+          />
         </div>
 
       </main>

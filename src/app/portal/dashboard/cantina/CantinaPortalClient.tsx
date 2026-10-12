@@ -23,6 +23,7 @@ import {
 import { formatCedula } from "@/lib/cedula"
 import { reportFoodPayment } from "./actions"
 import { compressImageClient } from "@/lib/clientImageCompressor"
+import EmptyState from "@/components/ui/EmptyState"
 
 interface CantinaPortalClientProps {
   athlete: any
@@ -218,11 +219,13 @@ export default function CantinaPortalClient({
       {activeTab === "orders" && (
         <div className="space-y-3">
           {orders.length === 0 ? (
-            <div className="bg-white rounded-3xl p-10 text-center text-gray-400 border border-gray-100">
-              <CreditCard className="w-10 h-10 mx-auto mb-2 text-gray-300" />
-              <p className="text-sm font-bold text-gray-600">No tienes consumos de crédito registrados.</p>
-              <p className="text-xs text-gray-400 mt-1">Los consumos despachados por el administrador aparecerán aquí.</p>
-            </div>
+            <EmptyState
+              icon={UtensilsCrossed}
+              title="Sin Consumos de Cantina"
+              description="Aún no tienes consumos a crédito registrados. Tus pedidos despachados aparecerán detallados aquí."
+              badgeText="Crédito Disponible"
+              className="bg-white border-gray-100 shadow-2xs"
+            />
           ) : (
             orders.map(order => {
               const items = order.food_order_items || []
@@ -275,10 +278,18 @@ export default function CantinaPortalClient({
       {activeTab === "payments" && (
         <div className="space-y-3">
           {payments.length === 0 ? (
-            <div className="bg-white rounded-3xl p-10 text-center text-gray-400 border border-gray-100">
-              <CreditCard className="w-10 h-10 mx-auto mb-2 text-gray-300" />
-              <p className="text-sm font-bold text-gray-600">No tienes pagos reportados todavía.</p>
-            </div>
+            <EmptyState
+              icon={CreditCard}
+              title="Sin Pagos Reportados"
+              description="No tienes pagos de cantina reportados todavía. Puedes abonar a tu saldo cuando lo desees."
+              badgeText="Historial de Abonos"
+              action={{
+                label: 'Reportar Abono',
+                onClick: () => setIsPayModalOpen(true),
+                variant: 'primary'
+              }}
+              className="bg-white border-gray-100 shadow-2xs"
+            />
           ) : (
             payments.map(payment => (
               <div key={payment.id} className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-2xs flex flex-col sm:flex-row justify-between sm:items-center gap-3">

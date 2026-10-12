@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import BrandLogo from '@/components/ui/BrandLogo';
 import { getServiceSupabase } from '@/lib/supabase';
+import AthleteBottomNav from '@/components/portal/AthleteBottomNav';
 
 export default async function PortalLayout({
   children,
@@ -15,7 +16,7 @@ export default async function PortalLayout({
     .single();
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col w-full max-w-full overflow-x-clip">
+    <div className="min-h-screen bg-gray-50 flex flex-col w-full max-w-full overflow-x-clip pb-16 md:pb-0">
       <nav className="bg-kasa-vinotinto text-white shadow-md w-full sticky top-0 z-40 border-b border-white/10 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2.5 group">
@@ -37,6 +38,7 @@ export default async function PortalLayout({
       <main className="flex-1 flex flex-col w-full max-w-full min-w-0 overflow-x-clip">
         {children}
       </main>
+      <AthleteBottomNav />
     </div>
   )
 }

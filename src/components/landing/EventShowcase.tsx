@@ -161,7 +161,7 @@ export default function EventShowcase({ settings }: EventShowcaseProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="group relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-900 via-zinc-900 to-black text-white border border-slate-800 shadow-xl flex flex-col justify-between hover:border-slate-700 transition-all"
+            className="group relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-900 via-zinc-900 to-black text-white border border-slate-800 shadow-premium hover:shadow-premium-hover flex flex-col justify-between hover:border-slate-700 transition-all"
           >
             {/* Glow decorativo de fondo */}
             <div className="absolute top-0 right-0 w-72 h-72 bg-kasa-vinotinto/25 rounded-full blur-3xl pointer-events-none group-hover:bg-kasa-dorado/20 transition-colors duration-700"></div>
@@ -210,6 +210,8 @@ export default function EventShowcase({ settings }: EventShowcaseProps) {
                   <img 
                     src={calendarImages[0]} 
                     alt="Rol de Juegos Preview" 
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500 opacity-90"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end justify-between p-3.5">
@@ -268,7 +270,7 @@ export default function EventShowcase({ settings }: EventShowcaseProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="group relative rounded-3xl overflow-hidden bg-gradient-to-br from-kasa-vinotinto via-red-950 to-kasa-vinotinto text-white border border-red-900/50 shadow-xl flex flex-col justify-between hover:border-red-800 transition-all"
+            className="group relative rounded-3xl overflow-hidden bg-gradient-to-br from-kasa-vinotinto via-red-950 to-kasa-vinotinto text-white border border-red-900/50 shadow-premium hover:shadow-premium-hover flex flex-col justify-between hover:border-kasa-dorado/40 transition-all"
           >
             {/* Glow decorativo de fondo */}
             <div className="absolute top-0 right-0 w-72 h-72 bg-red-900/40 rounded-full blur-3xl pointer-events-none group-hover:bg-kasa-dorado/20 transition-colors duration-700"></div>
@@ -318,6 +320,8 @@ export default function EventShowcase({ settings }: EventShowcaseProps) {
                   <img 
                     src={tryoutsImages[0]} 
                     alt="Tryouts Preview" 
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500 opacity-90"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent flex items-end justify-between p-3.5">
@@ -379,7 +383,7 @@ export default function EventShowcase({ settings }: EventShowcaseProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="group relative rounded-3xl overflow-hidden bg-gradient-to-br from-zinc-950 via-amber-950/60 to-black text-white border border-amber-900/40 shadow-xl flex flex-col justify-between hover:border-amber-800 transition-all"
+            className="group relative rounded-3xl overflow-hidden bg-gradient-to-br from-zinc-950 via-amber-950/60 to-black text-white border border-amber-900/40 shadow-premium hover:shadow-premium-hover flex flex-col justify-between hover:border-kasa-dorado/40 transition-all"
           >
             {/* Glow decorativo de fondo */}
             <div className="absolute top-0 right-0 w-72 h-72 bg-amber-600/20 rounded-full blur-3xl pointer-events-none group-hover:bg-yellow-500/20 transition-colors duration-700"></div>
@@ -429,6 +433,8 @@ export default function EventShowcase({ settings }: EventShowcaseProps) {
                   <img 
                     src={draftsImages[0]} 
                     alt="Drafts Preview" 
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500 opacity-90"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent flex items-end justify-between p-3.5">
@@ -549,6 +555,7 @@ export default function EventShowcase({ settings }: EventShowcaseProps) {
               <img
                 src={lightbox.images[lightbox.activeIndex]}
                 alt={lightbox.title}
+                decoding="async"
                 className="max-h-[72vh] max-w-full w-auto object-contain rounded-2xl shadow-2xl border border-white/15"
               />
 

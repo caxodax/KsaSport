@@ -5,6 +5,7 @@ import { ArrowLeft, CheckCircle2, Wallet, Camera, X, AlertCircle } from 'lucide-
 import Link from 'next/link'
 import { reportPayment } from '../../actions'
 import { compressImageClient } from '@/lib/clientImageCompressor'
+import EmptyState from '@/components/ui/EmptyState'
 
 type Product = {
   id: string
@@ -357,10 +358,19 @@ export default function PaymentForm({
             )
           })}
           {products.length === 0 && (
-            <div className="col-span-full p-8 text-center bg-gray-50 rounded-2xl border border-gray-200">
-              <Wallet className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <h3 className="font-bold text-gray-900">No hay productos disponibles</h3>
-              <p className="text-sm text-gray-500 mt-1">Actualmente no hay conceptos de pago habilitados para tu categoría.</p>
+            <div className="col-span-full py-6">
+              <EmptyState
+                icon={CheckCircle2}
+                title="¡Estás al día con tus pagos!"
+                description="No tienes cuotas pendientes ni conceptos por abonar en este momento. Si necesitas reportar un pago extraordinario o tienes dudas, contacta a la coordinación."
+                badgeText="Estatus Solvente"
+                action={{
+                  label: 'Volver al Inicio',
+                  href: '/portal/dashboard',
+                  variant: 'primary'
+                }}
+                className="max-w-md mx-auto bg-white"
+              />
             </div>
           )}
         </div>
