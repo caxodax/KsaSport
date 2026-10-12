@@ -55,24 +55,24 @@ export default function QRModal({
     setMounted(true);
   }, []);
 
-  // Construir objeto de atleta para el Cromo si solo se pasaron props básicas
-  const resolvedAthlete = athlete || {
-    id: athleteId,
-    name: athleteName || 'Atleta Oficial',
-    cedula: 'N/A',
-    status: status,
-    avatar_url: null,
-    position: null,
-    stats_avg: null,
-    stats_hits: null,
-    stats_rbi: null,
-    stats_runs: null,
+  // Construir objeto de atleta y equipo para el Cromo fusionando props
+  const resolvedAthlete = {
+    id: athlete?.id || athleteId,
+    name: athlete?.name || athleteName || 'Atleta Oficial',
+    cedula: athlete?.cedula || 'N/A',
+    status: athlete?.status || status,
+    avatar_url: athlete?.avatar_url || null,
+    position: athlete?.position || null,
+    stats_avg: athlete?.stats_avg || null,
+    stats_hits: athlete?.stats_hits || null,
+    stats_rbi: athlete?.stats_rbi || null,
+    stats_runs: athlete?.stats_runs || null,
   };
 
-  const resolvedTeam = team || {
-    name: teamName,
-    logo_url: teamLogoUrl,
-    category: null,
+  const resolvedTeam = {
+    name: team?.name || teamName || null,
+    logo_url: team?.logo_url || teamLogoUrl || null,
+    category: team?.category || null,
   };
 
   return (
