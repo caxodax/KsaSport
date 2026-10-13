@@ -110,7 +110,7 @@ export default function Navbar({ settings }: NavbarProps = {}) {
                 onClick={() => setMobileMenuOpen(false)}
                 className="w-full text-center py-4 rounded-2xl font-black bg-kasa-vinotinto text-white shadow-lg active:scale-95 transition-all text-base"
               >
-                Ingresar al Ecosistema
+                Ingresar a la Plataforma
               </Link>
             </div>
           </motion.div>

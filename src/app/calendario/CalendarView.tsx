@@ -454,7 +454,7 @@ export default function CalendarView({ settings }: CalendarViewProps) {
       {/* FOOTER */}
       <footer className="mt-auto border-t border-white/10 bg-slate-950 py-8 px-4 text-center text-xs text-gray-500">
         <p>© {new Date().getFullYear()} Kasa Sports. Todos los derechos reservados.</p>
-        <p className="mt-1">Ecosistema inteligente para la gestión de ligas deportivas.</p>
+        <p className="mt-1">Plataforma deportiva inteligente para la gestión de ligas.</p>
       </footer>
 
     </div>

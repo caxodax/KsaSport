@@ -9,7 +9,7 @@ import Footer from '@/components/landing/Footer';
 import { getServiceSupabase } from '@/lib/supabase';
 
 export const metadata = {
-  title: 'Kasa Sports | Ecosistema Deportivo Inteligente',
+  title: 'KsaSport',
   description: 'Plataforma integral para la gestión de ligas de béisbol y kickingball, captación de nuevos talentos y estadísticas en tiempo real.',
 };
 

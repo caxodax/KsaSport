@@ -13,7 +13,7 @@ export default function GlobalLoading() {
           KSA SPORT
         </h2>
         <p className="text-xs text-slate-500 font-medium animate-pulse">
-          Cargando contenido del ecosistema...
+          Cargando contenido de la plataforma...
         </p>
       </div>
     </div>

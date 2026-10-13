@@ -580,7 +580,7 @@ export default function HolographicPlayerCard({
 
     ctx.fillStyle = '#D4AF37'
     ctx.font = 'bold 32px sans-serif'
-    ctx.fillText('ksasport.com • El Ecosistema Deportivo Inteligente', 540, 1810)
+    ctx.fillText('ksasport.com • Plataforma Deportiva Inteligente', 540, 1810)
 
     return new Promise((resolve) => {
       canvas.toBlob((blob) => resolve(blob), 'image/png')

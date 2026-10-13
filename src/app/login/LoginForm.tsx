@@ -156,7 +156,7 @@ export default function LoginForm() {
             </>
           ) : isLogin ? (
             <>
-              <span>Ingresar al Ecosistema</span>
+              <span>Ingresar a la Plataforma</span>
               <ArrowRight className="w-4 h-4" />
             </>
           ) : (

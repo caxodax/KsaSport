@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'KsaSport',
     short_name: 'KsaSport',
-    description: 'Ecosistema Inteligente de Gestión Deportiva y Ligas Activas',
+    description: 'Plataforma Inteligente de Gestión Deportiva y Ligas Activas',
     id: '/',
     start_url: '/?source=pwa',
     scope: '/',

@@ -571,7 +571,7 @@ export default function PortalSettings({ settings }: PortalSettingsProps) {
                       KASA SPORTS
                     </span>
                     <span className="text-[10px] text-white/70 font-semibold tracking-widest uppercase mt-0.5">
-                      Ecosistema Deportivo
+                      Plataforma Deportiva
                     </span>
                   </div>
                 </div>

@@ -29,8 +29,11 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "KsaSport | Ecosistema Deportivo Inteligente",
-  description: "Ecosistema Web de Gestión Deportiva y Conciliación",
+  title: {
+    default: "KsaSport",
+    template: "%s | KsaSport",
+  },
+  description: "Plataforma Web de Gestión Deportiva y Conciliación",
   applicationName: "KsaSport",
   appleWebApp: {
     capable: true,

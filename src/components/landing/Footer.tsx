@@ -40,7 +40,7 @@ export default function Footer({ settings }: FooterProps) {
               </span>
             </Link>
             <p className="text-gray-400 max-w-sm mb-6 leading-relaxed text-sm">
-              El ecosistema deportivo inteligente diseñado para potenciar el talento, 
+              La plataforma deportiva inteligente diseñada para potenciar el talento, 
               optimizar la gestión de ligas y simplificar la experiencia de atletas, delegados y fanáticos.
             </p>
 
@@ -106,7 +106,7 @@ export default function Footer({ settings }: FooterProps) {
 
           {/* Links */}
           <div>
-            <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-wider">Ecosistema</h4>
+            <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-wider">Plataforma</h4>
             <ul className="space-y-3 text-sm">
               <li>
                 <Link href="/calendario" className="text-gray-400 hover:text-white transition-colors">

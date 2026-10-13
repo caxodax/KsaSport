@@ -148,7 +148,7 @@ export default function EventShowcase({ settings }: EventShowcaseProps) {
             transition={{ delay: 0.1 }}
             className="text-base sm:text-lg text-gray-600 leading-relaxed"
           >
-            Sigue la acción de nuestras ligas activas, postúlate a las pruebas de captación o participa en los próximos drafts oficiales del ecosistema deportivo KsaSport.
+            Sigue la acción de nuestras ligas activas, postúlate a las pruebas de captación o participa en los próximos drafts oficiales de la plataforma deportiva KsaSport.
           </motion.p>
         </div>
 

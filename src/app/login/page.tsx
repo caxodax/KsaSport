@@ -46,7 +46,7 @@ export default async function LoginPage() {
           KSA SPORTS
         </h1>
         <p className="text-xs text-slate-500 font-medium">
-          Ecosistema Deportivo Inteligente
+          Plataforma Deportiva
         </p>
       </div>
 
