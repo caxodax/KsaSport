@@ -50,7 +50,7 @@ export default async function DashboardPage({
   const { data: categoriesData } = await supabase.from('categories').select('*').order('name');
   const { data: allProductsData } = await supabase
     .from('products')
-    .select('id, name, price, categories, requires_opt_in, description')
+    .select('id, name, price, categories, requires_opt_in, description, start_date, end_date')
     .eq('is_active', true)
     .order('name');
 
@@ -199,8 +199,9 @@ export default async function DashboardPage({
       applicableProducts.forEach((p) => {
         const parentProd = findParentProduct(p, allProductsData || []);
         const isExempt =
+          Boolean(athlete.has_alliance) ||
           athleteExemptionSet.has(`${athlete.id}_${p.id}`) ||
-          (parentProd && athleteExemptionSet.has(`${athlete.id}_${parentProd.id}`));
+          Boolean(parentProd && athleteExemptionSet.has(`${athlete.id}_${parentProd.id}`));
         
         if (!isExempt) {
           athleteTargetPrice += Number(p.price);
@@ -227,7 +228,30 @@ export default async function DashboardPage({
           applicableProducts.some((p) => p.id === pay.product_id)
       );
 
-      const paidTotal = athleteCompletedPayments.reduce((sum, pay) => sum + Number(pay.amount), 0);
+      let paidTotal = athleteCompletedPayments.reduce((sum, pay) => sum + Number(pay.amount), 0);
+
+      // Si es un producto de Mensualidad y la atleta no tiene pago explícito registrado en payments,
+      // pero su ficha personal tiene paid_until que cubre el inicio/período de la mensualidad,
+      // se reconoce como pagado (ej. pago asentado directamente en taquilla o admin sin recibo en payments).
+      if (athlete.paid_until) {
+        const paidUntilDate = new Date(athlete.paid_until);
+        applicableProducts.forEach((p) => {
+          const isMensualidad = p.name.toLowerCase().includes('mensualidad') || p.name.toLowerCase().includes('cuota');
+          const hasDirectPayment = athleteCompletedPayments.some((pay) => pay.product_id === p.id);
+          if (isMensualidad && !hasDirectPayment && p.start_date) {
+            const pStart = new Date(p.start_date);
+            if (paidUntilDate >= pStart) {
+              const coveredAmount = Number(p.price);
+              paidTotal += coveredAmount;
+              const pStat = productStatsMap.get(p.id);
+              if (pStat) {
+                pStat.recibido += coveredAmount;
+              }
+            }
+          }
+        });
+      }
+
       montoSolvente += paidTotal;
 
       // Sumar al desglose de ingresos recibidos
@@ -461,8 +485,8 @@ export default async function DashboardPage({
   // CONSULTA PAGINADA DE ATLETAS PARA LA TABLA
   // =========================================================================
   const athletesSelect = categoryFilter
-    ? 'id, name, cedula, status, has_alliance, team_id, teams!inner(id, name, category)'
-    : 'id, name, cedula, status, has_alliance, team_id, teams(id, name, category)';
+    ? 'id, name, cedula, status, paid_until, has_alliance, team_id, teams!inner(id, name, category)'
+    : 'id, name, cedula, status, paid_until, has_alliance, team_id, teams(id, name, category)';
 
   let athletesQuery = supabase
     .from('athletes')
@@ -1020,15 +1044,24 @@ export default async function DashboardPage({
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
-                            <span className={`px-2.5 py-1 inline-flex text-xs font-bold rounded-full border ${
-                              athlete.status === 'Solvente'
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                : athlete.status === 'Moroso'
-                                ? 'bg-red-50 text-red-700 border-red-200'
-                                : 'bg-gray-50 text-gray-700 border-gray-200'
-                            }`}>
-                              {athlete.status}
-                            </span>
+                            {(() => {
+                              const effectiveGeneralStatus =
+                                productInfo?.status === 'unpaid' && !athlete.has_alliance
+                                  ? 'Moroso'
+                                  : athlete.status;
+
+                              return (
+                                <span className={`px-2.5 py-1 inline-flex text-xs font-bold rounded-full border ${
+                                  effectiveGeneralStatus === 'Solvente'
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    : effectiveGeneralStatus === 'Moroso'
+                                    ? 'bg-red-50 text-red-700 border-red-200'
+                                    : 'bg-gray-50 text-gray-700 border-gray-200'
+                                }`}>
+                                  {effectiveGeneralStatus}
+                                </span>
+                              );
+                            })()}
                           </td>
                         </>
                       ) : (

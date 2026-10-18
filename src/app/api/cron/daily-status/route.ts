@@ -31,14 +31,13 @@ export async function GET(request: Request) {
     // Formato YYYY-MM-DD para consultar Supabase
     const todayStr = today.toISOString().split('T')[0]
 
-    // 3. Buscar atletas que están Solventes pero su fecha de pago ya venció (excluyendo a quienes tienen alianza/exoneración)
+    // 3. Buscar atletas que están Solventes pero su fecha de pago ya venció o no tienen pago registrado (y sin alianza)
     const { data: expiredAthletes, error: fetchError } = await supabase
       .from('athletes')
       .select('id, name, paid_until')
       .eq('status', 'Solvente')
       .or('has_alliance.is.null,has_alliance.eq.false')
-      .not('paid_until', 'is', null)
-      .lt('paid_until', todayStr)
+      .or(`paid_until.lt.${todayStr},paid_until.is.null`)
 
     if (fetchError) {
       console.error('Error fetching expired athletes:', fetchError)
