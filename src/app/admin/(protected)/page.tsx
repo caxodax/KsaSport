@@ -137,13 +137,11 @@ export default async function DashboardPage({
       allExemptionsData?.map((e) => `${e.athlete_id}_${e.product_id}`) || []
     );
 
-    // 3. Consultar todos los pagos para los productos seleccionados en el rango de fechas
+    // 3. Consultar todos los pagos para los productos seleccionados (incluyendo pagos adelantados o extemporáneos)
     const { data: productPayments } = await supabase
       .from('payments')
       .select('id, athlete_id, product_id, amount, status, created_at, reference_number')
-      .in('product_id', selectedProductIds)
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString());
+      .in('product_id', selectedProductIds);
 
     // 4. Inicializar mapa de estadísticas individuales por producto
     const productStatsMap = new Map<
