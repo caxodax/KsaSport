@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { 
   Plus, Search, LayoutGrid, Table as TableIcon, Users, User, 
   Edit3, Trash2, Filter, ChevronRight, UserSearch, Phone, Award, Shield,
-  FileSpreadsheet, Loader2
+  FileSpreadsheet, Loader2, Smartphone, UserX
 } from 'lucide-react';
 import { deleteAthlete, getAthletesForExport } from './actions';
 import AthleteDrawer from './AthleteDrawer';
@@ -42,6 +42,7 @@ interface AthleteData {
   paid_until?: string | null;
   has_alliance?: boolean;
   avatar_url?: string | null;
+  user_id?: string | null;
   teams?: { id: string; name: string; category?: string } | null;
 }
 
@@ -54,7 +55,9 @@ export default function AthleteDashboard({
   totalCount = 0,
   totalPages = 0,
   currentPage = 1,
-  resolvedParams = {}
+  resolvedParams = {},
+  registeredCount = 0,
+  totalAthletes = 0,
 }: {
   initialAthletes: AthleteData[];
   teams: TeamItem[];
@@ -65,6 +68,8 @@ export default function AthleteDashboard({
   totalPages?: number;
   currentPage?: number;
   resolvedParams?: Record<string, string | string[] | undefined>;
+  registeredCount?: number;
+  totalAthletes?: number;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -74,6 +79,7 @@ export default function AthleteDashboard({
   const [selectedTeam, setSelectedTeam] = useState(searchParams.get('team') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
   const [selectedStatus, setSelectedStatus] = useState(searchParams.get('status') || '');
+  const [selectedPortal, setSelectedPortal] = useState(searchParams.get('portal') || '');
 
   // Vista (Tarjetas vs Tabla)
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
@@ -93,7 +99,8 @@ export default function AthleteDashboard({
         query: searchQuery.trim() || undefined,
         teamId: selectedTeam || coachTeamId || undefined,
         category: selectedCategory || undefined,
-        status: selectedStatus || undefined
+        status: selectedStatus || undefined,
+        portal: selectedPortal || undefined
       });
 
       if (res.error) {
@@ -129,7 +136,7 @@ export default function AthleteDashboard({
   };
 
   // Sincronizar filtros con la URL
-  const applyFilters = (newParams: { query?: string; team?: string; category?: string; status?: string }) => {
+  const applyFilters = (newParams: { query?: string; team?: string; category?: string; status?: string; portal?: string }) => {
     const params = new URLSearchParams(searchParams.toString());
     
     if (newParams.query !== undefined) {
@@ -147,6 +154,10 @@ export default function AthleteDashboard({
     if (newParams.status !== undefined) {
       if (newParams.status) params.set('status', newParams.status);
       else params.delete('status');
+    }
+    if (newParams.portal !== undefined) {
+      if (newParams.portal) params.set('portal', newParams.portal);
+      else params.delete('portal');
     }
 
     params.set('page', '1'); // Reiniciar a página 1 al filtrar
@@ -176,6 +187,11 @@ export default function AthleteDashboard({
   const handleStatusChange = (val: string) => {
     setSelectedStatus(val);
     applyFilters({ status: val });
+  };
+
+  const handlePortalChange = (val: string) => {
+    setSelectedPortal(val);
+    applyFilters({ portal: val });
   };
 
   const handleOpenCreate = () => {
@@ -225,6 +241,24 @@ export default function AthleteDashboard({
           <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
             Expediente centralizado, asignación de posiciones y control de solvencia en tiempo real.
           </p>
+
+          {/* Métrica de Adopción de la App */}
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/90 text-xs font-bold text-slate-700 shadow-2xs">
+              <Smartphone className="w-4 h-4 text-indigo-600" />
+              <span>Adopción App Móvil:</span>
+              <span className="font-black text-indigo-700">
+                {registeredCount} de {totalAthletes} ({totalAthletes > 0 ? Math.round((registeredCount / totalAthletes) * 100) : 0}%)
+              </span>
+            </div>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-indigo-50 border border-indigo-200/80 text-[11px] font-black text-indigo-700">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
+              {registeredCount} Registradas
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 border border-slate-200 text-[11px] font-bold text-slate-500">
+              {Math.max(0, totalAthletes - registeredCount)} Pendientes
+            </span>
+          </div>
         </div>
 
         {/* Acciones de Cabecera: Exportar Excel y Registrar Atleta */}
@@ -288,7 +322,7 @@ export default function AthleteDashboard({
           </form>
 
           {/* Filtros Dropdown */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full lg:w-auto flex-1 lg:max-w-2xl">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 w-full lg:w-auto flex-1 lg:max-w-3xl">
             {/* Filtro Equipo */}
             {!coachTeamId && (
               <select
@@ -330,6 +364,17 @@ export default function AthleteDashboard({
               <option value="Moroso">🔴 Morosos</option>
               <option value="Inactivo">⚫ Inactivos</option>
               <option value="Exonerado">🤝 Exonerados / Alianza</option>
+            </select>
+
+            {/* Filtro Acceso App Móvil */}
+            <select
+              value={selectedPortal}
+              onChange={(e) => handlePortalChange(e.target.value)}
+              className="w-full px-3 py-2.5 bg-slate-50/90 hover:bg-slate-100/80 focus:bg-white text-xs text-gray-900 rounded-xl border border-slate-200 focus:border-kasa-vinotinto outline-none focus:ring-2 focus:ring-red-100 transition-all font-semibold cursor-pointer shadow-xs"
+            >
+              <option value="">📱 App: Todas</option>
+              <option value="registered">📱 En la App ({registeredCount})</option>
+              <option value="unregistered">⏳ Sin Cuenta ({Math.max(0, totalAthletes - registeredCount)})</option>
             </select>
           </div>
 
@@ -434,13 +479,24 @@ export default function AthleteDashboard({
                           {athlete.name}
                         </Link>
                         
-                        <div className="flex items-center gap-2 mt-0.5">
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                           <span className="text-xs font-bold text-slate-500">
                             C.I. {formatCedula(athlete.cedula)}
                           </span>
                           {athlete.has_alliance && (
                             <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-50 text-amber-800 border border-amber-200/80 shadow-2xs">
                               🤝 Alianza
+                            </span>
+                          )}
+                          {athlete.user_id ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs" title="Cuenta activa y vinculada en la app">
+                              <Smartphone className="w-3 h-3" />
+                              <span>En App</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200" title="Aún no se ha registrado en la app">
+                              <UserX className="w-3 h-3 text-slate-400" />
+                              <span>Sin cuenta</span>
                             </span>
                           )}
                         </div>
@@ -624,9 +680,20 @@ export default function AthleteDashboard({
                         >
                           {athlete.name}
                         </Link>
-                        <span className="text-[11px] font-bold text-slate-400">
-                          C.I. {formatCedula(athlete.cedula)} {athlete.has_alliance && '• 🤝 Alianza'}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[11px] font-bold text-slate-400">
+                            C.I. {formatCedula(athlete.cedula)} {athlete.has_alliance && '• 🤝 Alianza'}
+                          </span>
+                          {athlete.user_id ? (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
+                              <Smartphone className="w-2.5 h-2.5" /> App
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200">
+                              Sin app
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -699,6 +766,9 @@ export default function AthleteDashboard({
                   <th scope="col" className="px-6 py-4 text-center text-xs font-black text-slate-600 uppercase tracking-wider">
                     Posición
                   </th>
+                  <th scope="col" className="px-6 py-4 text-center text-xs font-black text-slate-600 uppercase tracking-wider">
+                    App Móvil
+                  </th>
                   <th scope="col" className="px-6 py-4 text-left text-xs font-black text-slate-600 uppercase tracking-wider">
                     Estatus Financiero
                   </th>
@@ -765,6 +835,20 @@ export default function AthleteDashboard({
                           </span>
                         ) : (
                           <span className="text-xs text-slate-300">-</span>
+                        )}
+                      </td>
+
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        {athlete.user_id ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-black bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs" title="Cuenta activa y vinculada">
+                            <Smartphone className="w-3.5 h-3.5" />
+                            <span>En la App</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200" title="Pendiente por crear cuenta">
+                            <UserX className="w-3.5 h-3.5 text-slate-400" />
+                            <span>Sin cuenta</span>
+                          </span>
                         )}
                       </td>
 

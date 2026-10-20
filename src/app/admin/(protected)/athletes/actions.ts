@@ -116,6 +116,7 @@ export async function getAthletesForExport(filters: {
   teamId?: string;
   category?: string;
   status?: string;
+  portal?: string;
 }) {
   await checkAdminPermission('view_roster');
   const supabase = getServiceSupabase();
@@ -139,6 +140,12 @@ export async function getAthletesForExport(filters: {
 
   if (filters.status) {
     q = q.eq('status', filters.status);
+  }
+
+  if (filters.portal === 'registered') {
+    q = q.not('user_id', 'is', null);
+  } else if (filters.portal === 'unregistered') {
+    q = q.is('user_id', null);
   }
 
   if (filters.query) {

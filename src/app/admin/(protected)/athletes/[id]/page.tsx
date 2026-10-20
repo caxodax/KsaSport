@@ -1,7 +1,7 @@
 import { getServiceSupabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, User, Calendar, CreditCard, ShieldCheck, Activity, Trophy, MessageCircle, ExternalLink, Receipt, UtensilsCrossed, PlusCircle } from 'lucide-react'
+import { ArrowLeft, User, Calendar, CreditCard, ShieldCheck, Activity, Trophy, MessageCircle, ExternalLink, Receipt, UtensilsCrossed, PlusCircle, Smartphone } from 'lucide-react'
 import ExemptionManager from './ExemptionManager'
 import TournamentEnrollmentManager from './TournamentEnrollmentManager'
 import ManualPaymentModal from './ManualPaymentModal'
@@ -29,6 +29,19 @@ export default async function AthleteProfilePage({
 
   if (error || !athlete) {
     notFound()
+  }
+
+  // 1.1 Fetch Auth User info if registered in app
+  let authUserEmail: string | null = null
+  if (athlete.user_id) {
+    try {
+      const { data: userData } = await supabase.auth.admin.getUserById(athlete.user_id)
+      if (userData?.user) {
+        authUserEmail = userData.user.email || null
+      }
+    } catch (e) {
+      console.error('Error fetching auth user for athlete:', e)
+    }
   }
 
   // 2. Fetch Active Products (for Exemption, Tournaments and Payment Modal)
@@ -259,6 +272,28 @@ export default async function AthleteProfilePage({
                     <div>
                       <p className="text-[9px] uppercase font-black tracking-wider opacity-75 leading-none">Estatus Financiero</p>
                       <p className="font-black text-xs mt-0.5">{athlete.status}</p>
+                    </div>
+                  </div>
+
+                  {/* Acceso App Móvil */}
+                  <div className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border shadow-2xs ${
+                    athlete.user_id 
+                      ? 'bg-indigo-50 text-indigo-900 border-indigo-200' 
+                      : 'bg-slate-50 text-slate-600 border-slate-200'
+                  }`}>
+                    <Smartphone className={`w-4 h-4 ${athlete.user_id ? 'text-indigo-600' : 'text-slate-400'}`} />
+                    <div>
+                      <p className="text-[9px] uppercase font-black tracking-wider opacity-75 leading-none">Acceso App Móvil</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <p className="font-black text-xs">
+                          {athlete.user_id ? 'Registrada' : 'Sin Cuenta'}
+                        </p>
+                        {authUserEmail && (
+                          <span className="text-[10px] font-mono font-bold text-indigo-700 bg-white/90 px-1.5 py-0.5 rounded border border-indigo-200 max-w-[200px] truncate" title={authUserEmail}>
+                            {authUserEmail}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 

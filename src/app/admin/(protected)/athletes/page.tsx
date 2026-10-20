@@ -46,8 +46,8 @@ export default async function AthletesPage({
 
   // Consulta de Atletas con Filtros y Paginación
   const selectQuery = categoryFilter
-    ? 'id, name, cedula, phone, status, team_id, position, stats_avg, stats_hits, stats_rbi, stats_runs, paid_until, has_alliance, avatar_url, teams!inner(id, name, category)'
-    : 'id, name, cedula, phone, status, team_id, position, stats_avg, stats_hits, stats_rbi, stats_runs, paid_until, has_alliance, avatar_url, teams(id, name, category)';
+    ? 'id, name, cedula, phone, status, team_id, position, stats_avg, stats_hits, stats_rbi, stats_runs, paid_until, has_alliance, avatar_url, user_id, teams!inner(id, name, category)'
+    : 'id, name, cedula, phone, status, team_id, position, stats_avg, stats_hits, stats_rbi, stats_runs, paid_until, has_alliance, avatar_url, user_id, teams(id, name, category)';
 
   let athletesQuery = supabase
     .from('athletes')
@@ -80,9 +80,26 @@ export default async function AthletesPage({
     }
   }
 
-  const { data: athletes, error, count } = await athletesQuery
-    .order('created_at', { ascending: false })
-    .range(from, to);
+  // Filtro de Registro en la App Móvil / Portal
+  const portalFilter = typeof resolvedParams.portal === 'string' ? resolvedParams.portal : '';
+  if (portalFilter === 'registered') {
+    athletesQuery = athletesQuery.not('user_id', 'is', null);
+  } else if (portalFilter === 'unregistered') {
+    athletesQuery = athletesQuery.is('user_id', null);
+  }
+
+  // Métricas globales de adopción en la app
+  let registeredQuery = supabase.from('athletes').select('id', { count: 'exact', head: true }).not('user_id', 'is', null);
+  let totalAllQuery = supabase.from('athletes').select('id', { count: 'exact', head: true });
+  if (!isSuperAdmin && coachTeamId) {
+    registeredQuery = registeredQuery.eq('team_id', coachTeamId);
+    totalAllQuery = totalAllQuery.eq('team_id', coachTeamId);
+  }
+  const [{ count: registeredCount }, { count: totalAthletesCount }, { data: athletes, error, count }] = await Promise.all([
+    registeredQuery,
+    totalAllQuery,
+    athletesQuery.order('created_at', { ascending: false }).range(from, to)
+  ]);
 
   const totalPages = count ? Math.ceil(count / pageSize) : 0;
 
@@ -105,6 +122,8 @@ export default async function AthletesPage({
           totalPages={totalPages}
           currentPage={page}
           resolvedParams={resolvedParams}
+          registeredCount={registeredCount || 0}
+          totalAthletes={totalAthletesCount || 0}
         />
       </div>
     </div>
