@@ -19,6 +19,11 @@ export interface AthleteProductForPayment {
   amountPaid: number
   amountPending: number
   isExempt: boolean
+  start_date?: string | null
+  end_date?: string | null
+  gracePeriodDays?: number
+  penaltyAmount?: number
+  penaltyApplied?: number
 }
 
 interface ManualPaymentModalProps {
@@ -55,14 +60,52 @@ export default function ManualPaymentModal({
   const [reference, setReference] = useState<string>('')
   const [notes, setNotes] = useState<string>('')
   const [loading, setLoading] = useState(false)
+  const [waivePenalty, setWaivePenalty] = useState(false)
 
   // Estado para el Alert/Modal de confirmación de liga inactiva
   const [isConfirmingEnroll, setIsConfirmingEnroll] = useState(false)
 
   const selectedProduct = products.find(p => p.id === selectedProductId)
 
+  const isMensualidad = Boolean(
+    selectedProduct?.name?.toLowerCase().includes('mensualidad') || 
+    selectedProduct?.name?.toLowerCase().includes('cuota')
+  )
+  const graceDays = selectedProduct?.gracePeriodDays ?? 5
+  const penaltyAmt = selectedProduct?.penaltyAmount ?? 10
+
+  let isLate = false
+  if (isMensualidad && selectedProduct) {
+    let year: number | null = null
+    let month: number | null = null
+    if (selectedProduct.start_date) {
+      const parts = selectedProduct.start_date.split('T')[0].split('-').map(Number)
+      if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+        year = parts[0]
+        month = parts[1]
+      }
+    }
+    if (!month) {
+      const nameLower = selectedProduct.name.toLowerCase()
+      const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+      const foundIdx = months.findIndex(m => nameLower.includes(m))
+      if (foundIdx !== -1) {
+        month = foundIdx + 1
+        year = new Date().getFullYear()
+      }
+    }
+    if (year && month) {
+      const deadline = new Date(year, month - 1, graceDays, 23, 59, 59, 999)
+      const evalDate = paymentDate ? new Date(paymentDate + 'T12:00:00') : new Date()
+      if (evalDate > deadline) {
+        isLate = true
+      }
+    }
+  }
+
   const handleOpen = () => {
     const prod = products.find(p => p.amountPending > 0) || products[0]
+    setWaivePenalty(false)
     if (prod) {
       setSelectedProductId(prod.id)
       setAmount(prod.amountPending > 0 ? prod.amountPending.toString() : '')
@@ -73,6 +116,7 @@ export default function ManualPaymentModal({
 
   const handleProductChange = (id: string) => {
     setSelectedProductId(id)
+    setWaivePenalty(false)
     const prod = products.find(p => p.id === id)
     if (prod && prod.amountPending > 0) {
       setAmount(prod.amountPending.toString())
@@ -81,7 +125,10 @@ export default function ManualPaymentModal({
 
   const handlePayFullRemaining = () => {
     if (selectedProduct && selectedProduct.amountPending > 0) {
-      setAmount(selectedProduct.amountPending.toFixed(2))
+      const targetAmt = (isLate && waivePenalty)
+        ? Math.max(0, selectedProduct.amountPending - penaltyAmt)
+        : selectedProduct.amountPending
+      setAmount(targetAmt.toFixed(2))
     }
   }
 
@@ -96,7 +143,8 @@ export default function ManualPaymentModal({
         method,
         paymentDate,
         reference: reference.trim() || undefined,
-        notes: notes.trim() || undefined
+        notes: notes.trim() || undefined,
+        waivePenalty: isLate && waivePenalty
       })
 
       if (res?.error) {
@@ -280,6 +328,60 @@ export default function ManualPaymentModal({
                       </div>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Alerta de Recargo por Mora y Switch de Exoneración */}
+              {isLate && (
+                <div className={`p-4 rounded-2xl border transition-all ${
+                  waivePenalty 
+                    ? 'bg-amber-50/80 border-amber-300 text-amber-950 shadow-xs' 
+                    : 'bg-rose-50/90 border-rose-300 text-rose-950 shadow-xs'
+                }`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-2.5">
+                      <AlertTriangle className={`w-5 h-5 shrink-0 mt-0.5 ${waivePenalty ? 'text-amber-600' : 'text-rose-600 animate-pulse'}`} />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-black text-xs">
+                            {waivePenalty ? 'Recargo por Mora Exonerado' : 'Pago Fuera de Plazo (Mora Activa)'}
+                          </p>
+                          <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${
+                            waivePenalty 
+                              ? 'bg-amber-100 text-amber-800 border-amber-300' 
+                              : 'bg-rose-100 text-rose-800 border-rose-300'
+                          }`}>
+                            {waivePenalty ? 'Exonerado' : `+$${penaltyAmt.toFixed(2)} USD`}
+                          </span>
+                        </div>
+                        <p className="text-[11px] mt-1 leading-relaxed opacity-90">
+                          {waivePenalty
+                            ? `El administrador ha decidido no cobrar la penalidad de mora. El monto se registrará como mensualidad regular sin recargo.`
+                            : `La fecha límite sin recargo era hasta el día ${graceDays}. A este pago le corresponde una penalidad de $${penaltyAmt.toFixed(2)} USD. Si la jugadora solo cancela el monto regular, quedará con saldo deudor.`}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <label className="mt-3 pt-3 border-t border-slate-200/60 flex items-center gap-2.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={waivePenalty}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setWaivePenalty(checked);
+                        if (selectedProduct) {
+                          const base = selectedProduct.amountPending;
+                          const target = checked ? Math.max(0, base - penaltyAmt) : base;
+                          setAmount(target > 0 ? target.toFixed(2) : selectedProduct.price.toFixed(2));
+                        }
+                      }}
+                      className="w-4 h-4 rounded text-kasa-vinotinto focus:ring-red-400 accent-kasa-vinotinto cursor-pointer"
+                    />
+                    <span className="text-xs font-black text-gray-900">
+                      Exonerar / No cobrar penalidad de mora a esta atleta
+                    </span>
+                  </label>
                 </div>
               )}
 

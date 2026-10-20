@@ -82,8 +82,38 @@ export default async function AthleteProfilePage({
     .eq('athlete_id', athlete.id)
     .maybeSingle()
 
+  // 5.2 Fetch Settings & Categories for penalty and grace days calculation
+  const [{ data: settingsData }, { data: categoriesData }] = await Promise.all([
+    supabase.from('club_settings').select('grace_period_days, penalty_amount').eq('id', 1).maybeSingle(),
+    supabase.from('categories').select('name, grace_period_days, penalty_amount')
+  ])
+
+  const defaultGrace = settingsData?.grace_period_days ?? 5
+  const defaultPenalty = Number(settingsData?.penalty_amount ?? 10)
+
+  const athleteCategory = (athlete.teams as any)?.category?.trim()
+  const catRule = categoriesData?.find(c => c.name?.trim().toLowerCase() === athleteCategory?.toLowerCase())
+  const effectiveGrace = (catRule?.grace_period_days !== null && catRule?.grace_period_days !== undefined)
+    ? Number(catRule.grace_period_days)
+    : defaultGrace
+  const effectivePenalty = (catRule?.penalty_amount !== null && catRule?.penalty_amount !== undefined)
+    ? Number(catRule.penalty_amount)
+    : defaultPenalty
+
   // 6. Calcular Estado de Cuenta Financiero
-  const statement = []
+  interface StatementItem {
+    id: string
+    name: string
+    basePrice: number
+    facturado: number
+    pagado: number
+    saldo: number
+    isExempt: boolean
+    penaltyApplied: number
+    isWaived: boolean
+  }
+
+  const statement: StatementItem[] = []
   
   for (const product of (products || [])) {
     // Si es producto con opt-in (o derivado) y la jugadora NO aceptó la convocatoria, ignorar
@@ -92,28 +122,79 @@ export default async function AthleteProfilePage({
       continue
     }
     
-    // Si la jugadora está exonerada (directo o del torneo padre), su deuda es 0
+    // Si la jugadora está exonerada (directo o del torneo padre o alianza), su deuda base es 0
     const parentProd = findParentProduct(product, products || [])
-    const isExempt = exemptionSet.has(product.id) || (parentProd && exemptionSet.has(parentProd.id))
+    const isExempt = Boolean(exemptionSet.has(product.id) || (parentProd && exemptionSet.has(parentProd.id)) || athlete.has_alliance)
     
     // Calcular pagos válidos
     const productPayments = payments?.filter(p => p.product_id === product.id) || []
     const pagado = productPayments
       .filter(p => p.status === 'Completado')
       .reduce((sum, p) => sum + Number(p.amount), 0)
+
+    // Evaluar penalidad de mora para mensualidades
+    const isMensualidad = product.name.toLowerCase().includes('mensualidad') || product.name.toLowerCase().includes('cuota')
+    let penaltyApplied = 0
+    let isWaived = false
+
+    if (isMensualidad && !isExempt) {
+      let year: number | null = null
+      let month: number | null = null
+      if (product.start_date) {
+        const parts = product.start_date.split('T')[0].split('-').map(Number)
+        if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+          year = parts[0]
+          month = parts[1]
+        }
+      }
+      if (!month) {
+        const nameLower = product.name.toLowerCase()
+        const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+        const foundIdx = months.findIndex(m => nameLower.includes(m))
+        if (foundIdx !== -1) {
+          month = foundIdx + 1
+          year = new Date().getFullYear()
+        }
+      }
+
+      if (year && month) {
+        const deadline = new Date(year, month - 1, effectiveGrace, 23, 59, 59, 999)
+        const isPastDeadline = new Date() > deadline
+        
+        // Verificar si algún pago tiene la marca de mora exonerada
+        isWaived = productPayments.some(pay => 
+          pay.concept?.toLowerCase().includes('mora exonerada') || 
+          pay.concept?.toLowerCase().includes('sin penalidad')
+        )
+
+        // Verificar si la atleta pagó a tiempo (algún pago completado en o antes de la fecha límite)
+        const paidOnTime = productPayments.some(pay => 
+          pay.status === 'Completado' && new Date(pay.created_at) <= deadline
+        )
+
+        // Aplica penalidad si venció la fecha de gracia, no fue exonerada y no pagó a tiempo
+        if (isPastDeadline && !isWaived && !paidOnTime) {
+          penaltyApplied = effectivePenalty
+        }
+      }
+    }
       
-    const facturado = isExempt ? 0 : Number(product.price)
+    const basePrice = isExempt ? 0 : Number(product.price)
+    const facturado = isExempt ? 0 : (basePrice + penaltyApplied)
     
     // Solo mostramos en el Estado de Cuenta si es un producto a cuotas (meses/ligas)
-    // o si han pagado algo
-    if (product.allows_installments || productPayments.length > 0) {
+    // o si han pagado algo, o si tiene penalidad activa
+    if (product.allows_installments || productPayments.length > 0 || penaltyApplied > 0) {
       statement.push({
         id: product.id,
         name: product.name,
+        basePrice,
         facturado,
         pagado,
         saldo: Math.max(0, facturado - pagado),
-        isExempt
+        isExempt,
+        penaltyApplied,
+        isWaived
       })
     }
   }
@@ -124,7 +205,7 @@ export default async function AthleteProfilePage({
   // 6.2 Preparar lista de productos para el Modal de Pagos y Abonos
   const productsForPaymentModal = (products || []).map(p => {
     const parentProd = findParentProduct(p, products || [])
-    const isExempt = Boolean(exemptionSet.has(p.id) || (parentProd && exemptionSet.has(parentProd.id)))
+    const isExempt = Boolean(exemptionSet.has(p.id) || (parentProd && exemptionSet.has(parentProd.id)) || athlete.has_alliance)
 
     const productPayments = payments?.filter(pay => pay.product_id === p.id) || []
     const amountPaid = productPayments
@@ -132,7 +213,10 @@ export default async function AthleteProfilePage({
       .reduce((sum, pay) => sum + Number(pay.amount), 0)
 
     const basePrice = Number(p.price)
-    const amountPending = isExempt ? 0 : Math.max(0, basePrice - amountPaid)
+    const stmtItem = statement.find(s => s.id === p.id)
+    const penaltyApplied = stmtItem?.penaltyApplied ?? 0
+    const facturado = isExempt ? 0 : (basePrice + penaltyApplied)
+    const amountPending = isExempt ? 0 : Math.max(0, facturado - amountPaid)
 
     const effOptInId = getEffectiveOptInProductId(p, products || [])
     const isEnrolled = effOptInId ? optInIds.has(effOptInId) : (p.requires_opt_in ? optInIds.has(p.id) : true)
@@ -146,7 +230,12 @@ export default async function AthleteProfilePage({
       isEnrolled,
       amountPaid,
       amountPending,
-      isExempt
+      isExempt,
+      start_date: p.start_date,
+      end_date: p.end_date,
+      gracePeriodDays: effectiveGrace,
+      penaltyAmount: effectivePenalty,
+      penaltyApplied
     }
   })
 
@@ -439,7 +528,19 @@ export default async function AthleteProfilePage({
                 {statement.map(item => (
                   <div key={item.id} className="p-4 space-y-2.5">
                     <div className="flex items-start justify-between gap-2">
-                      <span className="font-bold text-gray-900 text-sm">{item.name}</span>
+                      <div>
+                        <span className="font-bold text-gray-900 text-sm block">{item.name}</span>
+                        {item.penaltyApplied > 0 && (
+                          <span className="inline-block mt-1 bg-rose-50 text-rose-800 border border-rose-200 text-[10px] px-2 py-0.5 rounded-md font-black uppercase tracking-wider shadow-2xs">
+                            + Recargo por mora (${item.penaltyApplied.toFixed(2)})
+                          </span>
+                        )}
+                        {item.isWaived && (
+                          <span className="inline-block mt-1 bg-amber-50 text-amber-900 border border-amber-200 text-[10px] px-2 py-0.5 rounded-md font-black uppercase tracking-wider shadow-2xs">
+                            Mora Exonerada
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-1 shrink-0">
                         {item.isExempt && (
                           <span className="bg-amber-100/80 text-amber-900 border border-amber-300 text-[10px] px-2 py-0.5 rounded-md font-black uppercase tracking-wider">
@@ -498,6 +599,16 @@ export default async function AthleteProfilePage({
                         <td className="py-4 px-6 font-bold text-gray-900 text-sm">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span>{item.name}</span>
+                            {item.penaltyApplied > 0 && (
+                              <span className="bg-rose-50 text-rose-800 border border-rose-300 text-[10px] px-2 py-0.5 rounded-md font-black uppercase tracking-wider shadow-2xs">
+                                + Recargo por mora (${item.penaltyApplied.toFixed(2)})
+                              </span>
+                            )}
+                            {item.isWaived && (
+                              <span className="bg-amber-50 text-amber-900 border border-amber-300 text-[10px] px-2 py-0.5 rounded-md font-black uppercase tracking-wider shadow-2xs">
+                                Mora Exonerada
+                              </span>
+                            )}
                             {item.isExempt && (
                               <span className="bg-amber-100/80 text-amber-900 border border-amber-300 text-[10px] px-2 py-0.5 rounded-md font-black uppercase tracking-wider shadow-2xs">
                                 🤝 Exonerado

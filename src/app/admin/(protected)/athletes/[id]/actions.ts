@@ -113,6 +113,7 @@ export interface RecordManualPaymentParams {
   paymentDate?: string;
   reference?: string;
   notes?: string;
+  waivePenalty?: boolean;
 }
 
 /**
@@ -126,7 +127,7 @@ export async function recordManualPayment(params: RecordManualPaymentParams) {
     return { error: 'No autorizado para registrar pagos o abonos.' };
   }
 
-  const { athleteId, productId, amount, rateType = 'USD', method, paymentDate, reference, notes } = params;
+  const { athleteId, productId, amount, rateType = 'USD', method, paymentDate, reference, notes, waivePenalty } = params;
 
   if (!athleteId) return { error: 'ID de atleta inválido.' };
   if (!productId) return { error: 'Debes seleccionar un producto válido.' };
@@ -182,7 +183,11 @@ export async function recordManualPayment(params: RecordManualPaymentParams) {
 
   // 4. Registrar el pago en la tabla payments
   const nowIso = paymentDate ? new Date(paymentDate).toISOString() : new Date().toISOString();
-  const concept = notes ? `${product.name} - ${notes.trim()}` : product.name;
+  let conceptBase = product.name;
+  if (waivePenalty) {
+    conceptBase = `${product.name} (Mora Exonerada)`;
+  }
+  const concept = notes ? `${conceptBase} - ${notes.trim()}` : conceptBase;
 
   const { data: newPayment, error: paymentError } = await supabase
     .from('payments')

@@ -134,7 +134,7 @@ export default async function PagosPage() {
   // Obtener todos los pagos aprobados/completados del atleta
   const { data: payments } = await adminSupabase
     .from('payments')
-    .select('product_id, amount')
+    .select('product_id, amount, concept, created_at, status')
     .eq('athlete_id', athlete.id)
     .in('status', ['Completado', 'Pendiente'])
 
@@ -175,7 +175,7 @@ export default async function PagosPage() {
     let amountPaid = productPayments.reduce((sum, pay) => sum + Number(pay.amount), 0)
     
     // Si es mensualidad y el atleta tiene paid_until que cubre este mes,
-    // se reconoce como pagado aunque el pago se haya registrado directamente en taquilla o admin
+    // se reconoce como pagado base aunque el pago se haya registrado directamente en taquilla o admin
     const isMensualidad = p.name.toLowerCase().includes('mensualidad') || p.name.toLowerCase().includes('cuota');
     if (isMensualidad && paidUntil && p.start_date) {
       const pStart = new Date(p.start_date);
@@ -185,16 +185,58 @@ export default async function PagosPage() {
       }
     }
 
-    const amountPending = Math.max(0, basePrice - amountPaid)
+    // Calcular si aplica penalidad por mora en mensualidades
+    let penaltyApplied = 0;
+    if (isMensualidad) {
+      let year: number | null = null;
+      let month: number | null = null;
+      if (p.start_date) {
+        const parts = p.start_date.split('T')[0].split('-').map(Number);
+        if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+          year = parts[0];
+          month = parts[1];
+        }
+      }
+      if (!month) {
+        const nameLower = p.name.toLowerCase();
+        const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        const foundIdx = months.findIndex(m => nameLower.includes(m));
+        if (foundIdx !== -1) {
+          month = foundIdx + 1;
+          year = new Date().getFullYear();
+        }
+      }
+
+      if (year && month) {
+        const deadline = new Date(year, month - 1, effectiveGracePeriod, 23, 59, 59, 999);
+        const isPastDeadline = new Date() > deadline;
+        const isWaived = productPayments.some(pay => 
+          pay.concept?.toLowerCase().includes('mora exonerada') || 
+          pay.concept?.toLowerCase().includes('sin penalidad')
+        );
+        const paidOnTime = productPayments.some(pay => 
+          new Date(pay.created_at) <= deadline
+        );
+
+        if (isPastDeadline && !isWaived && !paidOnTime) {
+          penaltyApplied = effectivePenaltyAmount;
+        }
+      }
+    }
+
+    const effectiveTotal = basePrice + penaltyApplied;
+    const amountPending = Math.max(0, effectiveTotal - amountPaid);
 
     return {
       ...p,
-      price: basePrice,
+      price: effectiveTotal,
+      base_price: basePrice,
       original_price: Number(p.price),
       rate_type: p.rate_type || 'USD',
       months_owed: 1, // Cada producto representa su período respectivo
       amount_paid: amountPaid,
-      amount_pending: amountPending
+      amount_pending: amountPending,
+      penalty_applied: penaltyApplied
     }
   }).filter(p => p.amount_pending > 0)
 

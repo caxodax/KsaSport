@@ -270,47 +270,11 @@ export default function PaymentForm({
       {!selectedProduct ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {products.map((product) => {
-            const isMensualidad = product.name.toLowerCase().includes('mensualidad');
-            const basePrice = Number(product.price);
-            const amountPaid = product.amount_paid || 0;
-            const isFullyPaid = amountPaid >= basePrice;
-            let hasPenalty = false;
-            
-            // La penalidad por mora solo aplica si la cuota NO ha sido pagada en su totalidad
-            if (isMensualidad && !isFullyPaid) {
-              let year: number | null = null;
-              let month: number | null = null;
-
-              if (product.start_date) {
-                const parts = product.start_date.split('T')[0].split('-').map(Number);
-                if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-                  year = parts[0];
-                  month = parts[1];
-                }
-              }
-
-              if (!month) {
-                const nameLower = product.name.toLowerCase();
-                const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-                const foundIdx = months.findIndex(m => nameLower.includes(m));
-                if (foundIdx !== -1) {
-                  month = foundIdx + 1;
-                  year = new Date().getFullYear();
-                }
-              }
-
-              if (year && month && gracePeriodDays !== undefined) {
-                // Fecha límite: día gracePeriodDays a las 23:59:59 del mes correspondiente
-                const deadline = new Date(year, month - 1, gracePeriodDays, 23, 59, 59, 999);
-                hasPenalty = new Date() > deadline;
-              } else {
-                hasPenalty = !!isLate;
-              }
-            }
-
-            const penaltyTotal = hasPenalty ? (penaltyAmount || 0) : 0;
-            const finalPrice = basePrice + penaltyTotal;
-            const finalPending = Math.max(0, finalPrice - amountPaid);
+            const isMensualidad = product.name.toLowerCase().includes('mensualidad') || product.name.toLowerCase().includes('cuota');
+            const penaltyTotal = product.penalty_applied ?? 0;
+            const hasPenalty = penaltyTotal > 0;
+            const finalPrice = product.price; // Ya calculado limpiamente en el servidor
+            const finalPending = product.amount_pending ?? finalPrice;
             const currSymbol = product.rate_type === 'EUR' ? '€' : '$';
             
             return (
@@ -321,7 +285,7 @@ export default function PaymentForm({
                   price: finalPrice, 
                   amount_pending: finalPending,
                   penalty_applied: penaltyTotal,
-                  name: hasPenalty ? `${product.name} + Recargo por Mora` : product.name 
+                  name: hasPenalty && !product.name.includes('Recargo') ? `${product.name} + Recargo por Mora` : product.name 
                 })}
                 className="text-left bg-white p-6 rounded-2xl border border-gray-200 hover:border-kasa-dorado hover:shadow-md transition-all group relative overflow-hidden cursor-pointer"
               >
