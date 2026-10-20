@@ -271,9 +271,13 @@ export default function PaymentForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {products.map((product) => {
             const isMensualidad = product.name.toLowerCase().includes('mensualidad');
+            const basePrice = Number(product.price);
+            const amountPaid = product.amount_paid || 0;
+            const isFullyPaid = amountPaid >= basePrice;
             let hasPenalty = false;
             
-            if (isMensualidad) {
+            // La penalidad por mora solo aplica si la cuota NO ha sido pagada en su totalidad
+            if (isMensualidad && !isFullyPaid) {
               let year: number | null = null;
               let month: number | null = null;
 
@@ -305,8 +309,8 @@ export default function PaymentForm({
             }
 
             const penaltyTotal = hasPenalty ? (penaltyAmount || 0) : 0;
-            const finalPrice = Number(product.price) + penaltyTotal;
-            const finalPending = Math.max(0, finalPrice - (product.amount_paid || 0));
+            const finalPrice = basePrice + penaltyTotal;
+            const finalPending = Math.max(0, finalPrice - amountPaid);
             const currSymbol = product.rate_type === 'EUR' ? '€' : '$';
             
             return (

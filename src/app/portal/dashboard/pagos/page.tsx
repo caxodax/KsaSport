@@ -172,8 +172,19 @@ export default async function PagosPage() {
 
     // Calcular cuánto ha pagado de este producto específico
     const productPayments = payments?.filter(pay => pay.product_id === p.id) || []
-    const amountPaid = productPayments.reduce((sum, pay) => sum + Number(pay.amount), 0)
+    let amountPaid = productPayments.reduce((sum, pay) => sum + Number(pay.amount), 0)
     
+    // Si es mensualidad y el atleta tiene paid_until que cubre este mes,
+    // se reconoce como pagado aunque el pago se haya registrado directamente en taquilla o admin
+    const isMensualidad = p.name.toLowerCase().includes('mensualidad') || p.name.toLowerCase().includes('cuota');
+    if (isMensualidad && paidUntil && p.start_date) {
+      const pStart = new Date(p.start_date);
+      const athletePaidUntil = new Date(paidUntil);
+      if (athletePaidUntil >= pStart && amountPaid === 0) {
+        amountPaid = basePrice;
+      }
+    }
+
     const amountPending = Math.max(0, basePrice - amountPaid)
 
     return {
@@ -181,11 +192,11 @@ export default async function PagosPage() {
       price: basePrice,
       original_price: Number(p.price),
       rate_type: p.rate_type || 'USD',
-      months_owed: 1, // Ya no multiplicamos, cada producto es un mes distinto
+      months_owed: 1, // Cada producto representa su período respectivo
       amount_paid: amountPaid,
       amount_pending: amountPending
     }
-  }).filter(p => p.amount_pending > 0 || (p.is_active && p.name.toLowerCase().includes('mensualidad')))
+  }).filter(p => p.amount_pending > 0)
 
   // Obtener tasa oficial del día desde BD
   const rates = await getTodayRates()
