@@ -45,14 +45,31 @@ export default async function DashboardPage({
     if (typeof v === 'string') paginationParams[k] = v;
   });
 
-  // Catálogos para los selectores
-  const { data: teamsData } = await supabase.from('teams').select('id, name').order('name');
-  const { data: categoriesData } = await supabase.from('categories').select('*').order('name');
-  const { data: allProductsData } = await supabase
-    .from('products')
-    .select('id, name, price, categories, requires_opt_in, description, start_date, end_date')
-    .eq('is_active', true)
-    .order('name');
+  // Catálogos para los selectores y configuración de mora
+  const [
+    { data: teamsData },
+    { data: categoriesData },
+    { data: allProductsData },
+    { data: settingsData }
+  ] = await Promise.all([
+    supabase.from('teams').select('id, name').order('name'),
+    supabase.from('categories').select('*').order('name'),
+    supabase.from('products').select('id, name, price, categories, requires_opt_in, description, start_date, end_date').eq('is_active', true).order('name'),
+    supabase.from('club_settings').select('grace_period_days, penalty_amount').eq('id', 1).maybeSingle(),
+  ]);
+
+  const defaultGrace = settingsData?.grace_period_days ?? 5;
+  const defaultPenalty = Number(settingsData?.penalty_amount ?? 10.00);
+
+  const categoryPenaltyMap = new Map<string, { grace_period_days: number; penalty_amount: number }>();
+  categoriesData?.forEach((c) => {
+    if (c.name) {
+      categoryPenaltyMap.set(c.name.trim().toLowerCase(), {
+        grace_period_days: c.grace_period_days !== null && c.grace_period_days !== undefined ? Number(c.grace_period_days) : defaultGrace,
+        penalty_amount: c.penalty_amount !== null && c.penalty_amount !== undefined ? Number(c.penalty_amount) : defaultPenalty,
+      });
+    }
+  });
 
   // Obtenemos los productos seleccionados si está en modo producto
   const selectedProducts = isProductMode
@@ -140,7 +157,7 @@ export default async function DashboardPage({
     // 3. Consultar todos los pagos para los productos seleccionados (incluyendo pagos adelantados o extemporáneos)
     const { data: productPayments } = await supabase
       .from('payments')
-      .select('id, athlete_id, product_id, amount, status, created_at, reference_number')
+      .select('id, athlete_id, product_id, amount, status, created_at, reference_number, concept')
       .in('product_id', selectedProductIds);
 
     // 4. Inicializar mapa de estadísticas individuales por producto
@@ -191,7 +208,7 @@ export default async function DashboardPage({
       // Si no aplica ningún producto para esta atleta (no aceptó la liga ni pagó), no evaluar
       if (applicableProducts.length === 0) return;
 
-      // Calcular precio exigible (restando exoneraciones específicas o de torneo padre)
+      // Calcular precio exigible (restando exoneraciones específicas o de torneo padre) y penalidades de mora
       let athleteTargetPrice = 0;
       let athleteHasExemptions = false;
       let exemptProductsCount = 0;
@@ -203,8 +220,56 @@ export default async function DashboardPage({
           athleteExemptionSet.has(`${athlete.id}_${p.id}`) ||
           Boolean(parentProd && athleteExemptionSet.has(`${athlete.id}_${parentProd.id}`));
         
+        let penaltyForProduct = 0;
+        const isMensualidad = p.name.toLowerCase().includes('mensualidad') || p.name.toLowerCase().includes('cuota');
+        if (isMensualidad && !isExempt) {
+          let year: number | null = null;
+          let month: number | null = null;
+          if (p.start_date) {
+            const parts = p.start_date.split('T')[0].split('-').map(Number);
+            if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+              year = parts[0];
+              month = parts[1];
+            }
+          }
+          if (!month) {
+            const nameLower = p.name.toLowerCase();
+            const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+            const foundIdx = months.findIndex(m => nameLower.includes(m));
+            if (foundIdx !== -1) {
+              month = foundIdx + 1;
+              year = new Date().getFullYear();
+            }
+          }
+
+          if (year && month) {
+            const catRule = categoryPenaltyMap.get(athleteCat.trim().toLowerCase());
+            const effGrace = catRule?.grace_period_days ?? defaultGrace;
+            const effPenalty = catRule?.penalty_amount ?? defaultPenalty;
+            const deadline = new Date(year, month - 1, effGrace, 23, 59, 59, 999);
+            const isPastDeadline = new Date() > deadline;
+
+            const athletePaymentsForProd = (productPayments || []).filter(
+              pay => pay.athlete_id === athlete.id && pay.product_id === p.id
+            );
+
+            const isWaived = athletePaymentsForProd.some(pay =>
+              pay.concept?.toLowerCase().includes('mora exonerada') ||
+              pay.concept?.toLowerCase().includes('sin penalidad')
+            );
+
+            const paidOnTime = athletePaymentsForProd.some(pay =>
+              pay.status === 'Completado' && new Date(pay.created_at) <= deadline
+            );
+
+            if (isPastDeadline && !isWaived && !paidOnTime) {
+              penaltyForProduct = effPenalty;
+            }
+          }
+        }
+
         if (!isExempt) {
-          athleteTargetPrice += Number(p.price);
+          athleteTargetPrice += Number(p.price) + penaltyForProduct;
         } else {
           athleteHasExemptions = true;
           exemptProductsCount++;
@@ -375,23 +440,8 @@ export default async function DashboardPage({
       .from('athlete_exemptions')
       .select('athlete_id, product_id');
 
-    const { data: settings } = await supabase
-      .from('club_settings')
-      .select('grace_period_days, penalty_amount')
-      .single();
-
-    const gracePeriodDays = settings?.grace_period_days ?? 5;
-    const penaltyAmount = settings?.penalty_amount ?? 5.00;
-
-    const categoryPenaltyMap = new Map<string, { grace_period_days: number; penalty_amount: number }>();
-    categoriesData?.forEach((c) => {
-      if (c.name) {
-        categoryPenaltyMap.set(c.name.trim(), {
-          grace_period_days: c.grace_period_days !== null && c.grace_period_days !== undefined ? Number(c.grace_period_days) : gracePeriodDays,
-          penalty_amount: c.penalty_amount !== null && c.penalty_amount !== undefined ? Number(c.penalty_amount) : penaltyAmount,
-        });
-      }
-    });
+    const gracePeriodDays = defaultGrace;
+    const penaltyAmount = defaultPenalty;
 
     const getMensualidadProduct = (cat: string) => {
       if (!mensualidades) return null;
@@ -449,7 +499,7 @@ export default async function DashboardPage({
         totalSolventesMes++;
       } else {
         let appliedPenalty = 0;
-        const catRules = categoryPenaltyMap.get(cat.trim());
+        const catRules = categoryPenaltyMap.get(cat.trim().toLowerCase());
         const catGrace = catRules?.grace_period_days ?? gracePeriodDays;
         const catPenalty = catRules?.penalty_amount ?? penaltyAmount;
         const targetDeadline = new Date(startDate.getFullYear(), startDate.getMonth(), catGrace, 23, 59, 59, 999);
