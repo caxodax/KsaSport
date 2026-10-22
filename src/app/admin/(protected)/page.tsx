@@ -88,7 +88,16 @@ export default async function DashboardPage({
 
   if (teamFilter) allAthletesQuery = allAthletesQuery.eq('team_id', teamFilter);
   if (categoryFilter) allAthletesQuery = allAthletesQuery.eq('teams.category', categoryFilter);
-  const { data: allAthletes } = await allAthletesQuery;
+
+  const [
+    { data: allAthletes },
+    { count: inactiveCount },
+    { count: totalClubCount }
+  ] = await Promise.all([
+    allAthletesQuery,
+    supabase.from('athletes').select('id', { count: 'exact', head: true }).eq('status', 'Inactivo'),
+    supabase.from('athletes').select('id', { count: 'exact', head: true })
+  ]);
 
   // ========== VARIABLES DE KPIS ==========
   let montoSolvente = 0;
@@ -117,6 +126,7 @@ export default async function DashboardPage({
     total: number;
     solventes: number;
     morosos: number;
+    exonerados: number;
     recibido: number;
     pendiente: number;
     esperado: number;
@@ -163,7 +173,7 @@ export default async function DashboardPage({
     // 4. Inicializar mapa de estadísticas individuales por producto
     const productStatsMap = new Map<
       string,
-      { name: string; category: string; price: number; solventes: number; morosos: number; recibido: number; pendiente: number }
+      { name: string; category: string; price: number; solventes: number; morosos: number; exonerados: number; recibido: number; pendiente: number }
     >();
 
     selectedProducts.forEach((p) => {
@@ -173,6 +183,7 @@ export default async function DashboardPage({
         price: Number(p.price),
         solventes: 0,
         morosos: 0,
+        exonerados: 0,
         recibido: 0,
         pendiente: 0,
       });
@@ -340,7 +351,7 @@ export default async function DashboardPage({
 
         applicableProducts.forEach((p) => {
           const pStat = productStatsMap.get(p.id);
-          if (pStat) pStat.solventes++;
+          if (pStat) pStat.exonerados++;
         });
       } else if (paidTotal >= athleteTargetPrice && athleteTargetPrice > 0) {
         // Pagó completo
@@ -417,9 +428,10 @@ export default async function DashboardPage({
       title: p.name,
       subtitle: p.category,
       price: p.price,
-      total: p.solventes + p.morosos,
+      total: p.solventes + p.morosos + p.exonerados,
       solventes: p.solventes,
       morosos: p.morosos,
+      exonerados: p.exonerados,
       recibido: p.recibido,
       pendiente: p.pendiente,
       esperado: p.recibido + p.pendiente,
@@ -454,7 +466,7 @@ export default async function DashboardPage({
 
     const categoryBreakdown = new Map<
       string,
-      { solventes: number; morosos: number; price: number; recibido: number; pendiente: number }
+      { solventes: number; morosos: number; exonerados: number; price: number; recibido: number; pendiente: number }
     >();
 
     const today = new Date();
@@ -465,12 +477,18 @@ export default async function DashboardPage({
       const price = product ? Number(product.price) : 0;
 
       if (!categoryBreakdown.has(cat)) {
-        categoryBreakdown.set(cat, { solventes: 0, morosos: 0, price, recibido: 0, pendiente: 0 });
+        categoryBreakdown.set(cat, { solventes: 0, morosos: 0, exonerados: 0, price, recibido: 0, pendiente: 0 });
       }
       const entry = categoryBreakdown.get(cat)!;
 
-      const isExempt = product && allExemptions?.some((e) => e.athlete_id === a.id && e.product_id === product.id);
-      if (isExempt) return;
+      const isExempt = product && (
+        allExemptions?.some((e) => e.athlete_id === a.id && e.product_id === product.id) ||
+        Boolean(a.has_alliance)
+      );
+      if (isExempt) {
+        entry.exonerados++;
+        return;
+      }
 
       let paidForPeriod = false;
       if (a.paid_until) {
@@ -519,9 +537,10 @@ export default async function DashboardPage({
     breakdownRows = Array.from(categoryBreakdown.entries()).map(([cat, data]) => ({
       title: cat,
       price: data.price,
-      total: data.solventes + data.morosos,
+      total: data.solventes + data.morosos + data.exonerados,
       solventes: data.solventes,
       morosos: data.morosos,
+      exonerados: data.exonerados,
       recibido: data.recibido,
       pendiente: data.pendiente,
       esperado: data.recibido + data.pendiente,
@@ -708,13 +727,15 @@ export default async function DashboardPage({
           <div className="flex items-start justify-between">
             <div>
               <dt className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                {isProductMode ? 'Roster Evaluado' : 'Total en Roster'}
+                {isProductMode ? 'Roster Evaluado' : 'Total Roster Activo'}
               </dt>
               <dd className="text-4xl sm:text-5xl font-display tracking-wide text-gray-900 mt-1">
                 {totalPoblacion}
               </dd>
               <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md inline-block mt-2">
-                {isProductMode ? 'Atletas convocadas' : 'Atletas registrados'}
+                {isProductMode 
+                  ? 'Atletas convocadas' 
+                  : `${totalPoblacion} activas • ${inactiveCount || 0} inactivas (${totalClubCount || 161} en club)`}
               </span>
             </div>
             <div className="p-3 bg-slate-100 rounded-2xl text-slate-600">
@@ -817,8 +838,12 @@ export default async function DashboardPage({
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div><span className="text-gray-500">Precio:</span> <span className="font-bold text-gray-900">${row.price.toFixed(2)}</span></div>
                   <div><span className="text-gray-500">Atletas:</span> <span className="font-bold text-gray-900">{row.total}</span></div>
+                  <div><span className="text-emerald-700 font-bold">Solventes: {row.solventes}</span></div>
+                  <div><span className="text-red-700 font-bold">Morosos: {row.morosos}</span></div>
+                  <div><span className="text-amber-800 font-bold">Exoneradas: {row.exonerados}</span></div>
                   <div><span className="text-emerald-700 font-bold">Recibido: ${row.recibido.toFixed(2)}</span></div>
                   <div><span className="text-red-700 font-bold">Pendiente: ${row.pendiente.toFixed(2)}</span></div>
+                  <div><span className="text-indigo-700 font-bold">Esperado: ${row.esperado.toFixed(2)}</span></div>
                 </div>
               </div>
             ))}
@@ -841,6 +866,7 @@ export default async function DashboardPage({
                   <th className="px-6 py-3.5 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Precio</th>
                   <th className="px-6 py-3.5 text-center text-xs font-bold text-emerald-700 uppercase tracking-wider">Solventes</th>
                   <th className="px-6 py-3.5 text-center text-xs font-bold text-red-700 uppercase tracking-wider">Morosos</th>
+                  <th className="px-6 py-3.5 text-center text-xs font-bold text-amber-700 uppercase tracking-wider">Exoneradas</th>
                   <th className="px-6 py-3.5 text-right text-xs font-bold text-emerald-700 uppercase tracking-wider">Recibido</th>
                   <th className="px-6 py-3.5 text-right text-xs font-bold text-red-700 uppercase tracking-wider">Pendiente</th>
                   <th className="px-6 py-3.5 text-right text-xs font-bold text-indigo-700 uppercase tracking-wider">Esperado</th>
@@ -853,7 +879,7 @@ export default async function DashboardPage({
                     {isProductMode && (
                       <td className="px-6 py-3 text-xs text-gray-600 font-medium">{row.subtitle || 'Global'}</td>
                     )}
-                    <td className="px-6 py-3 text-center text-sm text-gray-700">{row.total}</td>
+                    <td className="px-6 py-3 text-center text-sm font-black text-gray-900">{row.total}</td>
                     <td className="px-6 py-3 text-center text-sm font-bold text-gray-900">${row.price.toFixed(2)}</td>
                     <td className="px-6 py-3 text-center">
                       <span className="bg-emerald-50 text-emerald-700 text-xs font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">
@@ -863,6 +889,11 @@ export default async function DashboardPage({
                     <td className="px-6 py-3 text-center">
                       <span className="bg-red-50 text-red-700 text-xs font-bold px-2.5 py-0.5 rounded-full border border-red-200">
                         {row.morosos}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3 text-center">
+                      <span className="bg-amber-50 text-amber-800 text-xs font-bold px-2.5 py-0.5 rounded-full border border-amber-200">
+                        {row.exonerados}
                       </span>
                     </td>
                     <td className="px-6 py-3 text-right text-sm font-bold text-emerald-700">${row.recibido.toFixed(2)}</td>
