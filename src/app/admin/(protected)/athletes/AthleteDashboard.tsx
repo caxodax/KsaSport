@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
   Plus, Search, LayoutGrid, Table as TableIcon, Users, User, 
   Edit3, Trash2, Filter, ChevronRight, UserSearch, Phone, Award, Shield,
-  FileSpreadsheet, Loader2, Smartphone, UserX
+  FileSpreadsheet, Loader2, Smartphone, UserX, Bell
 } from 'lucide-react';
 import { deleteAthlete, getAthletesForExport } from './actions';
 import AthleteDrawer from './AthleteDrawer';
@@ -58,6 +58,7 @@ export default function AthleteDashboard({
   resolvedParams = {},
   registeredCount = 0,
   totalAthletes = 0,
+  pushAthleteIds = [],
 }: {
   initialAthletes: AthleteData[];
   teams: TeamItem[];
@@ -70,9 +71,12 @@ export default function AthleteDashboard({
   resolvedParams?: Record<string, string | string[] | undefined>;
   registeredCount?: number;
   totalAthletes?: number;
+  pushAthleteIds?: string[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const pushSet = useMemo(() => new Set(pushAthleteIds), [pushAthleteIds]);
 
   // Estados de filtros desde URL
   const [searchQuery, setSearchQuery] = useState(searchParams.get('query') || '');
@@ -374,6 +378,7 @@ export default function AthleteDashboard({
             >
               <option value="">📱 App: Todas</option>
               <option value="registered">📱 En la App ({registeredCount})</option>
+              <option value="push">🔔 Con Alertas Push ({pushAthleteIds.length})</option>
               <option value="unregistered">⏳ Sin Cuenta ({Math.max(0, totalAthletes - registeredCount)})</option>
             </select>
           </div>
@@ -497,6 +502,12 @@ export default function AthleteDashboard({
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200" title="Aún no se ha registrado en la app">
                               <UserX className="w-3 h-3 text-slate-400" />
                               <span>Sin cuenta</span>
+                            </span>
+                          )}
+                          {pushSet.has(athlete.id) && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-black bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs" title="Notificaciones Push / PWA activas en su teléfono">
+                              <Bell className="w-3 h-3 text-emerald-600" />
+                              <span>Push</span>
                             </span>
                           )}
                         </div>
@@ -693,6 +704,11 @@ export default function AthleteDashboard({
                               Sin app
                             </span>
                           )}
+                          {pushSet.has(athlete.id) && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-black bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs" title="Notificaciones Push / PWA activas">
+                              <Bell className="w-2.5 h-2.5 text-emerald-600" /> Push
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -839,17 +855,25 @@ export default function AthleteDashboard({
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap text-center">
-                        {athlete.user_id ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-black bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs" title="Cuenta activa y vinculada">
-                            <Smartphone className="w-3.5 h-3.5" />
-                            <span>En la App</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200" title="Pendiente por crear cuenta">
-                            <UserX className="w-3.5 h-3.5 text-slate-400" />
-                            <span>Sin cuenta</span>
-                          </span>
-                        )}
+                        <div className="flex flex-col items-center gap-1">
+                          {athlete.user_id ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-black bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs" title="Cuenta activa y vinculada">
+                              <Smartphone className="w-3.5 h-3.5" />
+                              <span>En la App</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200" title="Pendiente por crear cuenta">
+                              <UserX className="w-3.5 h-3.5 text-slate-400" />
+                              <span>Sin cuenta</span>
+                            </span>
+                          )}
+                          {pushSet.has(athlete.id) && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs" title="Notificaciones Push / PWA instalada">
+                              <Bell className="w-3 h-3 text-emerald-600" />
+                              <span>Push Activo</span>
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap">

@@ -80,12 +80,22 @@ export default async function AthletesPage({
     }
   }
 
-  // Filtro de Registro en la App Móvil / Portal
+  // Filtro de Registro en la App Móvil / Portal y Notificaciones Push
   const portalFilter = typeof resolvedParams.portal === 'string' ? resolvedParams.portal : '';
+  
+  // Consultar IDs de atletas con notificaciones push activas
+  const { data: allPushSubs } = await supabase
+    .from('push_subscriptions')
+    .select('athlete_id')
+    .not('athlete_id', 'is', null);
+  const pushAthleteIds = Array.from(new Set(allPushSubs?.map(s => s.athlete_id).filter(Boolean))) as string[];
+
   if (portalFilter === 'registered') {
     athletesQuery = athletesQuery.not('user_id', 'is', null);
   } else if (portalFilter === 'unregistered') {
     athletesQuery = athletesQuery.is('user_id', null);
+  } else if (portalFilter === 'push') {
+    athletesQuery = athletesQuery.in('id', pushAthleteIds.length > 0 ? pushAthleteIds : ['00000000-0000-0000-0000-000000000000']);
   }
 
   // Métricas globales de adopción en la app
@@ -124,6 +134,7 @@ export default async function AthletesPage({
           resolvedParams={resolvedParams}
           registeredCount={registeredCount || 0}
           totalAthletes={totalAthletesCount || 0}
+          pushAthleteIds={pushAthleteIds || []}
         />
       </div>
     </div>

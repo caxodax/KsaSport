@@ -1,7 +1,7 @@
 import { getServiceSupabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, User, Calendar, CreditCard, ShieldCheck, Activity, Trophy, MessageCircle, ExternalLink, Receipt, UtensilsCrossed, PlusCircle, Smartphone } from 'lucide-react'
+import { ArrowLeft, User, Calendar, CreditCard, ShieldCheck, Activity, Trophy, MessageCircle, ExternalLink, Receipt, UtensilsCrossed, PlusCircle, Smartphone, Bell } from 'lucide-react'
 import ExemptionManager from './ExemptionManager'
 import TournamentEnrollmentManager from './TournamentEnrollmentManager'
 import ManualPaymentModal from './ManualPaymentModal'
@@ -43,6 +43,14 @@ export default async function AthleteProfilePage({
       console.error('Error fetching auth user for athlete:', e)
     }
   }
+
+  // 1.2 Fetch Push Notification / PWA Subscriptions
+  const { data: pushSubs } = await supabase
+    .from('push_subscriptions')
+    .select('id, created_at, user_agent')
+    .eq('athlete_id', athlete.id)
+
+  const hasPush = Boolean(pushSubs && pushSubs.length > 0)
 
   // 2. Fetch Active Products (for Exemption, Tournaments and Payment Modal)
   const { data: products } = await supabase
@@ -380,6 +388,28 @@ export default async function AthleteProfilePage({
                         {authUserEmail && (
                           <span className="text-[10px] font-mono font-bold text-indigo-700 bg-white/90 px-1.5 py-0.5 rounded border border-indigo-200 max-w-[200px] truncate" title={authUserEmail}>
                             {authUserEmail}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Alertas Push / PWA */}
+                  <div className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border shadow-2xs ${
+                    hasPush 
+                      ? 'bg-emerald-50 text-emerald-900 border-emerald-200' 
+                      : 'bg-slate-50 text-slate-600 border-slate-200'
+                  }`}>
+                    <Bell className={`w-4 h-4 ${hasPush ? 'text-emerald-600' : 'text-slate-400'}`} />
+                    <div>
+                      <p className="text-[9px] uppercase font-black tracking-wider opacity-75 leading-none">PWA / Notificaciones</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <p className="font-black text-xs">
+                          {hasPush ? 'Push Activo' : 'Sin Alertas'}
+                        </p>
+                        {pushSubs && pushSubs.length > 0 && (
+                          <span className="text-[9px] font-black uppercase text-emerald-700 bg-emerald-100/90 px-1.5 py-0.5 rounded border border-emerald-200" title="Dispositivo con notificaciones push del navegador / PWA activas">
+                            {pushSubs.length} {pushSubs.length === 1 ? 'disp.' : 'disps.'}
                           </span>
                         )}
                       </div>
