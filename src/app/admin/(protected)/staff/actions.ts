@@ -3,6 +3,7 @@ import { getServiceSupabase } from '@/lib/supabase';
 import { checkAdminPermission } from '@/lib/auth-admin';
 import { revalidatePath } from 'next/cache';
 import { cleanCedula } from '@/lib/cedula';
+import { uploadImageToCloudflare } from '@/lib/cloudflare';
 
 export async function createStaff(formData: FormData) {
   await checkAdminPermission('manage_catalog');
@@ -215,4 +216,47 @@ export async function revokeStaffAccess(staffId: string): Promise<{ success?: bo
   revalidatePath('/admin/users');
   return { success: true };
 }
+
+export async function updateStaffAvatar(staffId: string, formData: FormData): Promise<{ success?: boolean; avatar_url?: string; error?: string }> {
+  const file = formData.get('avatar') as File;
+  if (!file || file.size === 0) {
+    return { error: 'No se seleccionó ninguna imagen.' };
+  }
+
+  if (!file.type.startsWith('image/')) {
+    return { error: 'El archivo debe ser una imagen válida.' };
+  }
+
+  if (file.size > 10 * 1024 * 1024) {
+    return { error: 'La imagen no debe pesar más de 10MB.' };
+  }
+
+  try {
+    const publicUrl = await uploadImageToCloudflare(file, 'avatares');
+    if (!publicUrl) {
+      return { error: 'Error al subir la imagen a la nube.' };
+    }
+
+    const supabase = getServiceSupabase();
+    const { error } = await supabase
+      .from('staff')
+      .update({ avatar_url: publicUrl })
+      .eq('id', staffId);
+
+    if (error) {
+      if (error.message.includes('avatar_url')) {
+        return { error: 'Debes ejecutar en Supabase SQL Editor: ALTER TABLE staff ADD COLUMN IF NOT EXISTS avatar_url TEXT;' };
+      }
+      return { error: error.message };
+    }
+
+    revalidatePath('/admin/staff');
+    revalidatePath('/admin', 'layout');
+    revalidatePath('/admin/lineup');
+    return { success: true, avatar_url: publicUrl };
+  } catch (err: any) {
+    return { error: err.message || 'Error desconocido al actualizar foto.' };
+  }
+}
+
 

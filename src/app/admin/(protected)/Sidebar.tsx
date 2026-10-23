@@ -1,25 +1,34 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Shield, Trophy, Menu, Tags, X, ShoppingBag, Wallet, Settings, LogOut, BarChart3, UserCog, Landmark, CreditCard, Bell } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, Trophy, Menu, Tags, X, ShoppingBag, Wallet, Settings, LogOut, BarChart3, UserCog, Landmark, CreditCard, Bell, Camera } from 'lucide-react';
 import { logoutAdmin } from '../login/actions';
 import BrandLogo from '@/components/ui/BrandLogo';
+import StaffAvatarModal from '@/components/staff/StaffAvatarModal';
 
 export default function Sidebar({ 
   permissions, 
   roleName, 
   email,
-  logoUrl
+  logoUrl,
+  staffProfile
 }: { 
   permissions: string[], 
   roleName: string, 
   email: string,
-  logoUrl?: string | null
+  logoUrl?: string | null,
+  staffProfile?: { id: string; name: string; avatar_url?: string | null; role?: string } | null
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isAvatarOpen, setIsAvatarOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(staffProfile?.avatar_url || null);
   const pathname = usePathname();
+
+  useEffect(() => {
+    setAvatarUrl(staffProfile?.avatar_url || null);
+  }, [staffProfile?.avatar_url]);
   const allLinks = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, permission: 'view_finances', group: 'overview' },
     { href: '/admin/athletes', label: 'Roster / Atletas', icon: Users, permission: 'view_roster', group: 'sport' },
@@ -128,23 +137,58 @@ export default function Sidebar({
         
         <div className="p-4 border-t border-white/10 mt-auto flex justify-between items-center pb-[max(1rem,calc(env(safe-area-inset-bottom)+0.5rem))]">
           <div className="flex items-center gap-3 px-3 py-2 w-full overflow-hidden">
-            <div className="w-8 h-8 rounded-full bg-kasa-dorado flex items-center justify-center text-kasa-vinotinto font-bold text-sm shrink-0">
-              {email ? email.substring(0, 2).toUpperCase() : 'AD'}
-            </div>
+            {staffProfile ? (
+              <div 
+                onClick={() => setIsAvatarOpen(true)}
+                className="w-9 h-9 rounded-full overflow-hidden shrink-0 ring-1 ring-white/20 relative group/sb cursor-pointer select-none"
+                title="Clic para cambiar tu foto de perfil"
+              >
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-kasa-dorado flex items-center justify-center text-kasa-vinotinto font-bold text-sm">
+                    {staffProfile.name ? staffProfile.name.substring(0, 2).toUpperCase() : 'ST'}
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/sb:opacity-100 transition-opacity flex items-center justify-center text-white">
+                  <Camera className="w-3.5 h-3.5" />
+                </div>
+              </div>
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-kasa-dorado flex items-center justify-center text-kasa-vinotinto font-bold text-sm shrink-0">
+                {email ? email.substring(0, 2).toUpperCase() : 'AD'}
+              </div>
+            )}
             <div className="flex flex-col min-w-0">
-              <span className="text-sm font-bold truncate block">{email ? email.split('@')[0] : 'Admin'}</span>
-              <span className="text-[10px] text-kasa-dorado font-bold uppercase tracking-wider truncate block">{roleName}</span>
+              <span className="text-sm font-bold truncate block">
+                {staffProfile?.name || (email ? email.split('@')[0] : 'Admin')}
+              </span>
+              <span className="text-[10px] text-kasa-dorado font-bold uppercase tracking-wider truncate block">
+                {roleName}
+              </span>
             </div>
           </div>
           <button 
             onClick={() => logoutAdmin()} 
-            className="text-white/60 hover:text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
+            className="text-white/60 hover:text-white p-2 hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
             title="Cerrar Sesión"
           >
             <LogOut className="w-5 h-5" />
           </button>
         </div>
       </aside>
+
+      {staffProfile && (
+        <StaffAvatarModal
+          isOpen={isAvatarOpen}
+          onClose={() => setIsAvatarOpen(false)}
+          staffId={staffProfile.id}
+          staffName={staffProfile.name}
+          currentAvatar={avatarUrl}
+          role={staffProfile.role || roleName}
+          onSuccess={(newUrl) => setAvatarUrl(newUrl)}
+        />
+      )}
     </>
   );
 }

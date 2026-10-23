@@ -6,11 +6,12 @@ import {
   Plus, Search, LayoutGrid, Table as TableIcon, Shield, Award, 
   UserCheck, Activity, Briefcase, HeartHandshake, Phone, 
   MessageCircle, Edit3, Trash2, X, Filter, Trophy, Users, Layers,
-  ChevronLeft, ChevronRight, Key, ShieldCheck, Lock
+  ChevronLeft, ChevronRight, Key, ShieldCheck, Lock, Camera
 } from 'lucide-react';
 import { deleteStaff } from './actions';
 import StaffDrawer, { StaffData, TeamOption, STAFF_ROLES } from './StaffDrawer';
 import StaffPermissionsDrawer, { StaffWithUserData } from './StaffPermissionsDrawer';
+import StaffAvatarModal from '@/components/staff/StaffAvatarModal';
 import { formatCedula, cleanCedula } from '@/lib/cedula';
 import { toast } from 'sonner';
 
@@ -43,6 +44,15 @@ export default function StaffDashboard({
   const handleOpenPermissions = (staff: StaffWithUserData) => {
     setStaffForPermissions(staff);
     setIsPermissionsOpen(true);
+  };
+
+  // Avatar Modal state
+  const [isAvatarOpen, setIsAvatarOpen] = useState(false);
+  const [staffForAvatar, setStaffForAvatar] = useState<StaffWithUserData | null>(null);
+
+  const handleOpenAvatar = (staff: StaffWithUserData) => {
+    setStaffForAvatar(staff);
+    setIsAvatarOpen(true);
   };
 
   // Paginación Reactiva
@@ -406,9 +416,27 @@ export default function StaffDashboard({
 
                   {/* Avatar + Info Principal */}
                   <div className="flex items-start gap-3.5 pt-1">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-950 via-kasa-vinotinto to-amber-600 text-white font-black text-lg flex items-center justify-center shadow-md shrink-0 ring-2 ring-slate-100">
-                      {getInitials(staff.name)}
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAvatar(staff)}
+                      className="group/avatar relative w-14 h-14 rounded-2xl overflow-hidden shrink-0 ring-2 ring-slate-100 shadow-md focus:outline-none focus:ring-2 focus:ring-kasa-vinotinto cursor-pointer"
+                      title="Cambiar foto de perfil"
+                    >
+                      {staff.avatar_url ? (
+                        <img
+                          src={staff.avatar_url}
+                          alt={staff.name}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover/avatar:scale-105"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-rose-950 via-kasa-vinotinto to-amber-600 text-white font-black text-lg flex items-center justify-center">
+                          {getInitials(staff.name)}
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center text-white">
+                        <Camera className="w-4 h-4" />
+                      </div>
+                    </button>
 
                     <div className="min-w-0 flex-1">
                       <h3 className="text-base font-black text-gray-900 group-hover:text-kasa-vinotinto transition-colors leading-snug truncate">
@@ -554,9 +582,27 @@ export default function StaffDashboard({
                       {/* Miembro */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-950 via-kasa-vinotinto to-amber-600 text-white font-black text-sm flex items-center justify-center shadow-xs shrink-0">
-                            {getInitials(staff.name)}
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenAvatar(staff)}
+                            className="group/tavatar relative w-10 h-10 rounded-xl overflow-hidden shrink-0 shadow-xs ring-1 ring-slate-200/80 focus:outline-none focus:ring-2 focus:ring-kasa-vinotinto cursor-pointer"
+                            title="Cambiar foto de perfil"
+                          >
+                            {staff.avatar_url ? (
+                              <img
+                                src={staff.avatar_url}
+                                alt={staff.name}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover/tavatar:scale-105"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-rose-950 via-kasa-vinotinto to-amber-600 text-white font-black text-sm flex items-center justify-center">
+                                {getInitials(staff.name)}
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/tavatar:opacity-100 transition-opacity flex items-center justify-center text-white">
+                              <Camera className="w-3.5 h-3.5" />
+                            </div>
+                          </button>
                           <div>
                             <div className="text-sm font-black text-gray-900">{staff.name}</div>
                           </div>
@@ -784,6 +830,24 @@ export default function StaffDashboard({
           router.refresh();
         }}
       />
+
+      {/* 6. MODAL PARA SUBIR/ACTUALIZAR FOTO DE PERFIL */}
+      {staffForAvatar && (
+        <StaffAvatarModal
+          isOpen={isAvatarOpen}
+          onClose={() => {
+            setIsAvatarOpen(false);
+            setStaffForAvatar(null);
+          }}
+          staffId={staffForAvatar.id}
+          staffName={staffForAvatar.name}
+          currentAvatar={staffForAvatar.avatar_url}
+          role={staffForAvatar.role}
+          onSuccess={() => {
+            router.refresh();
+          }}
+        />
+      )}
 
     </div>
   );

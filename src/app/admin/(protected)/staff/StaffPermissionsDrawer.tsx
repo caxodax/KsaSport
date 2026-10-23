@@ -18,6 +18,7 @@ export interface StaffWithUserData {
   role: string;
   team_id?: string | null;
   user_id?: string | null;
+  avatar_url?: string | null;
   roleConfigured?: boolean;
   rolePermissions?: string[];
   teams?: {

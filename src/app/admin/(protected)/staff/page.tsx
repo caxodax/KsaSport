@@ -9,7 +9,7 @@ export default async function StaffPage() {
   const supabase = getServiceSupabase();
 
   const [
-    { data: staffData },
+    staffQueryRes,
     { data: teamsData },
     { data: categoriesData },
     { data: adminUsersData },
@@ -17,7 +17,7 @@ export default async function StaffPage() {
   ] = await Promise.all([
     supabase
       .from('staff')
-      .select('id, name, cedula, phone, role, team_id, user_id, teams!left(id, name, category, logo_url)')
+      .select('id, name, cedula, phone, role, team_id, user_id, avatar_url, teams!left(id, name, category, logo_url)')
       .order('created_at', { ascending: false }),
     supabase
       .from('teams')
@@ -34,6 +34,15 @@ export default async function StaffPage() {
       .from('admin_roles')
       .select('id, name, permissions')
   ]);
+
+  let staffData: any[] | null = staffQueryRes.data;
+  if (staffQueryRes.error && staffQueryRes.error.message.includes('avatar_url')) {
+    const fallbackRes = await supabase
+      .from('staff')
+      .select('id, name, cedula, phone, role, team_id, user_id, teams!left(id, name, category, logo_url)')
+      .order('created_at', { ascending: false });
+    staffData = (fallbackRes.data || []).map((s: any) => ({ ...s, avatar_url: null }));
+  }
 
   const categories = categoriesData?.map(c => c.name) || [];
 

@@ -44,6 +44,25 @@ export default async function AdminLayout({
     .eq('id', 1)
     .single()
 
+  // Consultar si el usuario autenticado es miembro del staff
+  let staffProfile: { id: string; name: string; avatar_url?: string | null; role?: string } | null = null;
+  const { data: staffWithAvatar, error: staffErr } = await adminSupabase
+    .from('staff')
+    .select('id, name, role, avatar_url')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (staffErr && staffErr.message.includes('avatar_url')) {
+    const { data: staffWithoutAvatar } = await adminSupabase
+      .from('staff')
+      .select('id, name, role')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    staffProfile = staffWithoutAvatar;
+  } else {
+    staffProfile = staffWithAvatar;
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row w-full max-w-full overflow-x-hidden">
       <Sidebar 
@@ -51,6 +70,7 @@ export default async function AdminLayout({
         roleName={roleName} 
         email={adminUser.email} 
         logoUrl={settings?.logo_url}
+        staffProfile={staffProfile}
       />
 
       {/* Main Content Area */}

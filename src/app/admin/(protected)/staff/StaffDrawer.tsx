@@ -29,6 +29,7 @@ export interface StaffData {
   phone?: string | null;
   role: string;
   team_id?: string | null;
+  avatar_url?: string | null;
   teams?: {
     id?: string;
     name?: string;
