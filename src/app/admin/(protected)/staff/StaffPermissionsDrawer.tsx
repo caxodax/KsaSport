@@ -140,16 +140,12 @@ export default function StaffPermissionsDrawer({
     setErrorMsg(null);
 
     if (enableAccess) {
-      if (!email.trim() || !email.includes('@')) {
-        setErrorMsg('Ingresa un correo electrónico válido para el acceso web.');
-        return;
-      }
-      if (!staffMember.user && (!password || password.length < 6)) {
-        setErrorMsg('La contraseña inicial debe tener al menos 6 caracteres.');
+      if (email.trim() && !email.includes('@')) {
+        setErrorMsg('El correo ingresado no tiene un formato válido.');
         return;
       }
       if (password && password.length < 6) {
-        setErrorMsg('La nueva contraseña debe tener al menos 6 caracteres.');
+        setErrorMsg('La contraseña debe tener al menos 6 caracteres.');
         return;
       }
       if (selectedPermissions.length === 0) {
@@ -164,7 +160,7 @@ export default function StaffPermissionsDrawer({
       const res = await saveStaffAccessAndPermissions({
         staffId: staffMember.id,
         enableAccess,
-        email: email.trim().toLowerCase(),
+        email: email.trim() ? email.trim().toLowerCase() : undefined,
         password: password ? password.trim() : undefined,
         permissions: selectedPermissions
       });
@@ -316,49 +312,91 @@ export default function StaffPermissionsDrawer({
                 </label>
               </div>
 
-              {/* Campos de Credenciales */}
+              {/* Información de Vinculación y Cuenta */}
               {enableAccess && (
                 <div className="pt-3 border-t border-slate-100 space-y-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Correo Electrónico de Acceso
-                    </label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="entrenador@ksasport.com"
-                      required={enableAccess}
-                      className="w-full px-3.5 py-2 text-xs font-medium border border-slate-200 rounded-xl focus:ring-2 focus:ring-kasa-vinotinto/30 focus:border-kasa-vinotinto outline-hidden"
-                    />
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-xs font-bold text-slate-700">
-                        {staffMember.user ? 'Cambiar Contraseña (Opcional)' : 'Contraseña Inicial'}
-                      </label>
+                  {staffMember.user ? (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md">
+                              Cuenta Vinculada
+                            </span>
+                          </div>
+                          <p className="text-xs font-bold text-emerald-950 mt-1">
+                            {staffMember.user.email}
+                          </p>
+                        </div>
+                      </div>
                       <button
                         type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="text-[10px] text-slate-400 hover:text-slate-600 flex items-center gap-1"
+                        onClick={handleRevoke}
+                        disabled={revoking}
+                        className="text-xs font-bold text-red-600 hover:text-red-800 transition-colors p-1 cursor-pointer"
                       >
-                        {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                        <span>{showPassword ? 'Ocultar' : 'Mostrar'}</span>
+                        {revoking ? 'Desvinculando...' : 'Desvincular'}
                       </button>
                     </div>
-                    <div className="relative">
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder={staffMember.user ? 'Dejar en blanco para mantener la actual' : 'Mínimo 6 caracteres'}
-                        minLength={6}
-                        required={enableAccess && !staffMember.user}
-                        className="w-full px-3.5 py-2 text-xs font-medium border border-slate-200 rounded-xl focus:ring-2 focus:ring-kasa-vinotinto/30 focus:border-kasa-vinotinto outline-hidden"
-                      />
+                  ) : (
+                    <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-3.5 flex items-start gap-3">
+                      <ShieldCheck className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md">
+                          Auto-vinculación con C.I.
+                        </span>
+                        <p className="text-xs text-amber-900 font-medium mt-1 leading-relaxed">
+                          No necesitas asignarle correo ni clave. El técnico se registrará en la app por su cuenta e ingresará su cédula <strong>({formatCedula(staffMember.cedula)})</strong> para acceder con los permisos que marques abajo.
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Asignación manual opcional (oculta por defecto) */}
+                  <details className="group pt-1">
+                    <summary className="text-[11px] font-bold text-slate-500 hover:text-slate-800 cursor-pointer flex items-center gap-1.5 select-none">
+                      <Key className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600" />
+                      <span>{staffMember.user ? 'Cambiar credenciales manualmente (Avanzado)' : 'Asignar credenciales manualmente (Opcional)'}</span>
+                    </summary>
+                    <div className="pt-3 space-y-3 pl-2 border-l-2 border-slate-100 mt-2">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                          Correo Electrónico (Opcional)
+                        </label>
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="entrenador@ksasport.com"
+                          className="w-full px-3 py-1.5 text-xs font-medium border border-slate-200 rounded-xl focus:ring-2 focus:ring-kasa-vinotinto/30 focus:border-kasa-vinotinto outline-hidden"
+                        />
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-[11px] font-bold text-slate-600">
+                            {staffMember.user ? 'Nueva Contraseña (Opcional)' : 'Contraseña Inicial (Opcional)'}
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="text-[10px] text-slate-400 hover:text-slate-600 flex items-center gap-1 cursor-pointer"
+                          >
+                            {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                            <span>{showPassword ? 'Ocultar' : 'Mostrar'}</span>
+                          </button>
+                        </div>
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder={staffMember.user ? 'Dejar en blanco para no cambiar' : 'Mínimo 6 caracteres'}
+                          minLength={6}
+                          className="w-full px-3 py-1.5 text-xs font-medium border border-slate-200 rounded-xl focus:ring-2 focus:ring-kasa-vinotinto/30 focus:border-kasa-vinotinto outline-hidden"
+                        />
+                      </div>
+                    </div>
+                  </details>
                 </div>
               )}
             </div>

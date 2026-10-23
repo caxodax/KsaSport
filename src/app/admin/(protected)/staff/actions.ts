@@ -112,18 +112,14 @@ export async function saveStaffAccessAndPermissions(payload: {
   }
 
   // 2. Si se habilita o actualiza el acceso web
-  const email = payload.email?.trim().toLowerCase();
-  if (!email) {
-    return { error: 'El correo electrónico es requerido para el acceso.' };
-  }
-
   const roleId = `staff_${staff.id}`;
+  const permissions = payload.permissions?.length > 0 ? payload.permissions : ['view_lineup', 'view_roster'];
   
   // 2.1 Asegurar que el rol personalizado exista en admin_roles con los permisos seleccionados
   const { error: roleError } = await supabase.from('admin_roles').upsert({
     id: roleId,
     name: `${staff.role}: ${staff.name}`,
-    permissions: payload.permissions
+    permissions
   }, { onConflict: 'id' });
 
   if (roleError) {
@@ -131,11 +127,11 @@ export async function saveStaffAccessAndPermissions(payload: {
     return { error: `Error configurando rol: ${roleError.message}` };
   }
 
+  const email = payload.email?.trim().toLowerCase();
   let targetUserId = staff.user_id;
 
-  // 2.2 Si no tiene cuenta aún, crearla en Supabase Auth o vincularla
-  if (!targetUserId) {
-    // Verificar si el usuario ya existe en Auth por email
+  // 2.2 Si el Super Admin suministró manualmente credenciales
+  if (email && !targetUserId) {
     const { data: authList } = await supabase.auth.admin.listUsers();
     const existingAuthUser = authList?.users?.find(u => u.email?.toLowerCase() === email);
 
@@ -144,11 +140,7 @@ export async function saveStaffAccessAndPermissions(payload: {
       if (payload.password && payload.password.length >= 6) {
         await supabase.auth.admin.updateUserById(targetUserId, { password: payload.password });
       }
-    } else {
-      if (!payload.password || payload.password.length < 6) {
-        return { error: 'La contraseña inicial debe tener al menos 6 caracteres.' };
-      }
-
+    } else if (payload.password && payload.password.length >= 6) {
       const { data: newAuthData, error: createAuthError } = await supabase.auth.admin.createUser({
         email,
         password: payload.password,
@@ -156,16 +148,15 @@ export async function saveStaffAccessAndPermissions(payload: {
         user_metadata: { name: staff.name }
       });
 
-      if (createAuthError || !newAuthData?.user) {
-        return { error: `No se pudo crear la cuenta de usuario: ${createAuthError?.message || 'Error desconocido'}` };
+      if (!createAuthError && newAuthData?.user) {
+        targetUserId = newAuthData.user.id;
       }
-
-      targetUserId = newAuthData.user.id;
     }
 
-    // Vincular user_id en la tabla staff
-    await supabase.from('staff').update({ user_id: targetUserId }).eq('id', staff.id);
-  } else {
+    if (targetUserId) {
+      await supabase.from('staff').update({ user_id: targetUserId }).eq('id', staff.id);
+    }
+  } else if (targetUserId) {
     // Si ya tenía user_id, actualizar email y/o password si se suministraron
     const updates: any = {};
     if (payload.password && payload.password.length >= 6) updates.password = payload.password;
@@ -176,16 +167,13 @@ export async function saveStaffAccessAndPermissions(payload: {
     }
   }
 
-  // 2.3 Upsert en admin_users para registrar el acceso administrativo y su role_id
-  const { error: adminUserError } = await supabase.from('admin_users').upsert({
-    id: targetUserId,
-    email,
-    role_id: roleId
-  }, { onConflict: 'id' });
-
-  if (adminUserError) {
-    console.error('Error registering admin_users:', adminUserError);
-    return { error: `Error registrando usuario administrativo: ${adminUserError.message}` };
+  // 2.3 Si ya tiene cuenta vinculada (sea manual o por auto-registro), sincronizar admin_users
+  if (targetUserId) {
+    await supabase.from('admin_users').upsert({
+      id: targetUserId,
+      email: email || staff.name,
+      role_id: roleId
+    }, { onConflict: 'id' });
   }
 
   revalidatePath('/admin/staff');
