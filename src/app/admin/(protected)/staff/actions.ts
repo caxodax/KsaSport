@@ -77,3 +77,149 @@ export async function updateStaff(formData: FormData) {
   revalidatePath('/admin/staff');
   return { success: true };
 }
+
+export async function saveStaffAccessAndPermissions(payload: {
+  staffId: string;
+  enableAccess: boolean;
+  email?: string;
+  password?: string;
+  permissions: string[];
+}): Promise<{ success?: boolean; error?: string }> {
+  await checkAdminPermission('manage_roles');
+  const supabase = getServiceSupabase();
+
+  const { data: staff, error: staffError } = await supabase
+    .from('staff')
+    .select('id, name, role, user_id, team_id')
+    .eq('id', payload.staffId)
+    .single();
+
+  if (staffError || !staff) {
+    return { error: 'Miembro del staff no encontrado.' };
+  }
+
+  // 1. Si se desactiva el acceso web
+  if (!payload.enableAccess) {
+    if (staff.user_id) {
+      // Eliminar de admin_users
+      await supabase.from('admin_users').delete().eq('id', staff.user_id);
+      // Desvincular en staff
+      await supabase.from('staff').update({ user_id: null }).eq('id', staff.id);
+    }
+    revalidatePath('/admin/staff');
+    revalidatePath('/admin/users');
+    return { success: true };
+  }
+
+  // 2. Si se habilita o actualiza el acceso web
+  const email = payload.email?.trim().toLowerCase();
+  if (!email) {
+    return { error: 'El correo electrónico es requerido para el acceso.' };
+  }
+
+  const roleId = `staff_${staff.id}`;
+  
+  // 2.1 Asegurar que el rol personalizado exista en admin_roles con los permisos seleccionados
+  const { error: roleError } = await supabase.from('admin_roles').upsert({
+    id: roleId,
+    name: `${staff.role}: ${staff.name}`,
+    permissions: payload.permissions
+  }, { onConflict: 'id' });
+
+  if (roleError) {
+    console.error('Error upserting admin_roles:', roleError);
+    return { error: `Error configurando rol: ${roleError.message}` };
+  }
+
+  let targetUserId = staff.user_id;
+
+  // 2.2 Si no tiene cuenta aún, crearla en Supabase Auth o vincularla
+  if (!targetUserId) {
+    // Verificar si el usuario ya existe en Auth por email
+    const { data: authList } = await supabase.auth.admin.listUsers();
+    const existingAuthUser = authList?.users?.find(u => u.email?.toLowerCase() === email);
+
+    if (existingAuthUser) {
+      targetUserId = existingAuthUser.id;
+      if (payload.password && payload.password.length >= 6) {
+        await supabase.auth.admin.updateUserById(targetUserId, { password: payload.password });
+      }
+    } else {
+      if (!payload.password || payload.password.length < 6) {
+        return { error: 'La contraseña inicial debe tener al menos 6 caracteres.' };
+      }
+
+      const { data: newAuthData, error: createAuthError } = await supabase.auth.admin.createUser({
+        email,
+        password: payload.password,
+        email_confirm: true,
+        user_metadata: { name: staff.name }
+      });
+
+      if (createAuthError || !newAuthData?.user) {
+        return { error: `No se pudo crear la cuenta de usuario: ${createAuthError?.message || 'Error desconocido'}` };
+      }
+
+      targetUserId = newAuthData.user.id;
+    }
+
+    // Vincular user_id en la tabla staff
+    await supabase.from('staff').update({ user_id: targetUserId }).eq('id', staff.id);
+  } else {
+    // Si ya tenía user_id, actualizar email y/o password si se suministraron
+    const updates: any = {};
+    if (payload.password && payload.password.length >= 6) updates.password = payload.password;
+    if (email) updates.email = email;
+
+    if (Object.keys(updates).length > 0) {
+      await supabase.auth.admin.updateUserById(targetUserId, updates);
+    }
+  }
+
+  // 2.3 Upsert en admin_users para registrar el acceso administrativo y su role_id
+  const { error: adminUserError } = await supabase.from('admin_users').upsert({
+    id: targetUserId,
+    email,
+    role_id: roleId
+  }, { onConflict: 'id' });
+
+  if (adminUserError) {
+    console.error('Error registering admin_users:', adminUserError);
+    return { error: `Error registrando usuario administrativo: ${adminUserError.message}` };
+  }
+
+  revalidatePath('/admin/staff');
+  revalidatePath('/admin/users');
+  return { success: true };
+}
+
+export async function revokeStaffAccess(staffId: string): Promise<{ success?: boolean; error?: string }> {
+  await checkAdminPermission('manage_roles');
+  const supabase = getServiceSupabase();
+
+  const { data: staff, error: fetchErr } = await supabase
+    .from('staff')
+    .select('id, user_id')
+    .eq('id', staffId)
+    .single();
+
+  if (fetchErr) {
+    return { error: 'No se encontró el miembro del staff.' };
+  }
+
+  if (staff?.user_id) {
+    const { error: delErr } = await supabase.from('admin_users').delete().eq('id', staff.user_id);
+    if (delErr) {
+      return { error: `Error eliminando permisos: ${delErr.message}` };
+    }
+    const { error: updErr } = await supabase.from('staff').update({ user_id: null }).eq('id', staffId);
+    if (updErr) {
+      return { error: `Error desvinculando staff: ${updErr.message}` };
+    }
+  }
+
+  revalidatePath('/admin/staff');
+  revalidatePath('/admin/users');
+  return { success: true };
+}
+

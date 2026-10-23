@@ -1,7 +1,7 @@
 import { getServiceSupabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, User, Calendar, CreditCard, ShieldCheck, Activity, Trophy, MessageCircle, ExternalLink, Receipt, UtensilsCrossed, PlusCircle, Smartphone, Bell } from 'lucide-react'
+import { ArrowLeft, User, Calendar, CreditCard, ShieldCheck, Activity, Trophy, MessageCircle, ExternalLink, Receipt, UtensilsCrossed, PlusCircle, Smartphone, Bell, Lock } from 'lucide-react'
 import ExemptionManager from './ExemptionManager'
 import TournamentEnrollmentManager from './TournamentEnrollmentManager'
 import ManualPaymentModal from './ManualPaymentModal'
@@ -9,6 +9,7 @@ import VoidPaymentButton from './VoidPaymentButton'
 import { formatCedula } from '@/lib/cedula'
 import { formatLocalDate } from '@/lib/dateUtils'
 import { findParentProduct, getEffectiveOptInProductId } from '@/lib/productHierarchy'
+import { checkAdminPermission } from '@/lib/auth-admin'
 
 export const revalidate = 0
 
@@ -17,6 +18,10 @@ export default async function AthleteProfilePage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  const { user, permissions, isSuperAdmin } = await checkAdminPermission(['view_roster', 'view_lineup']);
+  const canViewFinances = isSuperAdmin || permissions.includes('view_finances');
+  const canViewContact = isSuperAdmin || permissions.includes('view_athlete_contact');
+
   const resolvedParams = await params
   const supabase = getServiceSupabase()
 
@@ -29,6 +34,14 @@ export default async function AthleteProfilePage({
 
   if (error || !athlete) {
     notFound()
+  }
+
+  // 1.0 Aislamiento estricto de equipo para personal técnico
+  if (!isSuperAdmin) {
+    const { data: staffData } = await supabase.from('staff').select('team_id').eq('user_id', user.id).single();
+    if (staffData?.team_id && athlete.team_id !== staffData.team_id) {
+      notFound();
+    }
   }
 
   // 1.1 Fetch Auth User info if registered in app
@@ -367,8 +380,16 @@ export default async function AthleteProfilePage({
                       isSolvente ? 'bg-emerald-500' : isMoroso ? 'bg-rose-500 animate-pulse' : 'bg-slate-400'
                     }`} />
                     <div>
-                      <p className="text-[9px] uppercase font-black tracking-wider opacity-75 leading-none">Estatus Financiero</p>
-                      <p className="font-black text-xs mt-0.5">{athlete.status}</p>
+                      <p className="text-[9px] uppercase font-black tracking-wider opacity-75 leading-none">
+                        {canViewFinances ? 'Estatus Financiero' : 'Habilitación Deportiva'}
+                      </p>
+                      <p className="font-black text-xs mt-0.5">
+                        {canViewFinances 
+                          ? athlete.status 
+                          : isSolvente 
+                          ? 'Habilitada para Juego' 
+                          : 'No Convocable'}
+                      </p>
                     </div>
                   </div>
 
@@ -416,7 +437,7 @@ export default async function AthleteProfilePage({
                     </div>
                   </div>
 
-                  {athlete.paid_until && (
+                  {canViewFinances && athlete.paid_until && (
                     <div className="flex items-center gap-2 bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200 shadow-2xs">
                       <Calendar className="w-4 h-4 text-slate-400" />
                       <div>
@@ -430,38 +451,47 @@ export default async function AthleteProfilePage({
                     </div>
                   )}
 
-                  {/* Botón WhatsApp */}
-                  {athlete.phone ? (
-                    <a
-                      href={formatWhatsAppUrl(athlete.phone, athlete.name)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-0.5"
-                      title={`Abrir chat de WhatsApp con ${athlete.phone}`}
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                      <span>WhatsApp ({athlete.phone})</span>
-                    </a>
+                  {/* Botón WhatsApp / Contacto */}
+                  {canViewContact ? (
+                    athlete.phone ? (
+                      <a
+                        href={formatWhatsAppUrl(athlete.phone, athlete.name)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-0.5"
+                        title={`Abrir chat de WhatsApp con ${athlete.phone}`}
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        <span>WhatsApp ({athlete.phone})</span>
+                      </a>
+                    ) : (
+                      <span className="text-xs text-slate-400 font-medium italic">
+                        Sin teléfono registrado
+                      </span>
+                    )
                   ) : (
-                    <span className="text-xs text-slate-400 font-medium italic">
-                      Sin teléfono registrado
+                    <span className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-400 font-medium" title="Teléfono reservado para la administración">
+                      <Lock className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Contacto reservado</span>
                     </span>
                   )}
 
-                  {/* Badge y acceso rápido a Créditos */}
-                  <Link
-                    href="/admin/cantina"
-                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 transition-colors shadow-2xs"
-                    title="Ver en Créditos KsaSports"
-                  >
-                    <CreditCard className="w-4 h-4 text-amber-700" />
-                    <div>
-                      <p className="text-[9px] uppercase font-black text-amber-800 tracking-wider leading-none">Créditos</p>
-                      <p className="font-black text-xs text-amber-900 mt-0.5">
-                        {Number(foodCredit?.balance || 0) > 0 ? `Deuda: €${Number(foodCredit?.balance || 0).toFixed(2)}` : 'Al día (€0.00)'}
-                      </p>
-                    </div>
-                  </Link>
+                  {/* Badge y acceso rápido a Créditos (solo si tiene permiso de finanzas) */}
+                  {canViewFinances && (
+                    <Link
+                      href="/admin/cantina"
+                      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 transition-colors shadow-2xs"
+                      title="Ver en Créditos KsaSports"
+                    >
+                      <CreditCard className="w-4 h-4 text-amber-700" />
+                      <div>
+                        <p className="text-[9px] uppercase font-black text-amber-800 tracking-wider leading-none">Créditos</p>
+                        <p className="font-black text-xs text-amber-900 mt-0.5">
+                          {Number(foodCredit?.balance || 0) > 0 ? `Deuda: €${Number(foodCredit?.balance || 0).toFixed(2)}` : 'Al día (€0.00)'}
+                        </p>
+                      </div>
+                    </Link>
+                  )}
                 </div>
               </div>
             </div>
@@ -497,7 +527,8 @@ export default async function AthleteProfilePage({
         </div>
 
         {/* CUERPO PRINCIPAL */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {canViewFinances ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Columna Izquierda: Convocatorias a Ligas y Exoneraciones */}
           <div className="lg:col-span-1 space-y-6">
@@ -872,6 +903,48 @@ export default async function AthleteProfilePage({
 
           </div>
         </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm space-y-3">
+              <div className="flex items-center gap-2.5 text-slate-900">
+                <ShieldCheck className="w-5 h-5 text-kasa-vinotinto" />
+                <h3 className="font-black text-lg">Expediente Deportivo y Técnico</h3>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed max-w-2xl">
+                Como miembro del cuerpo técnico, tienes acceso a la ficha deportiva, posición, estadísticas de campo y convocatorias a torneos de la atleta. El historial de pagos, recibos bancarios y cobros son administrados exclusivamente por la directiva del club.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <TournamentEnrollmentManager 
+                athleteId={athlete.id} 
+                tournamentProducts={tournamentProducts}
+                initialEnrolledIds={Array.from(optInIds)}
+              />
+
+              <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-sm space-y-4">
+                <div className="flex items-center gap-2 text-slate-900">
+                  <Activity className="w-5 h-5 text-emerald-600" />
+                  <h4 className="font-black text-base">Rendimiento en el Diamante</h4>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <p className="text-[10px] font-black uppercase text-slate-400">Posición Principal</p>
+                    <p className="text-lg font-mono font-black text-gray-900 mt-1">{athlete.position || 'Sin asignar'}</p>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <p className="text-[10px] font-black uppercase text-slate-400">Promedio Bateo</p>
+                    <p className="text-lg font-mono font-black text-sky-900 mt-1">{athlete.stats_avg ?? '.000'}</p>
+                  </div>
+                </div>
+                <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200/70 text-[11px] text-amber-900 flex items-center gap-2">
+                  <Trophy className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>Para asignar o cambiar la posición en la alineación del juego, utiliza la <Link href="/admin/lineup" className="font-bold underline">Pizarra de Alineación</Link>.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

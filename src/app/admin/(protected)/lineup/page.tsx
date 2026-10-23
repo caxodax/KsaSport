@@ -5,7 +5,7 @@ import LineupClientWrapper from './LineupClientWrapper';
 export const revalidate = 0;
 
 export default async function LineupPage() {
-  const { user, permissions } = await checkAdminPermission('view_roster');
+  const { user, permissions } = await checkAdminPermission(['view_lineup', 'view_roster']);
   const isSuperAdmin = permissions.includes('manage_catalog');
   const supabase = getServiceSupabase();
 

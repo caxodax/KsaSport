@@ -1,26 +1,31 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Plus, Search, LayoutGrid, Table as TableIcon, Shield, Award, 
   UserCheck, Activity, Briefcase, HeartHandshake, Phone, 
   MessageCircle, Edit3, Trash2, X, Filter, Trophy, Users, Layers,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Key, ShieldCheck, Lock
 } from 'lucide-react';
 import { deleteStaff } from './actions';
 import StaffDrawer, { StaffData, TeamOption, STAFF_ROLES } from './StaffDrawer';
+import StaffPermissionsDrawer, { StaffWithUserData } from './StaffPermissionsDrawer';
 import { formatCedula, cleanCedula } from '@/lib/cedula';
 import { toast } from 'sonner';
 
 export default function StaffDashboard({
   initialStaff = [],
   teams = [],
-  categories = []
+  categories = [],
+  isSuperAdmin = true
 }: {
-  initialStaff: StaffData[];
+  initialStaff: StaffWithUserData[];
   teams: TeamOption[];
   categories: string[];
+  isSuperAdmin?: boolean;
 }) {
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [teamFilter, setTeamFilter] = useState('');
@@ -30,6 +35,15 @@ export default function StaffDashboard({
   // Drawer state
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<StaffData | null>(null);
+
+  // Permissions Drawer state
+  const [isPermissionsOpen, setIsPermissionsOpen] = useState(false);
+  const [staffForPermissions, setStaffForPermissions] = useState<StaffWithUserData | null>(null);
+
+  const handleOpenPermissions = (staff: StaffWithUserData) => {
+    setStaffForPermissions(staff);
+    setIsPermissionsOpen(true);
+  };
 
   // Paginación Reactiva
   const [currentPage, setCurrentPage] = useState(1);
@@ -364,16 +378,25 @@ export default function StaffDashboard({
                     </span>
 
                     <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                      {isSuperAdmin && (
+                        <button
+                          onClick={() => handleOpenPermissions(staff)}
+                          className="p-2 hover:bg-amber-50 text-slate-400 hover:text-amber-700 rounded-xl transition-colors cursor-pointer"
+                          title="Gestionar permisos y acceso al panel"
+                        >
+                          <Key className="w-4 h-4" />
+                        </button>
+                      )}
                       <button
                         onClick={() => handleOpenEdit(staff)}
-                        className="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-800 rounded-xl transition-colors"
+                        className="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-800 rounded-xl transition-colors cursor-pointer"
                         title="Editar expediente"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(staff)}
-                        className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-xl transition-colors"
+                        className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-xl transition-colors cursor-pointer"
                         title="Eliminar del staff"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -420,6 +443,37 @@ export default function StaffDashboard({
                           Sin teléfono registrado
                         </p>
                       )}
+
+                      {/* Estado de Acceso Web */}
+                      <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5">
+                        {staff.user ? (
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-50 text-emerald-800 border border-emerald-200 truncate">
+                              <ShieldCheck className="w-3 h-3 text-emerald-600 shrink-0" />
+                              <span className="truncate">{staff.user.email}</span>
+                            </span>
+                            <span className="text-[9px] font-black uppercase text-slate-400 shrink-0">
+                              {staff.user.permissions.length} perm.
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-400">
+                            <Lock className="w-3 h-3" />
+                            <span>Sin acceso web</span>
+                          </span>
+                        )}
+
+                        {isSuperAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenPermissions(staff)}
+                            className="text-[10px] font-black text-kasa-vinotinto hover:text-red-950 hover:underline shrink-0 flex items-center gap-0.5 cursor-pointer"
+                          >
+                            <span>{staff.user ? 'Permisos' : 'Dar Acceso'}</span>
+                            <ChevronRight className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -476,6 +530,7 @@ export default function StaffDashboard({
                   <th className="px-6 py-4 text-left text-[11px] font-black uppercase tracking-wider text-slate-500">Contacto</th>
                   <th className="px-6 py-4 text-left text-[11px] font-black uppercase tracking-wider text-slate-500">Rol Técnico</th>
                   <th className="px-6 py-4 text-left text-[11px] font-black uppercase tracking-wider text-slate-500">Equipo Asignado</th>
+                  <th className="px-6 py-4 text-left text-[11px] font-black uppercase tracking-wider text-slate-500">Acceso Web</th>
                   <th className="px-6 py-4 text-right text-[11px] font-black uppercase tracking-wider text-slate-500">Acciones</th>
                 </tr>
               </thead>
@@ -558,9 +613,38 @@ export default function StaffDashboard({
                         )}
                       </td>
 
+                      {/* Acceso Web */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {staff.user ? (
+                          <div className="flex flex-col gap-0.5">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-50 text-emerald-800 border border-emerald-200 w-max">
+                              <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                              <span>{staff.user.email}</span>
+                            </span>
+                            <span className="text-[9px] font-bold text-slate-400">
+                              {staff.user.permissions.length} permisos activos
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400">
+                            <Lock className="w-3 h-3 text-slate-300" />
+                            Sin cuenta
+                          </span>
+                        )}
+                      </td>
+
                       {/* Acciones */}
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-1">
+                          {isSuperAdmin && (
+                            <button
+                              onClick={() => handleOpenPermissions(staff)}
+                              className="p-1.5 hover:bg-amber-50 text-slate-400 hover:text-amber-700 rounded-lg transition-colors cursor-pointer"
+                              title="Gestionar Permisos Web"
+                            >
+                              <Key className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => handleOpenEdit(staff)}
                             className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-800 rounded-lg transition-colors cursor-pointer"
@@ -665,6 +749,20 @@ export default function StaffDashboard({
         }}
         staffMember={selectedStaff}
         teams={teams}
+      />
+
+      {/* 5. MODAL DRAWER DE CONTROL DE ACCESO Y PERMISOS */}
+      <StaffPermissionsDrawer
+        key={staffForPermissions?.id || 'permissions'}
+        isOpen={isPermissionsOpen}
+        onClose={() => {
+          setIsPermissionsOpen(false);
+          setStaffForPermissions(null);
+        }}
+        staffMember={staffForPermissions}
+        onSuccess={() => {
+          router.refresh();
+        }}
       />
 
     </div>

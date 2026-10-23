@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getServiceSupabase } from '@/lib/supabase'
 import { redirect } from 'next/navigation'
 
-export async function checkAdminPermission(requiredPermission?: string) {
+export async function checkAdminPermission(requiredPermission?: string | string[]) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -25,11 +25,16 @@ export async function checkAdminPermission(requiredPermission?: string) {
     redirect('/login')
   }
 
-  const permissions = (adminUser.admin_roles as any)?.permissions || []
+  const permissions: string[] = (adminUser.admin_roles as any)?.permissions || []
+  const isSuperAdmin = adminUser.role_id === 'superadmin' || permissions.includes('manage_roles')
 
-  if (requiredPermission && !permissions.includes(requiredPermission)) {
-    redirect('/admin?error=unauthorized')
+  if (requiredPermission && !isSuperAdmin) {
+    const requiredList = Array.isArray(requiredPermission) ? requiredPermission : [requiredPermission]
+    const hasPermission = requiredList.some(p => permissions.includes(p))
+    if (!hasPermission) {
+      redirect('/admin?error=unauthorized')
+    }
   }
 
-  return { user, permissions, role_id: adminUser.role_id }
+  return { user, permissions, role_id: adminUser.role_id, isSuperAdmin }
 }

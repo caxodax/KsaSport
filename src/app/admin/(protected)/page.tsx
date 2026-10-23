@@ -12,6 +12,9 @@ import { cleanCedula, formatCedula } from '@/lib/cedula';
 import { ProductFilterItem } from './MultiSelectProductFilter';
 import { findParentProduct, getEffectiveOptInProductId } from '@/lib/productHierarchy';
 
+import { redirect } from 'next/navigation';
+import { checkAdminPermission } from '@/lib/auth-admin';
+
 export const revalidate = 0;
 
 export default async function DashboardPage({
@@ -19,6 +22,15 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+  const { permissions, isSuperAdmin } = await checkAdminPermission();
+  if (!isSuperAdmin && !permissions.includes('view_finances')) {
+    if (permissions.includes('view_lineup')) {
+      redirect('/admin/lineup');
+    } else if (permissions.includes('view_roster')) {
+      redirect('/admin/athletes');
+    }
+  }
+
   const supabase = getServiceSupabase();
   const resolvedParams = await searchParams;
 
