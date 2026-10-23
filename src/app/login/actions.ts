@@ -118,3 +118,31 @@ export async function logout() {
   revalidatePath('/', 'layout');
   redirect('/login');
 }
+
+export async function requestPasswordReset(formData: FormData): Promise<AuthResult> {
+  const email = (formData.get('email') as string)?.trim().toLowerCase();
+
+  if (!email) {
+    return { error: 'Por favor, ingresa tu correo electrónico.' };
+  }
+
+  const { headers } = await import('next/headers');
+  const headersList = await headers();
+  const host = headersList.get('x-forwarded-host') || headersList.get('host') || 'localhost:3000';
+  const proto = headersList.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
+  const origin = headersList.get('origin') || `${proto}://${host}`;
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/callback?next=/reset-password`,
+  });
+
+  if (error) {
+    console.error('Error in resetPasswordForEmail:', error);
+    return { error: 'No se pudo procesar la solicitud en este momento. Inténtalo más tarde.' };
+  }
+
+  return {
+    successMessage: 'Si el correo está registrado en KsaSport, te hemos enviado un enlace seguro para restablecer tu contraseña. Revisa tu bandeja de entrada o spam.',
+  };
+}
