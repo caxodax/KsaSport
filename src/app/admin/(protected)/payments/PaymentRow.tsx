@@ -23,6 +23,12 @@ type Payment = {
   transferred_amount?: number
   payment_currency?: string
   date_rate?: string
+  created_by_email?: string | null
+  recorded_at?: string | null
+  approved_by_email?: string | null
+  approved_at?: string | null
+  voided_by_email?: string | null
+  voided_at?: string | null
   athletes: {
     name: string
     cedula: string
@@ -201,6 +207,28 @@ export default function PaymentRow({ payment }: { payment: Payment }) {
           }`}>
             {payment.status}
           </span>
+
+          {/* Auditoría Interna (Solo Admin) */}
+          {payment.created_by_email && (
+            <div className="text-[10px] text-slate-500 font-medium mt-1">
+              👤 <span className="font-bold text-slate-700">{payment.created_by_email}</span>
+              {payment.recorded_at && (
+                <span className="text-slate-400 block text-[9px]">
+                  {new Date(payment.recorded_at).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+            </div>
+          )}
+          {payment.approved_by_email && (
+            <div className="text-[10px] text-emerald-700 font-medium mt-1">
+              ✓ <span className="font-bold">{payment.approved_by_email}</span>
+            </div>
+          )}
+          {payment.voided_by_email && (
+            <div className="text-[10px] text-rose-600 font-medium mt-1">
+              ✕ <span className="font-bold">{payment.voided_by_email}</span>
+            </div>
+          )}
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
           {payment.status === 'Pendiente' ? (
@@ -360,6 +388,13 @@ export function PaymentCard({ payment }: { payment: Payment }) {
           <p className="mt-2 pt-1 border-t border-gray-200 text-xs text-slate-500">
             <span className="font-semibold text-gray-700">Fecha:</span> {new Date(payment.created_at).toLocaleString()}
           </p>
+          {(payment.created_by_email || payment.approved_by_email || payment.voided_by_email) && (
+            <div className="text-[11px] bg-slate-100 p-2 rounded-lg text-slate-600 font-medium space-y-0.5">
+              {payment.created_by_email && <div>👤 Cargado por: <strong className="text-slate-800">{payment.created_by_email}</strong></div>}
+              {payment.approved_by_email && <div>✓ Aprobado por: <strong className="text-emerald-700">{payment.approved_by_email}</strong></div>}
+              {payment.voided_by_email && <div>✕ Anulado por: <strong className="text-rose-700">{payment.voided_by_email}</strong></div>}
+            </div>
+          )}
         </div>
         
         {payment.status === 'Pendiente' && (

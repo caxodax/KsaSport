@@ -749,6 +749,16 @@ export default async function AthleteProfilePage({
                         </span>
                       </div>
 
+                      {/* Auditoría Móvil */}
+                      {(pay.created_by_email || pay.approved_by_email || pay.voided_by_email) && (
+                        <div className="text-[10px] bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 flex items-center justify-between text-slate-500 font-medium">
+                          {pay.created_by_email && <span>👤 <strong className="text-slate-700">{pay.created_by_email}</strong></span>}
+                          {pay.approved_by_email && <span>✓ <strong className="text-emerald-700">{pay.approved_by_email}</strong></span>}
+                          {pay.voided_by_email && <span>✕ <strong className="text-rose-700">{pay.voided_by_email}</strong></span>}
+                          {pay.recorded_at && <span className="text-[9px] text-slate-400">{formatLocalDate(pay.recorded_at, { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })}</span>}
+                        </div>
+                      )}
+
                       <div className="flex items-baseline justify-between gap-2">
                         <div className="min-w-0">
                           <p className="text-sm font-bold text-gray-900 truncate">
@@ -873,6 +883,38 @@ export default async function AthleteProfilePage({
                               }`} />
                               {pay.status}
                             </span>
+
+                            {/* Auditoría Administrativa (Solo visible para Administradores) */}
+                            {pay.created_by_email && (
+                              <div className="text-[10px] text-slate-500 font-medium mt-1">
+                                👤 <span className="text-slate-700 font-bold">{pay.created_by_email}</span>
+                                {pay.recorded_at && (
+                                  <span className="text-slate-400 block text-[9px]">
+                                    {formatLocalDate(pay.recorded_at, { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            {pay.approved_by_email && (
+                              <div className="text-[10px] text-emerald-700 font-medium mt-1">
+                                ✓ <span className="font-bold">{pay.approved_by_email}</span>
+                                {pay.approved_at && (
+                                  <span className="text-emerald-600/70 block text-[9px]">
+                                    {formatLocalDate(pay.approved_at, { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            {pay.voided_by_email && (
+                              <div className="text-[10px] text-rose-600 font-medium mt-1">
+                                ✕ <span className="font-bold">{pay.voided_by_email}</span>
+                                {pay.voided_at && (
+                                  <span className="text-rose-500/70 block text-[9px]">
+                                    {formatLocalDate(pay.voided_at, { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </td>
                           <td className="py-4 px-6 text-right whitespace-nowrap">
                             <VoidPaymentButton

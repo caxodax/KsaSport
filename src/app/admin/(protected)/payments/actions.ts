@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { sendAthletePush } from '@/lib/pushNotifications'
 
 export async function approvePayment(paymentId: string, athleteId: string, concept: string) {
-  await checkAdminPermission('view_finances')
+  const { user } = await checkAdminPermission('view_finances')
   const supabase = getServiceSupabase()
   
   // 1. Obtener la data del pago antes de actualizar
@@ -20,13 +20,36 @@ export async function approvePayment(paymentId: string, athleteId: string, conce
   if (payment.status === 'Completado') return { error: 'Este pago ya fue aprobado previamente.' }
 
   // 2. Actualizar estatus del pago de forma atómica asegurando que siga en Pendiente
-  const { data: updatedPayment, error: paymentError } = await supabase
+  const updatePayload: any = { 
+    status: 'Completado',
+    approved_by: user?.id || null,
+    approved_by_email: user?.email || null,
+    approved_at: new Date().toISOString()
+  }
+
+  let { data: updatedPayment, error: paymentError } = await supabase
     .from('payments')
-    .update({ status: 'Completado' })
+    .update(updatePayload)
     .eq('id', paymentId)
     .eq('status', 'Pendiente')
     .select('id')
     .single()
+
+  // Fallback si las columnas de auditoría aún no existen en DB
+  if (paymentError && paymentError.message.includes('approved_by')) {
+    delete updatePayload.approved_by;
+    delete updatePayload.approved_by_email;
+    delete updatePayload.approved_at;
+    const retry = await supabase
+      .from('payments')
+      .update(updatePayload)
+      .eq('id', paymentId)
+      .eq('status', 'Pendiente')
+      .select('id')
+      .single()
+    updatedPayment = retry.data;
+    paymentError = retry.error;
+  }
 
   if (paymentError || !updatedPayment) {
     return { error: 'Este pago ya fue procesado o no se encuentra en estado Pendiente.' }
@@ -98,7 +121,7 @@ export async function approvePayment(paymentId: string, athleteId: string, conce
 }
 
 export async function rejectPayment(paymentId: string) {
-  await checkAdminPermission('view_finances')
+  const { user } = await checkAdminPermission('view_finances')
   const supabase = getServiceSupabase()
   
   // Obtener atleta_id antes de actualizar
@@ -108,13 +131,35 @@ export async function rejectPayment(paymentId: string) {
     .eq('id', paymentId)
     .single()
 
-  const { data: updatedPayment, error } = await supabase
+  const updatePayload: any = { 
+    status: 'Rechazado',
+    voided_by: user?.id || null,
+    voided_by_email: user?.email || null,
+    voided_at: new Date().toISOString()
+  }
+
+  let { data: updatedPayment, error } = await supabase
     .from('payments')
-    .update({ status: 'Rechazado' })
+    .update(updatePayload)
     .eq('id', paymentId)
     .eq('status', 'Pendiente')
     .select('id')
     .single()
+
+  if (error && error.message.includes('voided_by')) {
+    delete updatePayload.voided_by;
+    delete updatePayload.voided_by_email;
+    delete updatePayload.voided_at;
+    const retry = await supabase
+      .from('payments')
+      .update(updatePayload)
+      .eq('id', paymentId)
+      .eq('status', 'Pendiente')
+      .select('id')
+      .single()
+    updatedPayment = retry.data;
+    error = retry.error;
+  }
 
   if (error || !updatedPayment) {
     return { error: 'El pago ya fue procesado o no se encuentra en estado Pendiente.' }
@@ -142,7 +187,7 @@ export async function rejectPayment(paymentId: string) {
  * ingresos del club y recalculando solvencia si correspondía a una mensualidad.
  */
 export async function voidPayment(paymentId: string, reason?: string) {
-  const { permissions } = await checkAdminPermission()
+  const { user, permissions } = await checkAdminPermission()
   if (!permissions.includes('view_finances') && !permissions.includes('manage_catalog')) {
     return { error: 'No autorizado para anular pagos.' }
   }
@@ -164,18 +209,35 @@ export async function voidPayment(paymentId: string, reason?: string) {
     return { error: 'Este pago ya se encuentra anulado.' }
   }
 
-  // 2. Anular el pago actualizando su estatus
+  // 2. Anular el pago actualizando su estatus y registrando auditoría
   const voidConcept = reason?.trim() 
     ? `${payment.concept} [ANULADO: ${reason.trim()}]` 
     : `${payment.concept} [ANULADO]`
 
-  const { error: updateError } = await supabase
+  const updatePayload: any = { 
+    status: 'Anulado',
+    concept: voidConcept,
+    voided_by: user?.id || null,
+    voided_by_email: user?.email || null,
+    voided_at: new Date().toISOString()
+  }
+
+  let { error: updateError } = await supabase
     .from('payments')
-    .update({ 
-      status: 'Anulado',
-      concept: voidConcept
-    })
+    .update(updatePayload)
     .eq('id', paymentId)
+
+  // Fallback si las columnas de auditoría aún no existen en DB
+  if (updateError && updateError.message.includes('voided_by')) {
+    delete updatePayload.voided_by;
+    delete updatePayload.voided_by_email;
+    delete updatePayload.voided_at;
+    const retry = await supabase
+      .from('payments')
+      .update(updatePayload)
+      .eq('id', paymentId)
+    updateError = retry.error;
+  }
 
   if (updateError) {
     return { error: updateError.message || 'Error al anular el pago.' }

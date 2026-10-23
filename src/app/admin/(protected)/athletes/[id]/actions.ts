@@ -122,7 +122,7 @@ export interface RecordManualPaymentParams {
  * marca AUTOMÁTICAMENTE a la jugadora en TRUE en athlete_product_opt_ins.
  */
 export async function recordManualPayment(params: RecordManualPaymentParams) {
-  const { permissions } = await checkAdminPermission();
+  const { user, permissions } = await checkAdminPermission();
   if (!permissions.includes('manage_catalog') && !permissions.includes('view_finances')) {
     return { error: 'No autorizado para registrar pagos o abonos.' };
   }
@@ -189,22 +189,41 @@ export async function recordManualPayment(params: RecordManualPaymentParams) {
   }
   const concept = notes ? `${conceptBase} - ${notes.trim()}` : conceptBase;
 
-  const { data: newPayment, error: paymentError } = await supabase
+  const insertPayload: any = {
+    athlete_id: athleteId,
+    product_id: productId,
+    amount: Number(amount),
+    currency: 'USD',
+    rate_type: rateType || 'USD',
+    method: method.trim(),
+    concept: concept,
+    status: 'Completado', // Pagos manuales del admin se asumen verificados
+    reference_number: reference ? reference.trim() : null,
+    created_at: nowIso,
+    created_by: user?.id || null,
+    created_by_email: user?.email || null,
+    recorded_at: new Date().toISOString()
+  };
+
+  let { data: newPayment, error: paymentError } = await supabase
     .from('payments')
-    .insert({
-      athlete_id: athleteId,
-      product_id: productId,
-      amount: Number(amount),
-      currency: 'USD',
-      rate_type: rateType || 'USD',
-      method: method.trim(),
-      concept: concept,
-      status: 'Completado', // Pagos manuales del admin se asumen verificados
-      reference_number: reference ? reference.trim() : null,
-      created_at: nowIso
-    })
+    .insert(insertPayload)
     .select()
     .single();
+
+  // Fallback si la migración de columnas de auditoría aún no se ha corrido
+  if (paymentError && (paymentError.message.includes('created_by') || paymentError.message.includes('recorded_at'))) {
+    delete insertPayload.created_by;
+    delete insertPayload.created_by_email;
+    delete insertPayload.recorded_at;
+    const retry = await supabase
+      .from('payments')
+      .insert(insertPayload)
+      .select()
+      .single();
+    newPayment = retry.data;
+    paymentError = retry.error;
+  }
 
   if (paymentError || !newPayment) {
     return { error: paymentError?.message || 'Error al registrar el pago en el sistema.' };
