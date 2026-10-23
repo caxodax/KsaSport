@@ -18,6 +18,8 @@ export interface StaffWithUserData {
   role: string;
   team_id?: string | null;
   user_id?: string | null;
+  roleConfigured?: boolean;
+  rolePermissions?: string[];
   teams?: {
     id?: string;
     name?: string;
@@ -103,11 +105,14 @@ export default function StaffPermissionsDrawer({
   // Sincronizar estado inicial al abrir o cambiar de staff
   useEffect(() => {
     if (staffMember) {
-      const hasAccount = Boolean(staffMember.user_id || staffMember.user);
-      setEnableAccess(hasAccount);
+      const hasAccess = Boolean(staffMember.user_id || staffMember.user || staffMember.roleConfigured);
+      setEnableAccess(hasAccess);
       setEmail(staffMember.user?.email || '');
       setPassword('');
-      setSelectedPermissions(staffMember.user?.permissions || ['view_lineup', 'view_roster']);
+      const perms = staffMember.user?.permissions?.length
+        ? staffMember.user.permissions
+        : (staffMember.rolePermissions?.length ? staffMember.rolePermissions : ['view_lineup', 'view_roster']);
+      setSelectedPermissions(perms);
     } else {
       setEnableAccess(false);
       setEmail('');

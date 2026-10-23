@@ -456,6 +456,16 @@ export default function StaffDashboard({
                               {staff.user.permissions.length} perm.
                             </span>
                           </div>
+                        ) : staff.roleConfigured ? (
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-50 text-amber-900 border border-amber-200 truncate">
+                              <Key className="w-3 h-3 text-amber-600 shrink-0" />
+                              <span>Habilitado (C.I.)</span>
+                            </span>
+                            <span className="text-[9px] font-black uppercase text-amber-700/80 shrink-0">
+                              {staff.rolePermissions?.length || 0} perm.
+                            </span>
+                          </div>
                         ) : (
                           <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-400">
                             <Lock className="w-3 h-3" />
@@ -469,7 +479,7 @@ export default function StaffDashboard({
                             onClick={() => handleOpenPermissions(staff)}
                             className="text-[10px] font-black text-kasa-vinotinto hover:text-red-950 hover:underline shrink-0 flex items-center gap-0.5 cursor-pointer"
                           >
-                            <span>{staff.user ? 'Permisos' : 'Dar Acceso'}</span>
+                            <span>{staff.user || staff.roleConfigured ? 'Permisos' : 'Dar Acceso'}</span>
                             <ChevronRight className="w-3 h-3" />
                           </button>
                         )}
@@ -623,6 +633,16 @@ export default function StaffDashboard({
                             </span>
                             <span className="text-[9px] font-bold text-slate-400">
                               {staff.user.permissions.length} permisos activos
+                            </span>
+                          </div>
+                        ) : staff.roleConfigured ? (
+                          <div className="flex flex-col gap-0.5">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-50 text-amber-900 border border-amber-200 w-max">
+                              <Key className="w-3 h-3 text-amber-600" />
+                              <span>Habilitado (C.I.)</span>
+                            </span>
+                            <span className="text-[9px] font-bold text-amber-700/80">
+                              {staff.rolePermissions?.length || 0} permisos asignados
                             </span>
                           </div>
                         ) : (

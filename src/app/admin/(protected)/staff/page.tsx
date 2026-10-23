@@ -12,7 +12,8 @@ export default async function StaffPage() {
     { data: staffData },
     { data: teamsData },
     { data: categoriesData },
-    { data: adminUsersData }
+    { data: adminUsersData },
+    { data: adminRolesData }
   ] = await Promise.all([
     supabase
       .from('staff')
@@ -28,7 +29,10 @@ export default async function StaffPage() {
       .order('name'),
     supabase
       .from('admin_users')
-      .select('id, email, role_id, admin_roles(id, name, permissions)')
+      .select('id, email, role_id, admin_roles(id, name, permissions)'),
+    supabase
+      .from('admin_roles')
+      .select('id, name, permissions')
   ]);
 
   const categories = categoriesData?.map(c => c.name) || [];
@@ -37,13 +41,20 @@ export default async function StaffPage() {
   const enrichedStaff = (staffData || []).map((s: any) => {
     const matchedUser = adminUsersData?.find((u: any) => u.id === s.user_id);
     const roleObj = Array.isArray(matchedUser?.admin_roles) ? matchedUser?.admin_roles[0] : matchedUser?.admin_roles;
+    const roleId = `staff_${s.id}`;
+    const matchedRole = adminRolesData?.find((r: any) => r.id === roleId);
+
+    const activePermissions = (roleObj?.permissions as string[]) || (matchedRole?.permissions as string[]) || [];
+
     return {
       ...s,
+      roleConfigured: !!matchedRole,
+      rolePermissions: (matchedRole?.permissions as string[]) || [],
       user: matchedUser ? {
         id: matchedUser.id,
         email: matchedUser.email,
         role_id: matchedUser.role_id,
-        permissions: (roleObj?.permissions as string[]) || []
+        permissions: activePermissions
       } : null
     };
   });

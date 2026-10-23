@@ -100,6 +100,8 @@ export async function saveStaffAccessAndPermissions(payload: {
 
   // 1. Si se desactiva el acceso web
   if (!payload.enableAccess) {
+    const roleId = `staff_${staff.id}`;
+    await supabase.from('admin_roles').delete().eq('id', roleId);
     if (staff.user_id) {
       // Eliminar de admin_users
       await supabase.from('admin_users').delete().eq('id', staff.user_id);
@@ -194,6 +196,9 @@ export async function revokeStaffAccess(staffId: string): Promise<{ success?: bo
   if (fetchErr) {
     return { error: 'No se encontró el miembro del staff.' };
   }
+
+  const roleId = `staff_${staffId}`;
+  await supabase.from('admin_roles').delete().eq('id', roleId);
 
   if (staff?.user_id) {
     const { error: delErr } = await supabase.from('admin_users').delete().eq('id', staff.user_id);
