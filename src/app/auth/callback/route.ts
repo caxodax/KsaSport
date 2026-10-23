@@ -23,6 +23,6 @@ export async function GET(request: Request) {
     console.error('Error intercambiando código de autenticación:', error);
   }
 
-  // Redirigir a login con indicador de error si el enlace expiró o es inválido
-  return NextResponse.redirect(`${origin}/login?error=enlace_invalido_o_expirado`);
+  // Si no vino código o es flujo de hash/recovery, redirigir a reset-password para que el cliente capture el token
+  return NextResponse.redirect(`${origin}${next}`);
 }

@@ -128,13 +128,13 @@ export async function requestPasswordReset(formData: FormData): Promise<AuthResu
 
   const { headers } = await import('next/headers');
   const headersList = await headers();
-  const host = headersList.get('x-forwarded-host') || headersList.get('host') || 'localhost:3000';
+  const host = headersList.get('x-forwarded-host') || headersList.get('host') || 'www.kasasportsagency.com';
   const proto = headersList.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
   const origin = headersList.get('origin') || `${proto}://${host}`;
 
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback?next=/reset-password`,
+    redirectTo: `${origin}/reset-password`,
   });
 
   if (error) {

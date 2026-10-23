@@ -20,29 +20,60 @@ export default function ResetPasswordForm() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
+    const supabase = createBrowserClient();
+
     async function checkAuth() {
       try {
-        const supabase = createBrowserClient();
+        // 1. Si Supabase envió ?code=... en los query params (flujo PKCE)
+        const searchParams = new URLSearchParams(window.location.search);
+        const code = searchParams.get('code');
+        if (code) {
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (!exchangeError && data.session) {
+            setHasSession(true);
+            setCheckingSession(false);
+            return;
+          }
+        }
+
+        // 2. Si ya hay sesión activa
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           setHasSession(true);
-        } else {
-          // Si Supabase envía el token en el hash (#access_token=...)
-          const hash = window.location.hash;
-          if (hash && hash.includes('access_token')) {
-            setHasSession(true);
-          } else {
-            setHasSession(false);
-          }
+          setCheckingSession(false);
+          return;
         }
+
+        // 3. Si Supabase envió el token en el hash (#access_token=...)
+        const hash = window.location.hash;
+        if (hash && (hash.includes('access_token') || hash.includes('type=recovery'))) {
+          setHasSession(true);
+          setCheckingSession(false);
+          return;
+        }
+
+        setHasSession(false);
       } catch (err) {
         console.error('Error verifying recovery session:', err);
+        setHasSession(false);
       } finally {
         setCheckingSession(false);
       }
     }
 
     checkAuth();
+
+    // 4. Escuchar evento explícito de recuperación de contraseña de Supabase
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+        setHasSession(true);
+        setCheckingSession(false);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
