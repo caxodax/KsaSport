@@ -32,7 +32,7 @@ export default function LinkProfilePage() {
           ¡Cuenta creada con éxito!
         </h2>
         <p className="text-gray-500 mb-8 text-sm">
-          Ahora vincularemos tu nueva cuenta con tu perfil deportivo en Kasa Sports. Ingresa tu número de cédula exacto tal cual se lo diste a la administración.
+          Ahora vincularemos tu cuenta con tu perfil registrado en Kasa Sports (Atleta o Cuerpo Técnico). Ingresa tu número de cédula de identidad:
         </p>
 
         {error && (
@@ -66,7 +66,7 @@ export default function LinkProfilePage() {
             disabled={loading}
             className="w-full bg-kasa-vinotinto hover:bg-red-900 text-white font-bold py-3 rounded-xl transition-colors shadow-lg shadow-red-900/20 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {loading ? 'Buscando perfil...' : 'Vincular y Entrar al Portal'}
+            {loading ? 'Buscando perfil...' : 'Vincular y Entrar al Sistema'}
           </button>
         </form>
 

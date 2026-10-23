@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getServiceSupabase } from '@/lib/supabase'
 import { uploadImageToCloudflare } from '@/lib/cloudflare'
-import { cleanCedula } from '@/lib/cedula'
+import { cleanCedula, formatCedula } from '@/lib/cedula'
 
 export async function login(formData: FormData) {
   const email = formData.get('email') as string
@@ -21,16 +21,15 @@ export async function login(formData: FormData) {
     return { error: 'Credenciales inválidas.' }
   }
 
-  // Verificar si ya tiene el perfil vinculado
+  // Verificar si ya tiene algún perfil vinculado (Atleta o Staff/Admin)
   const adminSupabase = getServiceSupabase();
-  const { data: athlete } = await adminSupabase
-    .from('athletes')
-    .select('id')
-    .eq('user_id', data.user.id)
-    .single();
+  const [athleteRes, adminRes] = await Promise.all([
+    adminSupabase.from('athletes').select('id').eq('user_id', data.user.id).maybeSingle(),
+    adminSupabase.from('admin_users').select('id').eq('id', data.user.id).maybeSingle(),
+  ]);
 
-  if (!athlete) {
-    // Redirigir a vincular perfil
+  if (!athleteRes.data && !adminRes.data) {
+    // Redirigir a vincular perfil si es cuenta recién creada
     redirect('/portal/link-profile')
   }
 
@@ -59,7 +58,7 @@ export async function signup(formData: FormData) {
     return { error: 'Cuenta creada exitosamente. Por favor, revisa tu bandeja de entrada y confirma tu correo electrónico antes de continuar.' }
   }
   
-  // Como es una cuenta nueva, no tiene perfil de atleta vinculado
+  // Como es una cuenta nueva, no tiene perfil vinculado
   redirect('/portal/link-profile')
 }
 
@@ -80,52 +79,104 @@ export async function linkProfile(formData: FormData) {
   }
 
   const adminSupabase = getServiceSupabase();
+  const searchCedulas = Array.from(new Set([cedula, rawCedula?.trim(), formatCedula(cedula)].filter(Boolean)));
   
   // 1. Buscar si la cédula existe en atletas
   const { data: athlete } = await adminSupabase
     .from('athletes')
     .select('id, user_id')
-    .eq('cedula', cedula)
-    .single();
+    .in('cedula', searchCedulas)
+    .maybeSingle();
 
   // 1.5 Buscar si existe en staff
   const { data: staff } = await adminSupabase
     .from('staff')
-    .select('id, user_id')
-    .eq('cedula', cedula)
-    .single();
+    .select('id, user_id, name, role')
+    .in('cedula', searchCedulas)
+    .maybeSingle();
 
   if (!athlete && !staff) {
     return { error: 'No se encontró ningún registro con esta cédula en Kasa Sports. Contacta a administración.' }
   }
 
-  if (!athlete && staff) {
-    return { error: 'Esta cédula corresponde a un miembro del cuerpo técnico. El acceso al panel administrativo debe ser gestionado por el Súper Administrador desde el panel de usuarios.' }
+  // 2. Verificar que no estén ya vinculados a otra cuenta
+  if (athlete && athlete.user_id && athlete.user_id !== user.id) {
+    return { error: 'Esta cédula ya está vinculada a otra cuenta de atleta.' }
   }
 
-  // 2. Verificar y vincular Atleta
+  if (staff && staff.user_id && staff.user_id !== user.id) {
+    return { error: 'Esta cédula ya está vinculada a otra cuenta de usuario.' }
+  }
+
+  // 3. Vincular Atleta si existe
   if (athlete) {
-    if (athlete.user_id && athlete.user_id !== user.id) {
-      return { error: 'Esta cédula ya está vinculada a otra cuenta de atleta.' }
-    }
-    const { error: updateError } = await adminSupabase
+    const { error: updateAthleteError } = await adminSupabase
       .from('athletes')
       .update({ user_id: user.id })
       .eq('id', athlete.id);
       
-    if (updateError) return { error: 'Ocurrió un error al vincular el perfil de atleta.' }
+    if (updateAthleteError) {
+      console.error('Error linking athlete:', updateAthleteError);
+      return { error: 'Ocurrió un error al vincular el perfil de atleta.' }
+    }
   }
 
-  // 3. Si además es miembro de staff, vincular el registro en staff SIN auto-promover a admin_users
-  if (staff && (!staff.user_id || staff.user_id === user.id)) {
-    await adminSupabase
+  // 4. Vincular Staff si existe y otorgar rol técnico
+  if (staff) {
+    const roleId = `staff_${staff.id}`;
+
+    // 4.1 Verificar si ya existe un rol específico configurado por el Super Admin
+    const { data: existingRole } = await adminSupabase
+      .from('admin_roles')
+      .select('id, permissions')
+      .eq('id', roleId)
+      .maybeSingle();
+
+    if (!existingRole) {
+      // Crear rol predeterminado: solo Alineaciones y Roster (sin acceso financiero)
+      const { error: roleInsertError } = await adminSupabase
+        .from('admin_roles')
+        .insert({
+          id: roleId,
+          name: `${staff.role || 'Staff'}: ${staff.name || 'Miembro'}`,
+          permissions: ['view_lineup', 'view_roster']
+        });
+
+      if (roleInsertError) {
+        console.error('Error creating staff role:', roleInsertError);
+      }
+    }
+
+    // 4.2 Registrar / Actualizar en admin_users
+    const { error: adminUserError } = await adminSupabase
+      .from('admin_users')
+      .upsert({
+        id: user.id,
+        email: user.email,
+        role_id: roleId
+      }, { onConflict: 'id' });
+
+    if (adminUserError) {
+      console.error('Error linking admin_users:', adminUserError);
+      return { error: 'Error al conceder los accesos técnicos. Contacta a administración.' };
+    }
+
+    // 4.3 Vincular user_id en la tabla staff
+    const { error: updateStaffError } = await adminSupabase
       .from('staff')
       .update({ user_id: user.id })
       .eq('id', staff.id);
+
+    if (updateStaffError) {
+      console.error('Error updating staff user_id:', updateStaffError);
+    }
   }
 
-  revalidatePath('/gateway')
-  redirect('/gateway')
+  revalidatePath('/gateway');
+  revalidatePath('/admin/staff');
+  revalidatePath('/admin/users');
+  revalidatePath('/portal/dashboard');
+  redirect('/gateway');
 }
 
 export async function reportPayment(formData: FormData) {
