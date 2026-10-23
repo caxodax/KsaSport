@@ -130,7 +130,7 @@ export async function requestPasswordReset(formData: FormData): Promise<AuthResu
   const headersList = await headers();
   const host = headersList.get('x-forwarded-host') || headersList.get('host') || 'www.kasasportsagency.com';
   const proto = headersList.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
-  const origin = headersList.get('origin') || `${proto}://${host}`;
+  const origin = (headersList.get('origin') || `${proto}://${host}`).replace(/\/$/, '');
 
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -139,7 +139,14 @@ export async function requestPasswordReset(formData: FormData): Promise<AuthResu
 
   if (error) {
     console.error('Error in resetPasswordForEmail:', error);
-    return { error: 'No se pudo procesar la solicitud en este momento. Inténtalo más tarde.' };
+    const msg = error.message?.toLowerCase() || '';
+    if (msg.includes('rate limit') || msg.includes('security purposes') || msg.includes('seconds')) {
+      return { error: 'Por motivos de seguridad de Supabase, debes esperar 60 segundos antes de solicitar otro correo de recuperación.' };
+    }
+    if (msg.includes('redirect') || msg.includes('url')) {
+      return { error: `URL no autorizada en Supabase: ${error.message}. Verifica las Redirect URLs en el Dashboard.` };
+    }
+    return { error: error.message || 'No se pudo procesar la solicitud en este momento. Inténtalo más tarde.' };
   }
 
   return {
