@@ -318,27 +318,6 @@ export default async function DashboardPage({
 
       let paidTotal = athleteCompletedPayments.reduce((sum, pay) => sum + Number(pay.amount), 0);
 
-      // Si es un producto de Mensualidad y la atleta no tiene pago explícito registrado en payments,
-      // pero su ficha personal tiene paid_until que cubre el inicio/período de la mensualidad,
-      // se reconoce como pagado (ej. pago asentado directamente en taquilla o admin sin recibo en payments).
-      if (athlete.paid_until) {
-        const paidUntilDate = new Date(athlete.paid_until);
-        applicableProducts.forEach((p) => {
-          const isMensualidad = p.name.toLowerCase().includes('mensualidad') || p.name.toLowerCase().includes('cuota');
-          const hasDirectPayment = athleteCompletedPayments.some((pay) => pay.product_id === p.id);
-          if (isMensualidad && !hasDirectPayment && p.start_date) {
-            const pStart = new Date(p.start_date);
-            if (paidUntilDate >= pStart) {
-              const coveredAmount = Number(p.price);
-              paidTotal += coveredAmount;
-              const pStat = productStatsMap.get(p.id);
-              if (pStat) {
-                pStat.recibido += coveredAmount;
-              }
-            }
-          }
-        });
-      }
 
       montoSolvente += paidTotal;
 

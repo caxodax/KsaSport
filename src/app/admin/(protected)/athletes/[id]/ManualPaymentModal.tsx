@@ -49,9 +49,8 @@ export default function ManualPaymentModal({
 }: ManualPaymentModalProps) {
   const [isOpen, setIsOpen] = useState(false)
   
-  // Buscar primer producto que tenga saldo pendiente o el primero de la lista
-  const defaultProduct = products.find(p => p.amountPending > 0) || products[0]
-  const [selectedProductId, setSelectedProductId] = useState<string>(defaultProduct?.id || '')
+  // No pre-seleccionar ciegamente para evitar pagos accidentales en meses futuros
+  const [selectedProductId, setSelectedProductId] = useState<string>('')
   
   const [amount, setAmount] = useState<string>('')
   const [method, setMethod] = useState<string>('Efectivo (USD)')
@@ -104,12 +103,9 @@ export default function ManualPaymentModal({
   }
 
   const handleOpen = () => {
-    const prod = products.find(p => p.amountPending > 0) || products[0]
     setWaivePenalty(false)
-    if (prod) {
-      setSelectedProductId(prod.id)
-      setAmount(prod.amountPending > 0 ? prod.amountPending.toString() : '')
-    }
+    setSelectedProductId('')
+    setAmount('')
     setIsConfirmingEnroll(false)
     setIsOpen(true)
   }
@@ -252,6 +248,7 @@ export default function ManualPaymentModal({
                   className="w-full px-4 py-3 rounded-2xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-kasa-vinotinto focus:outline-hidden text-sm font-bold text-gray-900 transition-all"
                   required
                 >
+                  <option value="" disabled>-- Selecciona el concepto o producto a abonar --</option>
                   {products.map(p => {
                     let tag = ''
                     if (p.requires_opt_in && !p.isEnrolled) {
@@ -492,7 +489,7 @@ export default function ManualPaymentModal({
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !selectedProductId}
                   className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs px-6 py-2.5 rounded-2xl shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50"
                 >
                   {loading ? (
