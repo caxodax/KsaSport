@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -84,6 +84,37 @@ export default function AthleteDashboard({
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
   const [selectedStatus, setSelectedStatus] = useState(searchParams.get('status') || '');
   const [selectedPortal, setSelectedPortal] = useState(searchParams.get('portal') || '');
+
+  // Referencia para controlar el montaje inicial y evitar disparos innecesarios
+  const isFirstRender = useRef(true);
+
+  // Sincronizar estado si la URL cambia (ej. botón atrás o enlaces directos)
+  useEffect(() => {
+    const q = searchParams.get('query') || '';
+    setSearchQuery(q);
+    setSelectedTeam(searchParams.get('team') || '');
+    setSelectedCategory(searchParams.get('category') || '');
+    setSelectedStatus(searchParams.get('status') || '');
+    setSelectedPortal(searchParams.get('portal') || '');
+  }, [searchParams]);
+
+  // Búsqueda reactiva en tiempo real (Debounce nativo de 350ms al escribir)
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      const currentParam = searchParams.get('query') || '';
+      const trimmed = searchQuery.trim();
+      if (trimmed !== currentParam) {
+        applyFilters({ query: trimmed });
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Vista (Tarjetas vs Tabla)
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
@@ -302,24 +333,34 @@ export default function AthleteDashboard({
           
           {/* Buscador por Nombre o Cédula */}
           <form onSubmit={handleSearchSubmit} className="relative w-full lg:w-80">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <button
+              type="submit"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-kasa-vinotinto transition-colors p-1"
+              title="Buscar atleta"
+            >
+              <Search className="w-4 h-4" />
+            </button>
             <input 
               type="text" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar por nombre o cédula..."
-              className="w-full pl-9 pr-14 py-2.5 bg-slate-50/90 hover:bg-slate-100/80 focus:bg-white text-xs sm:text-sm text-gray-900 rounded-2xl border border-slate-200 focus:border-kasa-vinotinto outline-none focus:ring-2 focus:ring-red-100 transition-all shadow-inner font-medium"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              className="w-full pl-9 pr-16 py-2.5 bg-slate-50/90 hover:bg-slate-100/80 focus:bg-white text-xs sm:text-sm text-gray-900 rounded-2xl border border-slate-200 focus:border-kasa-vinotinto outline-none focus:ring-2 focus:ring-red-100 transition-all shadow-inner font-medium"
             />
             {searchQuery ? (
               <button 
                 type="button"
                 onClick={handleClearSearch}
-                className="text-[11px] font-bold text-slate-400 hover:text-slate-600 absolute right-3 top-1/2 -translate-y-1/2"
+                className="text-[11px] font-bold text-slate-500 hover:text-slate-800 bg-slate-200/60 hover:bg-slate-200 px-2 py-0.5 rounded-lg absolute right-2.5 top-1/2 -translate-y-1/2 transition-colors cursor-pointer"
+                title="Limpiar búsqueda"
               >
-                Borrar
+                ✕ Borrar
               </button>
             ) : (
-              <span className="text-[10px] text-slate-400 font-bold absolute right-3 top-1/2 -translate-y-1/2">
+              <span className="text-[10px] text-slate-400 font-bold absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline">
                 ↵ Enter
               </span>
             )}
