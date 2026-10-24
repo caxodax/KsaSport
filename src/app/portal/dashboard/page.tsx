@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getServiceSupabase } from '@/lib/supabase'
-import { CheckCircle2, AlertCircle, ShoppingCart, Activity, ShieldCheck, User, Calendar, LogOut, Lock, PhoneCall, Trophy, CreditCard } from 'lucide-react'
+import { CheckCircle2, AlertCircle, ShoppingCart, Activity, ShieldCheck, Shield, User, Calendar, LogOut, Lock, PhoneCall, Trophy, CreditCard } from 'lucide-react'
 import Link from 'next/link'
 import { logout } from '../actions'
 import QRModal from '@/components/portal/QRModal'
@@ -27,7 +27,7 @@ export default async function PortalDashboard() {
   const [athleteRes, settingsRes] = await Promise.all([
     adminSupabase
       .from('athletes')
-      .select('id, name, cedula, status, avatar_url, paid_until, position, stats_avg, stats_hits, stats_rbi, stats_runs, has_alliance, teams(id, name, logo_url, category)')
+      .select('id, name, cedula, status, avatar_url, paid_until, position, batting_order, stats_avg, stats_hits, stats_rbi, stats_runs, has_alliance, teams(id, name, logo_url, category)')
       .eq('user_id', user.id)
       .single(),
     adminSupabase
@@ -494,6 +494,40 @@ export default async function PortalDashboard() {
               ))}
             </div>
           )}
+
+          {/* Tarjeta Lineup Oficial del Equipo */}
+          <div className="bg-gradient-to-r from-red-950 via-kasa-vinotinto to-red-900 rounded-3xl p-5 sm:p-6 text-white shadow-premium border border-red-800/80 hover:border-kasa-dorado/40 transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative overflow-hidden">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-white/10 text-kasa-dorado flex items-center justify-center shrink-0 border border-white/10">
+                <Shield className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-black text-base text-white">Lineup Oficial: {team?.name || 'Tu Equipo'}</h3>
+                  {athlete.position && (
+                    <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-black px-2.5 py-0.5 rounded-full">
+                      Posición: {athlete.position}
+                    </span>
+                  )}
+                  {athlete.batting_order && (
+                    <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-black px-2.5 py-0.5 rounded-full">
+                      {athlete.batting_order}° al Bate
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-red-100/80 mt-0.5">
+                  Consulta las posiciones defensivas en el campo y el orden al bate oficial.
+                </p>
+              </div>
+            </div>
+
+            <Link
+              href="/portal/dashboard/lineup"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-kasa-dorado hover:bg-yellow-400 text-kasa-vinotinto font-black text-xs transition-colors shadow-md text-center flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+            >
+              Ver Alineación Oficial ➜
+            </Link>
+          </div>
 
           {/* Tarjeta Créditos KsaSports */}
           <div className="bg-gradient-to-r from-slate-900 via-zinc-900 to-slate-950 rounded-3xl p-5 sm:p-6 text-white shadow-premium border border-zinc-800/80 hover:border-kasa-dorado/30 transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative overflow-hidden">

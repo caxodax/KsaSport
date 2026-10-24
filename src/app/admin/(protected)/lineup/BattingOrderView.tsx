@@ -12,7 +12,15 @@ interface Athlete {
   batting_order: number | null;
 }
 
-export default function BattingOrderView({ athletes }: { athletes: Athlete[] }) {
+export default function BattingOrderView({ 
+  athletes,
+  readOnly = false,
+  currentAthleteId,
+}: { 
+  athletes: Athlete[];
+  readOnly?: boolean;
+  currentAthleteId?: string;
+}) {
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
   
   // Sort by batting order (nulls go to the end)
@@ -24,6 +32,7 @@ export default function BattingOrderView({ athletes }: { athletes: Athlete[] }) 
   });
 
   const handleStat = async (athleteId: string, type: 'hit' | 'out') => {
+    if (readOnly) return;
     setLoadingIds(prev => new Set(prev).add(athleteId));
     await addOffensiveStat(athleteId, type);
     // Remove from loading state
@@ -36,6 +45,7 @@ export default function BattingOrderView({ athletes }: { athletes: Athlete[] }) 
   };
 
   const handleOrderChange = async (athleteId: string, order: number | null) => {
+    if (readOnly) return;
     setLoadingIds(prev => new Set(prev).add(athleteId));
     await updateBattingOrder(athleteId, order);
     setLoadingIds(prev => {
@@ -53,7 +63,11 @@ export default function BattingOrderView({ athletes }: { athletes: Athlete[] }) 
           <div className="p-4 md:p-6 border-b border-gray-100 bg-white sticky top-0 z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-bold text-gray-900">Orden al Bate (Lineup Ofensivo)</h2>
-              <p className="text-sm text-gray-500">Asigna el orden del 1 al 13 y registra hits/outs en vivo.</p>
+              <p className="text-sm text-gray-500">
+                {readOnly 
+                  ? 'Alineación ofensiva y turnos al bate oficiales de tu equipo.' 
+                  : 'Asigna el orden del 1 al 13 y registra hits/outs en vivo.'}
+              </p>
             </div>
             <div className="text-sm bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg font-medium">
               Total en Roster: {athletes.length}
@@ -62,34 +76,67 @@ export default function BattingOrderView({ athletes }: { athletes: Athlete[] }) 
 
           <div className="divide-y divide-gray-100">
             {sortedAthletes.length > 0 ? (
-              sortedAthletes.map((athlete, index) => {
+              sortedAthletes.map((athlete) => {
                 const isLoading = loadingIds.has(athlete.id);
+                const isMe = Boolean(currentAthleteId && athlete.id === currentAthleteId);
+
                 return (
-                  <div key={athlete.id} className="p-4 flex flex-col md:flex-row md:items-center gap-4 hover:bg-gray-50 transition-colors">
+                  <div 
+                    key={athlete.id} 
+                    className={`p-4 flex flex-col md:flex-row md:items-center gap-4 transition-colors ${
+                      isMe ? 'bg-amber-50/70 border-l-4 border-l-amber-500' : 'hover:bg-gray-50'
+                    }`}
+                  >
                     
-                    {/* Order Selection */}
+                    {/* Order Selection / Display */}
                     <div className="flex items-center gap-3 w-32 shrink-0">
-                      <select
-                        value={athlete.batting_order || ''}
-                        onChange={(e) => handleOrderChange(athlete.id, e.target.value ? Number(e.target.value) : null)}
-                        disabled={isLoading}
-                        className="bg-gray-100 border-none rounded-lg px-2 py-1.5 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-kasa-vinotinto outline-none w-16"
-                      >
-                        <option value="">-</option>
-                        {[...Array(20)].map((_, i) => (
-                          <option key={i + 1} value={i + 1}>{i + 1}</option>
-                        ))}
-                      </select>
-                      <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Turno</span>
+                      {readOnly ? (
+                        <div className="flex items-center gap-2">
+                          <span className={`w-9 h-9 rounded-xl font-display text-base font-bold flex items-center justify-center border ${
+                            isMe
+                              ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-sm font-black'
+                              : athlete.batting_order 
+                                ? 'bg-kasa-vinotinto text-white border-red-950 shadow-2xs' 
+                                : 'bg-gray-100 text-gray-400 border-gray-200'
+                          }`}>
+                            {athlete.batting_order ?? '-'}
+                          </span>
+                          <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Turno</span>
+                        </div>
+                      ) : (
+                        <>
+                          <select
+                            value={athlete.batting_order || ''}
+                            onChange={(e) => handleOrderChange(athlete.id, e.target.value ? Number(e.target.value) : null)}
+                            disabled={isLoading}
+                            className="bg-gray-100 border-none rounded-lg px-2 py-1.5 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-kasa-vinotinto outline-none w-16"
+                          >
+                            <option value="">-</option>
+                            {[...Array(20)].map((_, i) => (
+                              <option key={i + 1} value={i + 1}>{i + 1}</option>
+                            ))}
+                          </select>
+                          <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Turno</span>
+                        </>
+                      )}
                     </div>
 
                     {/* Athlete Info */}
                     <div className="flex-1 flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 bg-kasa-vinotinto rounded-full flex items-center justify-center text-white shrink-0 shadow-sm">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm ${
+                        isMe ? 'bg-amber-500 text-slate-900 font-black' : 'bg-kasa-vinotinto text-white'
+                      }`}>
                         <User className="w-5 h-5" />
                       </div>
                       <div className="min-w-0">
-                        <h4 className="font-bold text-gray-900 truncate">{athlete.name}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-gray-900 truncate">{athlete.name}</h4>
+                          {isMe && (
+                            <span className="bg-amber-200 text-amber-900 border border-amber-300 text-[10px] font-black px-2 py-0.2 rounded-full">
+                              ¡TÚ!
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           {athlete.stats_avg != null ? (
                             <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
@@ -102,25 +149,27 @@ export default function BattingOrderView({ athletes }: { athletes: Athlete[] }) 
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="w-full md:w-auto flex items-center gap-2 mt-2 md:mt-0 justify-end">
-                      <button
-                        onClick={() => handleStat(athlete.id, 'hit')}
-                        disabled={isLoading}
-                        className="flex-1 md:flex-initial justify-center min-h-[44px] flex items-center gap-1.5 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors disabled:opacity-50 active:scale-95 cursor-pointer shadow-2xs"
-                      >
-                        <Target className="w-4 h-4" />
-                        +1 Hit
-                      </button>
-                      <button
-                        onClick={() => handleStat(athlete.id, 'out')}
-                        disabled={isLoading}
-                        className="flex-1 md:flex-initial justify-center min-h-[44px] flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors disabled:opacity-50 active:scale-95 cursor-pointer shadow-2xs"
-                      >
-                        <ShieldX className="w-4 h-4" />
-                        +1 Out (Ofensivo)
-                      </button>
-                    </div>
+                    {/* Action Buttons (Admin Only) */}
+                    {!readOnly && (
+                      <div className="w-full md:w-auto flex items-center gap-2 mt-2 md:mt-0 justify-end">
+                        <button
+                          onClick={() => handleStat(athlete.id, 'hit')}
+                          disabled={isLoading}
+                          className="flex-1 md:flex-initial justify-center min-h-[44px] flex items-center gap-1.5 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors disabled:opacity-50 active:scale-95 cursor-pointer shadow-2xs"
+                        >
+                          <Target className="w-4 h-4" />
+                          +1 Hit
+                        </button>
+                        <button
+                          onClick={() => handleStat(athlete.id, 'out')}
+                          disabled={isLoading}
+                          className="flex-1 md:flex-initial justify-center min-h-[44px] flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors disabled:opacity-50 active:scale-95 cursor-pointer shadow-2xs"
+                        >
+                          <ShieldX className="w-4 h-4" />
+                          +1 Out (Ofensivo)
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               })

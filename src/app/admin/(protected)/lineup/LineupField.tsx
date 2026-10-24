@@ -29,7 +29,15 @@ const POSITIONS = [
   { id: 'RF', label: 'Right Field', top: '25%', left: '85%' },
 ];
 
-export default function LineupField({ athletes }: { athletes: Athlete[] }) {
+export default function LineupField({ 
+  athletes,
+  readOnly = false,
+  currentAthleteId,
+}: { 
+  athletes: Athlete[];
+  readOnly?: boolean;
+  currentAthleteId?: string;
+}) {
   const [selectedPos, setSelectedPos] = useState<string | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
@@ -40,19 +48,21 @@ export default function LineupField({ athletes }: { athletes: Athlete[] }) {
   const activeAthletes = selectedPos ? getAthletesForPos(selectedPos) : [];
 
   const handleAssign = async (athleteId: string, posId: string) => {
+    if (readOnly) return;
     setLoadingId(athleteId);
     await assignPosition(athleteId, posId);
     setLoadingId(null);
   };
 
   const handleUnassign = async (athleteId: string) => {
+    if (readOnly) return;
     setLoadingId(athleteId);
     await unassignPosition(athleteId);
     setLoadingId(null);
   };
 
   const handleDefensiveOut = async (athleteId: string) => {
-    // Para UX rápida podríamos hacer optimistic update, pero mantengamos simple.
+    if (readOnly) return;
     await addDefensiveStat(athleteId);
     toast.success('Out Defensivo registrado exitosamente.');
   };
@@ -95,8 +105,10 @@ export default function LineupField({ athletes }: { athletes: Athlete[] }) {
 
           {/* Interactive Position Badges */}
           {POSITIONS.map((pos) => {
-            const count = getAthletesForPos(pos.id).length;
+            const athletesInPos = getAthletesForPos(pos.id);
+            const count = athletesInPos.length;
             const isActive = selectedPos === pos.id;
+            const hasCurrentAthlete = Boolean(currentAthleteId && athletesInPos.some(a => a.id === currentAthleteId));
             
             return (
               <button
@@ -108,24 +120,29 @@ export default function LineupField({ athletes }: { athletes: Athlete[] }) {
               >
                 {/* Badge Label */}
                 <div className={`px-2 md:px-3 py-1 rounded-full border-2 text-xs md:text-sm font-bold shadow-lg flex items-center gap-1.5 transition-colors
-                  ${isActive 
-                    ? 'bg-kasa-dorado border-white text-kasa-vinotinto' 
-                    : count > 0 
-                      ? 'bg-kasa-vinotinto border-white text-white' 
-                      : 'bg-white/80 border-white/50 text-gray-700 backdrop-blur-sm'
+                  ${hasCurrentAthlete
+                    ? 'bg-amber-400 border-amber-200 text-slate-950 ring-4 ring-amber-300/70 font-black'
+                    : isActive 
+                      ? 'bg-kasa-dorado border-white text-kasa-vinotinto' 
+                      : count > 0 
+                        ? 'bg-kasa-vinotinto border-white text-white' 
+                        : 'bg-white/80 border-white/50 text-gray-700 backdrop-blur-sm'
                   }`}
                 >
                   {pos.id}
-                  {count > 0 && (
-                    <span className={`flex items-center justify-center w-4 h-4 rounded-full text-[10px] 
-                      ${isActive ? 'bg-white text-kasa-vinotinto' : 'bg-white text-kasa-vinotinto'}`}>
+                  {hasCurrentAthlete ? (
+                    <span className="bg-slate-900 text-amber-300 text-[9px] font-black px-1.5 py-0.2 rounded-full">
+                      TÚ
+                    </span>
+                  ) : count > 0 ? (
+                    <span className="flex items-center justify-center w-4 h-4 rounded-full text-[10px] bg-white text-kasa-vinotinto font-bold">
                       {count}
                     </span>
-                  )}
+                  ) : null}
                 </div>
                 
                 {/* Small tooltip text */}
-                <span className="mt-1 text-[10px] font-bold text-white bg-black/40 px-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap hidden md:block">
+                <span className="mt-1 text-[10px] font-bold text-white bg-black/50 px-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap hidden md:block">
                   {pos.label}
                 </span>
               </button>
@@ -145,11 +162,14 @@ export default function LineupField({ athletes }: { athletes: Athlete[] }) {
             <div className="p-4 md:p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
               <div>
                 <h2 className="text-xl font-bold text-gray-900">{selectedPosData?.label}</h2>
-                <p className="text-sm text-gray-500">Gestión de la posición</p>
+                <p className="text-sm text-gray-500">
+                  {readOnly ? 'Alineación de la posición' : 'Gestión de la posición'}
+                </p>
               </div>
               <button 
                 onClick={() => setSelectedPos(null)}
-                className="p-2 hover:bg-gray-200 rounded-full transition-colors md:hidden"
+                className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                title="Cerrar panel"
               >
                 <X className="w-5 h-5 text-gray-500" />
               </button>
@@ -162,75 +182,97 @@ export default function LineupField({ athletes }: { athletes: Athlete[] }) {
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">En el campo ({activeAthletes.length})</h3>
                 <div className="space-y-3">
                   {activeAthletes.length > 0 ? (
-                    activeAthletes.map(athlete => (
-                      <div key={athlete.id} className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm flex flex-col gap-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-kasa-vinotinto rounded-full flex items-center justify-center text-white shrink-0">
-                            <User className="w-5 h-5" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-gray-900 truncate">{athlete.name}</h4>
-                            {athlete.stats_avg != null && (
-                              <div className="flex items-center gap-1 text-xs font-bold text-blue-600">
-                                AVG: {Number(athlete.stats_avg).toFixed(3)}
+                    activeAthletes.map(athlete => {
+                      const isMe = Boolean(currentAthleteId && athlete.id === currentAthleteId);
+                      return (
+                        <div key={athlete.id} className={`border rounded-xl p-3 shadow-xs flex flex-col gap-2 transition-all ${isMe ? 'bg-amber-50/80 border-amber-300 ring-2 ring-amber-400/30' : 'bg-white border-gray-200'}`}>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isMe ? 'bg-amber-500 text-slate-900 font-black' : 'bg-kasa-vinotinto text-white'}`}>
+                              <User className="w-5 h-5" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-bold text-gray-900 truncate text-sm">{athlete.name}</h4>
+                                {isMe && (
+                                  <span className="bg-amber-200 text-amber-900 border border-amber-300 text-[10px] font-black px-2 py-0.2 rounded-full">¡TÚ!</span>
+                                )}
                               </div>
+                              {athlete.stats_avg != null && (
+                                <div className="flex items-center gap-1 text-xs font-bold text-blue-600">
+                                  AVG: {Number(athlete.stats_avg).toFixed(3)}
+                                </div>
+                              )}
+                            </div>
+                            {!readOnly && (
+                              <button
+                                disabled={loadingId === athlete.id}
+                                onClick={() => handleUnassign(athlete.id)}
+                                className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                title="Quitar del campo"
+                              >
+                                <Minus className="w-5 h-5" />
+                              </button>
                             )}
                           </div>
-                          <button
-                            disabled={loadingId === athlete.id}
-                            onClick={() => handleUnassign(athlete.id)}
-                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Quitar del campo"
-                          >
-                            <Minus className="w-5 h-5" />
-                          </button>
+                          {!readOnly && (
+                            <div className="flex justify-between items-center border-t pt-2">
+                              <span className="text-[10px] text-gray-500 font-medium">ESTADÍSTICAS</span>
+                              <button
+                                onClick={() => handleDefensiveOut(athlete.id)}
+                                className="flex items-center gap-1 text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 px-2 py-1 rounded cursor-pointer"
+                              >
+                                <ShieldAlert className="w-3 h-3" />
+                                +1 Out Defensivo
+                              </button>
+                            </div>
+                          )}
                         </div>
-                        <div className="flex justify-between items-center border-t pt-2">
-                          <span className="text-[10px] text-gray-500 font-medium">ESTADÍSTICAS</span>
-                          <button
-                            onClick={() => handleDefensiveOut(athlete.id)}
-                            className="flex items-center gap-1 text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 px-2 py-1 rounded"
-                          >
-                            <ShieldAlert className="w-3 h-3" />
-                            +1 Out Defensivo
-                          </button>
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <div className="text-center py-6 border-2 border-dashed border-gray-200 rounded-xl">
-                      <p className="text-gray-500 text-sm">Nadie asignado a {selectedPos}.</p>
+                      <p className="text-gray-500 text-sm">Nadie asignada a {selectedPos}.</p>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* DISPONIBLES */}
+              {/* DISPONIBLES / EN LA BANCA */}
               <div>
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">En la Banca ({availableAthletes.length})</h3>
                 <div className="space-y-3">
                   {availableAthletes.length > 0 ? (
-                    availableAthletes.map(athlete => (
-                      <div key={athlete.id} className="bg-gray-50 border border-gray-100 rounded-xl p-3 flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 shrink-0">
-                          <User className="w-4 h-4" />
+                    availableAthletes.map(athlete => {
+                      const isMe = Boolean(currentAthleteId && athlete.id === currentAthleteId);
+                      return (
+                        <div key={athlete.id} className={`border rounded-xl p-3 flex items-center gap-3 ${isMe ? 'bg-amber-50/80 border-amber-300' : 'bg-gray-50 border-gray-100'}`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isMe ? 'bg-amber-400 text-slate-900 font-black' : 'bg-gray-200 text-gray-500'}`}>
+                            <User className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-sm font-semibold text-gray-700 truncate">{athlete.name}</h4>
+                              {isMe && (
+                                <span className="bg-amber-200 text-amber-900 border border-amber-300 text-[10px] font-black px-1.5 py-0.2 rounded-full">¡TÚ!</span>
+                              )}
+                            </div>
+                          </div>
+                          {!readOnly && (
+                            <button
+                              disabled={loadingId === athlete.id}
+                              onClick={() => handleAssign(athlete.id, selectedPos)}
+                              className="flex items-center gap-1 bg-kasa-vinotinto hover:bg-red-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
+                            >
+                              <Plus className="w-4 h-4" />
+                              Asignar
+                            </button>
+                          )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-semibold text-gray-700 truncate">{athlete.name}</h4>
-                        </div>
-                        <button
-                          disabled={loadingId === athlete.id}
-                          onClick={() => handleAssign(athlete.id, selectedPos)}
-                          className="flex items-center gap-1 bg-kasa-vinotinto hover:bg-red-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
-                        >
-                          <Plus className="w-4 h-4" />
-                          Asignar
-                        </button>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <div className="text-center py-6">
-                      <p className="text-gray-400 text-sm">No hay jugadoras disponibles.</p>
+                      <p className="text-gray-400 text-sm">No hay jugadoras en la banca.</p>
                     </div>
                   )}
                 </div>
@@ -243,7 +285,11 @@ export default function LineupField({ athletes }: { athletes: Athlete[] }) {
             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
               <User className="w-8 h-8 text-gray-300" />
             </div>
-            <p>Selecciona una posición en el campo para gestionar las asignaciones.</p>
+            <p>
+              {readOnly 
+                ? 'Toca o haz clic en cualquier posición en el campo para ver quiénes juegan allí.' 
+                : 'Selecciona una posición en el campo para gestionar las asignaciones.'}
+            </p>
           </div>
         )}
       </div>
