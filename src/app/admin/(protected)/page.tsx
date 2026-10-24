@@ -232,9 +232,11 @@ export default async function DashboardPage({
       if (applicableProducts.length === 0) return;
 
       // Calcular precio exigible (restando exoneraciones específicas o de torneo padre) y penalidades de mora
+      // Calcular precio exigible (restando exoneraciones específicas o de torneo padre) y penalidades de mora
       let athleteTargetPrice = 0;
       let athleteHasExemptions = false;
       let exemptProductsCount = 0;
+      const productTargetMap = new Map<string, { targetPrice: number; isExempt: boolean }>();
 
       applicableProducts.forEach((p) => {
         const parentProd = findParentProduct(p, allProductsData || []);
@@ -291,8 +293,11 @@ export default async function DashboardPage({
           }
         }
 
+        const prodTarget = isExempt ? 0 : Number(p.price) + penaltyForProduct;
+        productTargetMap.set(p.id, { targetPrice: prodTarget, isExempt });
+
         if (!isExempt) {
-          athleteTargetPrice += Number(p.price) + penaltyForProduct;
+          athleteTargetPrice += prodTarget;
         } else {
           athleteHasExemptions = true;
           exemptProductsCount++;
@@ -317,7 +322,6 @@ export default async function DashboardPage({
       );
 
       let paidTotal = athleteCompletedPayments.reduce((sum, pay) => sum + Number(pay.amount), 0);
-
 
       montoSolvente += paidTotal;
 
@@ -345,7 +349,7 @@ export default async function DashboardPage({
           if (pStat) pStat.exonerados++;
         });
       } else if (paidTotal >= athleteTargetPrice && athleteTargetPrice > 0) {
-        // Pagó completo
+        // Pagó completo todas sus cuotas/productos aplicables
         totalSolventesMes++;
         paidAthleteIds.push(athlete.id);
 
@@ -360,10 +364,10 @@ export default async function DashboardPage({
           if (pStat) pStat.solventes++;
         });
       } else if (paidTotal > 0 && paidTotal < athleteTargetPrice) {
-        // Abono parcial (ha pagado pero tiene saldo pendiente)
+        // Abono parcial o deuda por penalidad (ha pagado pero tiene saldo pendiente)
         const saldoRestante = athleteTargetPrice - paidTotal;
         montoMorosidad += saldoRestante;
-        totalSolventesMes++;
+        totalMorososMes++;
         paidAthleteIds.push(athlete.id);
         unpaidAthleteIds.push(athlete.id);
 
@@ -375,9 +379,20 @@ export default async function DashboardPage({
 
         applicableProducts.forEach((p) => {
           const pStat = productStatsMap.get(p.id);
-          if (pStat) {
+          if (!pStat) return;
+          const pInfo = productTargetMap.get(p.id);
+          const pTarget = pInfo?.targetPrice ?? Number(p.price);
+          const pCompleted = (productPayments || []).filter(
+            (pay) => pay.athlete_id === athlete.id && pay.product_id === p.id && pay.status === 'Completado'
+          ).reduce((sum, pay) => sum + Number(pay.amount), 0);
+
+          if (pInfo?.isExempt) {
+            pStat.exonerados++;
+          } else if (pCompleted >= pTarget && pTarget > 0) {
             pStat.solventes++;
-            pStat.pendiente += Math.max(0, Number(p.price) - paidTotal);
+          } else {
+            pStat.morosos++;
+            pStat.pendiente += Math.max(0, pTarget - pCompleted);
           }
         });
       } else if (athletePendingPayments.length > 0) {
@@ -404,9 +419,15 @@ export default async function DashboardPage({
 
         applicableProducts.forEach((p) => {
           const pStat = productStatsMap.get(p.id);
-          if (pStat) {
+          if (!pStat) return;
+          const pInfo = productTargetMap.get(p.id);
+          const pTarget = pInfo?.targetPrice ?? Number(p.price);
+
+          if (pInfo?.isExempt) {
+            pStat.exonerados++;
+          } else {
             pStat.morosos++;
-            pStat.pendiente += Number(p.price);
+            pStat.pendiente += pTarget;
           }
         });
       }
@@ -1118,7 +1139,7 @@ export default async function DashboardPage({
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             {(() => {
                               const effectiveGeneralStatus =
-                                productInfo?.status === 'unpaid' && !athlete.has_alliance
+                                (productInfo?.status === 'unpaid' || (productInfo && productInfo.paidAmount < productInfo.targetAmount)) && !athlete.has_alliance
                                   ? 'Moroso'
                                   : athlete.status;
 
