@@ -9,6 +9,7 @@ import Pagination from './Pagination';
 import DateRangeFilter from './DateRangeFilter';
 import { parseDateRange } from '@/lib/dateRange';
 import { cleanCedula, formatCedula } from '@/lib/cedula';
+import { formatLocalDate } from '@/lib/dateUtils';
 import { ProductFilterItem } from './MultiSelectProductFilter';
 import { findParentProduct, getEffectiveOptInProductId } from '@/lib/productHierarchy';
 
@@ -122,7 +123,7 @@ export default async function DashboardPage({
   // Mapas para asociar el estatus de producto a cada atleta
   const athleteProductMap = new Map<
     string,
-    { status: 'paid' | 'unpaid' | 'pending' | 'exempt'; paidAmount: number; targetAmount: number }
+    { status: 'paid' | 'unpaid' | 'pending' | 'exempt'; paidAmount: number; targetAmount: number; lastPaymentDate?: string | null }
   >();
 
   const paidAthleteIds: string[] = [];
@@ -322,6 +323,10 @@ export default async function DashboardPage({
       );
 
       let paidTotal = athleteCompletedPayments.reduce((sum, pay) => sum + Number(pay.amount), 0);
+      const latestPayment = athleteCompletedPayments.length > 0
+        ? [...athleteCompletedPayments].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
+        : null;
+      const lastPaymentDate = latestPayment?.created_at || null;
 
       montoSolvente += paidTotal;
 
@@ -342,6 +347,7 @@ export default async function DashboardPage({
           status: 'exempt',
           paidAmount: paidTotal,
           targetAmount: 0,
+          lastPaymentDate,
         });
 
         applicableProducts.forEach((p) => {
@@ -357,6 +363,7 @@ export default async function DashboardPage({
           status: 'paid',
           paidAmount: paidTotal,
           targetAmount: athleteTargetPrice,
+          lastPaymentDate,
         });
 
         applicableProducts.forEach((p) => {
@@ -375,6 +382,7 @@ export default async function DashboardPage({
           status: 'paid',
           paidAmount: paidTotal,
           targetAmount: athleteTargetPrice,
+          lastPaymentDate,
         });
 
         applicableProducts.forEach((p) => {
@@ -404,6 +412,7 @@ export default async function DashboardPage({
           status: 'pending',
           paidAmount: 0,
           targetAmount: athleteTargetPrice,
+          lastPaymentDate: null,
         });
       } else {
         // Sin pago (Debe completo)
@@ -415,6 +424,7 @@ export default async function DashboardPage({
           status: 'unpaid',
           paidAmount: 0,
           targetAmount: athleteTargetPrice,
+          lastPaymentDate: null,
         });
 
         applicableProducts.forEach((p) => {
@@ -998,27 +1008,34 @@ export default async function DashboardPage({
 
                     {/* Badge de Estatus Contextual */}
                     {isProductMode ? (
-                      <span className={`px-2.5 py-1 inline-flex text-[11px] font-black rounded-full border shadow-2xs ${
-                        productInfo?.status === 'paid'
-                          ? productInfo.paidAmount < productInfo.targetAmount
-                            ? 'bg-amber-50 text-amber-800 border-amber-300'
-                            : 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                          : productInfo?.status === 'pending'
-                          ? 'bg-amber-50 text-amber-800 border-amber-200'
-                          : productInfo?.status === 'exempt'
-                          ? 'bg-amber-50 text-amber-900 border-amber-300'
-                          : 'bg-red-50 text-red-800 border-red-200'
-                      }`}>
-                        {productInfo?.status === 'paid' && (
-                          productInfo.paidAmount < productInfo.targetAmount
-                            ? `⚠️ Abono ($${productInfo.paidAmount.toFixed(2)} / $${productInfo.targetAmount.toFixed(2)})`
-                            : `✅ Pagó ($${productInfo.paidAmount.toFixed(2)})`
+                      <div className="flex flex-col items-end gap-1">
+                        <span className={`px-2.5 py-1 inline-flex text-[11px] font-black rounded-full border shadow-2xs ${
+                          productInfo?.status === 'paid'
+                            ? productInfo.paidAmount < productInfo.targetAmount
+                              ? 'bg-amber-50 text-amber-800 border-amber-300'
+                              : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                            : productInfo?.status === 'pending'
+                            ? 'bg-amber-50 text-amber-800 border-amber-200'
+                            : productInfo?.status === 'exempt'
+                            ? 'bg-amber-50 text-amber-900 border-amber-300'
+                            : 'bg-red-50 text-red-800 border-red-200'
+                        }`}>
+                          {productInfo?.status === 'paid' && (
+                            productInfo.paidAmount < productInfo.targetAmount
+                              ? `⚠️ Abono ($${productInfo.paidAmount.toFixed(2)} / $${productInfo.targetAmount.toFixed(2)})`
+                              : `✅ Pagó ($${productInfo.paidAmount.toFixed(2)})`
+                          )}
+                          {productInfo?.status === 'pending' && '⏳ En Revisión'}
+                          {productInfo?.status === 'exempt' && '🤝 Exonerado'}
+                          {productInfo?.status === 'unpaid' && `❌ Debe ($${productInfo.targetAmount.toFixed(2)})`}
+                          {!productInfo && 'Sin Datos'}
+                        </span>
+                        {productInfo?.lastPaymentDate && (
+                          <span className="text-[10px] text-gray-500 font-medium">
+                            Pago: {formatLocalDate(productInfo.lastPaymentDate, { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </span>
                         )}
-                        {productInfo?.status === 'pending' && '⏳ En Revisión'}
-                        {productInfo?.status === 'exempt' && '🤝 Exonerado'}
-                        {productInfo?.status === 'unpaid' && `❌ Debe ($${productInfo.targetAmount.toFixed(2)})`}
-                        {!productInfo && 'Sin Datos'}
-                      </span>
+                      </div>
                     ) : (
                       <span className={`px-2 py-0.5 inline-flex text-[10px] uppercase font-bold rounded-full border ${
                         athlete.status === 'Solvente'
@@ -1057,16 +1074,19 @@ export default async function DashboardPage({
                   Equipo / Categoría
                 </th>
                 {isProductMode ? (
-                  <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Estatus del Producto ({selectedProducts.length})
-                  </th>
+                  <>
+                    <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Estatus del Producto ({selectedProducts.length})
+                    </th>
+                    <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Fecha de Pago
+                    </th>
+                    <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Estatus General
+                    </th>
+                  </>
                 ) : (
                   <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Estatus General
-                  </th>
-                )}
-                {isProductMode && (
-                  <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
                     Estatus General
                   </th>
                 )}
@@ -1137,6 +1157,17 @@ export default async function DashboardPage({
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
+                            {productInfo?.lastPaymentDate ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-50 text-gray-700 border border-gray-200">
+                                📅 {formatLocalDate(productInfo.lastPaymentDate, { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </span>
+                            ) : productInfo?.status === 'exempt' ? (
+                              <span className="text-xs text-amber-700 font-medium italic">Exonerada</span>
+                            ) : (
+                              <span className="text-xs text-gray-400 font-medium">—</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
                             {(() => {
                               const effectiveGeneralStatus =
                                 (productInfo?.status === 'unpaid' || (productInfo && productInfo.paidAmount < productInfo.targetAmount)) && !athlete.has_alliance
@@ -1177,7 +1208,7 @@ export default async function DashboardPage({
                 })
               ) : (
                 <tr>
-                  <td colSpan={isProductMode ? 5 : 4} className="px-8 py-16 text-center">
+                  <td colSpan={isProductMode ? 6 : 4} className="px-8 py-16 text-center">
                     <Users className="mx-auto h-16 w-16 text-gray-200 mb-4" />
                     <h3 className="text-lg font-bold text-gray-900">No hay resultados</h3>
                     <p className="mt-1 text-sm text-gray-500">
