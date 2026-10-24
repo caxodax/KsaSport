@@ -987,9 +987,13 @@ export default async function DashboardPage({
                   <div className="flex justify-between items-start gap-2">
                     <div>
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <h4 className="font-bold text-gray-900 text-base leading-tight">
+                        <Link
+                          href={`/admin/athletes/${athlete.id}`}
+                          className="font-bold text-gray-900 text-base leading-tight hover:text-kasa-vinotinto hover:underline transition-colors"
+                          title="Ver Perfil 360"
+                        >
                           {athlete.name}
-                        </h4>
+                        </Link>
                         {athlete.has_alliance && (
                           <span className="bg-amber-100/90 text-amber-900 border border-amber-300 text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider shadow-2xs">
                             🤝 Alianza
@@ -1102,7 +1106,13 @@ export default async function DashboardPage({
                     <tr key={athlete.id} className="hover:bg-gray-50/80 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-gray-900">{athlete.name}</span>
+                          <Link
+                            href={`/admin/athletes/${athlete.id}`}
+                            className="text-sm font-bold text-gray-900 hover:text-kasa-vinotinto hover:underline transition-colors"
+                            title="Ver Perfil 360"
+                          >
+                            {athlete.name}
+                          </Link>
                           {athlete.has_alliance && (
                             <span className="bg-amber-100/90 text-amber-900 border border-amber-300 text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider shadow-2xs">
                               🤝 Alianza
