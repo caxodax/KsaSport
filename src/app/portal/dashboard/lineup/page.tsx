@@ -90,7 +90,11 @@ export default async function AthleteLineupPortalPage() {
             <Shield className="w-3.5 h-3.5 text-emerald-600" />
             <span className="text-[11px] text-gray-500 font-medium">Tu Posición:</span>
             <span className="text-xs font-bold text-gray-900">
-              {athlete.position || 'En Banca'}
+              {athlete.position === 'DH' 
+                ? 'Bateadora Designada (DH)' 
+                : athlete.position === 'RES' 
+                  ? 'Reservas (Banca)' 
+                  : athlete.position || 'En Banca'}
             </span>
           </div>
 

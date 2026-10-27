@@ -13,7 +13,7 @@ interface Athlete {
   phone: string | null;
 }
 
-const POSITIONS = [
+const FIELD_POSITIONS = [
   { id: 'C', label: 'Catcher', top: '92%', left: '50%' },
   { id: 'P', label: 'Pitcher', top: '66%', left: '50%' },
   { id: '1B', label: 'Primera Base', top: '65%', left: '78%' },
@@ -28,6 +28,13 @@ const POSITIONS = [
   { id: 'RCF', label: 'Right Center', top: '32%', left: '60%' },
   { id: 'RF', label: 'Right Field', top: '25%', left: '85%' },
 ];
+
+const SPECIAL_POSITIONS = [
+  { id: 'DH', label: 'Bateadora Designada (DH)' },
+  { id: 'RES', label: 'Reservas (Banca / Suplentes)' },
+];
+
+const ALL_POSITIONS = [...FIELD_POSITIONS, ...SPECIAL_POSITIONS];
 
 function formatShortName(fullName: string): string {
   if (!fullName) return '';
@@ -49,9 +56,17 @@ export default function LineupField({
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   const getAthletesForPos = (posId: string) => athletes.filter(a => a.position === posId);
-  const availableAthletes = athletes.filter(a => !a.position);
+  const dhAthletes = getAthletesForPos('DH');
+  const resAthletes = getAthletesForPos('RES');
 
-  const selectedPosData = POSITIONS.find(p => p.id === selectedPos);
+  const availableAthletes = athletes.filter(a => {
+    if (selectedPos === 'RES') {
+      return !a.position;
+    }
+    return !a.position || a.position === 'RES';
+  });
+
+  const selectedPosData = ALL_POSITIONS.find(p => p.id === selectedPos);
   const activeAthletes = selectedPos ? getAthletesForPos(selectedPos) : [];
 
   const handleAssign = async (athleteId: string, posId: string) => {
@@ -78,10 +93,10 @@ export default function LineupField({
     <div className="flex flex-col md:flex-row h-full w-full bg-[#3b8c2a] relative overflow-hidden">
       
       {/* 1. Baseball Field Area */}
-      <div className="relative flex-1 min-h-[500px] md:min-h-full w-full overflow-hidden flex items-center justify-center p-4">
+      <div className="relative flex-1 min-h-[520px] md:min-h-full w-full overflow-y-auto md:overflow-hidden flex flex-col items-center justify-between p-3 sm:p-4">
         
         {/* Aspect Ratio Container for Field */}
-        <div className="relative w-full max-w-2xl aspect-square">
+        <div className="relative w-full max-w-2xl aspect-square shrink-0">
           
           {/* SVG Field Graphics */}
           <svg viewBox="0 0 100 100" className="w-full h-full absolute inset-0 drop-shadow-2xl">
@@ -111,7 +126,7 @@ export default function LineupField({
           </svg>
 
           {/* Interactive Position Badges */}
-          {POSITIONS.map((pos) => {
+          {FIELD_POSITIONS.map((pos) => {
             const athletesInPos = getAthletesForPos(pos.id);
             const count = athletesInPos.length;
             const isActive = selectedPos === pos.id;
@@ -180,6 +195,111 @@ export default function LineupField({
             )
           })}
         </div>
+
+        {/* Dugout: DH y Reservas (Posiciones de Banca y Ofensiva Especial) */}
+        <div className="w-full max-w-2xl mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 z-20 shrink-0">
+          {/* Card DH */}
+          <button
+            type="button"
+            onClick={() => setSelectedPos('DH')}
+            className={`flex-1 flex items-center gap-2.5 p-2 sm:p-2.5 rounded-2xl transition-all duration-200 text-left border backdrop-blur-md shadow-lg group cursor-pointer ${
+              selectedPos === 'DH'
+                ? 'bg-amber-400 border-white ring-2 ring-amber-300 text-slate-950 scale-[1.01]'
+                : dhAthletes.length > 0
+                  ? 'bg-slate-950/85 border-white/20 text-white hover:bg-slate-900'
+                  : 'bg-white/90 border-white/60 text-slate-800 hover:bg-white'
+            }`}
+          >
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="px-2.5 py-1 rounded-xl text-xs font-black bg-kasa-vinotinto text-white shadow-xs">
+                DH
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-wider opacity-85 hidden xl:inline">
+                Designada
+              </span>
+            </div>
+
+            <div className="flex-1 min-w-0 flex items-center gap-1.5 flex-wrap">
+              {dhAthletes.length > 0 ? (
+                dhAthletes.map(a => {
+                  const isMe = Boolean(currentAthleteId && a.id === currentAthleteId);
+                  return (
+                    <span 
+                      key={a.id} 
+                      className={`px-2 py-0.5 rounded-lg text-xs font-bold truncate max-w-[140px] shadow-xs border ${
+                        isMe
+                          ? 'bg-amber-400 text-slate-950 border-amber-300 ring-1 ring-amber-300 font-black'
+                          : selectedPos === 'DH'
+                            ? 'bg-slate-900 text-white border-slate-700'
+                            : 'bg-white/20 text-white border-white/30'
+                      }`}
+                    >
+                      {isMe && '⭐ '}{formatShortName(a.name)}
+                    </span>
+                  );
+                })
+              ) : (
+                <span className={`text-xs italic font-medium ${selectedPos === 'DH' ? 'text-slate-800' : 'text-slate-500 sm:text-white/70'}`}>
+                  + Asignar DH
+                </span>
+              )}
+            </div>
+          </button>
+
+          {/* Card Reservas */}
+          <button
+            type="button"
+            onClick={() => setSelectedPos('RES')}
+            className={`flex-1 flex items-center gap-2.5 p-2 sm:p-2.5 rounded-2xl transition-all duration-200 text-left border backdrop-blur-md shadow-lg group cursor-pointer ${
+              selectedPos === 'RES'
+                ? 'bg-amber-400 border-white ring-2 ring-amber-300 text-slate-950 scale-[1.01]'
+                : resAthletes.length > 0
+                  ? 'bg-slate-950/85 border-white/20 text-white hover:bg-slate-900'
+                  : 'bg-white/90 border-white/60 text-slate-800 hover:bg-white'
+            }`}
+          >
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="px-2.5 py-1 rounded-xl text-xs font-black bg-slate-900 text-white shadow-xs">
+                Reservas
+              </span>
+              <span className="text-[11px] font-black bg-white/20 text-white px-1.5 py-0.2 rounded-full">
+                {resAthletes.length}
+              </span>
+            </div>
+
+            <div className="flex-1 min-w-0 flex items-center gap-1.5 flex-wrap">
+              {resAthletes.length > 0 ? (
+                resAthletes.slice(0, 4).map(a => {
+                  const isMe = Boolean(currentAthleteId && a.id === currentAthleteId);
+                  return (
+                    <span 
+                      key={a.id} 
+                      className={`px-2 py-0.5 rounded-lg text-xs font-bold truncate max-w-[120px] shadow-xs border ${
+                        isMe
+                          ? 'bg-amber-400 text-slate-950 border-amber-300 ring-1 ring-amber-300 font-black'
+                          : selectedPos === 'RES'
+                            ? 'bg-slate-900 text-white border-slate-700'
+                            : 'bg-white/20 text-white border-white/30'
+                      }`}
+                    >
+                      {isMe && '⭐ '}{formatShortName(a.name)}
+                    </span>
+                  );
+                }).concat(
+                  resAthletes.length > 4 ? [
+                    <span key="more" className={`text-xs font-black px-1.5 py-0.5 rounded-md ${selectedPos === 'RES' ? 'bg-slate-900/80 text-white' : 'bg-white/20 text-white'}`}>
+                      +{resAthletes.length - 4} más
+                    </span>
+                  ] : []
+                )
+              ) : (
+                <span className={`text-xs italic font-medium ${selectedPos === 'RES' ? 'text-slate-800' : 'text-slate-500 sm:text-white/70'}`}>
+                  + Asignar reservas
+                </span>
+              )}
+            </div>
+          </button>
+        </div>
       </div>
 
       {/* 2. Right Sidebar Panel (Player List) */}
@@ -194,7 +314,13 @@ export default function LineupField({
               <div>
                 <h2 className="text-xl font-bold text-gray-900">{selectedPosData?.label}</h2>
                 <p className="text-sm text-gray-500">
-                  {readOnly ? 'Alineación de la posición' : 'Gestión de la posición'}
+                  {selectedPos === 'RES' 
+                    ? 'Jugadoras suplentes y reserva de banca' 
+                    : selectedPos === 'DH' 
+                      ? 'Alineación de bateadora designada' 
+                      : readOnly 
+                        ? 'Alineación de la posición' 
+                        : 'Gestión de la posición'}
                 </p>
               </div>
               <button 
@@ -210,7 +336,9 @@ export default function LineupField({
               
               {/* ASIGNADAS */}
               <div>
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">En el campo ({activeAthletes.length})</h3>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+                  {selectedPos === 'RES' ? 'En Reserva' : 'En el campo / Asignadas'} ({activeAthletes.length})
+                </h3>
                 <div className="space-y-3">
                   {activeAthletes.length > 0 ? (
                     activeAthletes.map(athlete => {
@@ -239,13 +367,13 @@ export default function LineupField({
                                 disabled={loadingId === athlete.id}
                                 onClick={() => handleUnassign(athlete.id)}
                                 className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                                title="Quitar del campo"
+                                title="Quitar de la posición"
                               >
                                 <Minus className="w-5 h-5" />
                               </button>
                             )}
                           </div>
-                          {!readOnly && (
+                          {!readOnly && selectedPos !== 'RES' && (
                             <div className="flex justify-between items-center border-t pt-2">
                               <span className="text-[10px] text-gray-500 font-medium">ESTADÍSTICAS</span>
                               <button
@@ -262,7 +390,7 @@ export default function LineupField({
                     })
                   ) : (
                     <div className="text-center py-6 border-2 border-dashed border-gray-200 rounded-xl">
-                      <p className="text-gray-500 text-sm">Nadie asignada a {selectedPos}.</p>
+                      <p className="text-gray-500 text-sm">Nadie asignada a {selectedPosData?.label || selectedPos}.</p>
                     </div>
                   )}
                 </div>
@@ -270,7 +398,9 @@ export default function LineupField({
 
               {/* DISPONIBLES / EN LA BANCA */}
               <div>
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">En la Banca ({availableAthletes.length})</h3>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+                  {selectedPos === 'RES' ? 'Disponibles para Reserva' : 'En la Banca / Disponibles'} ({availableAthletes.length})
+                </h3>
                 <div className="space-y-3">
                   {availableAthletes.length > 0 ? (
                     availableAthletes.map(athlete => {
@@ -283,6 +413,11 @@ export default function LineupField({
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <h4 className="text-sm font-semibold text-gray-700 truncate">{athlete.name}</h4>
+                              {athlete.position === 'RES' && selectedPos !== 'RES' && (
+                                <span className="bg-slate-200 text-slate-700 text-[10px] font-bold px-1.5 py-0.2 rounded">
+                                  Reserva
+                                </span>
+                              )}
                               {isMe && (
                                 <span className="bg-amber-200 text-amber-900 border border-amber-300 text-[10px] font-black px-1.5 py-0.2 rounded-full">¡TÚ!</span>
                               )}
