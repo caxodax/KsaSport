@@ -29,6 +29,13 @@ const POSITIONS = [
   { id: 'RF', label: 'Right Field', top: '25%', left: '85%' },
 ];
 
+function formatShortName(fullName: string): string {
+  if (!fullName) return '';
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length <= 1) return parts[0];
+  return `${parts[0]} ${parts[1][0]}.`;
+}
+
 export default function LineupField({ 
   athletes,
   readOnly = false,
@@ -109,6 +116,9 @@ export default function LineupField({
             const count = athletesInPos.length;
             const isActive = selectedPos === pos.id;
             const hasCurrentAthlete = Boolean(currentAthleteId && athletesInPos.some(a => a.id === currentAthleteId));
+            const primaryAthlete = hasCurrentAthlete
+              ? athletesInPos.find(a => a.id === currentAthleteId) || athletesInPos[0]
+              : athletesInPos[0];
             
             return (
               <button
@@ -118,6 +128,11 @@ export default function LineupField({
                   ${isActive ? 'scale-110 z-20' : 'hover:scale-105'}`}
                 style={{ top: pos.top, left: pos.left }}
               >
+                {/* Small tooltip text (Position full label on hover) */}
+                <span className="absolute -top-5 text-[9px] font-bold text-white bg-black/80 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap hidden md:block pointer-events-none z-30 shadow-xs">
+                  {pos.label}
+                </span>
+
                 {/* Badge Label */}
                 <div className={`px-2 md:px-3 py-1 rounded-full border-2 text-xs md:text-sm font-bold shadow-lg flex items-center gap-1.5 transition-colors
                   ${hasCurrentAthlete
@@ -141,10 +156,26 @@ export default function LineupField({
                   ) : null}
                 </div>
                 
-                {/* Small tooltip text */}
-                <span className="mt-1 text-[10px] font-bold text-white bg-black/50 px-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap hidden md:block">
-                  {pos.label}
-                </span>
+                {/* Nombre de la persona asignada (1 sola persona) */}
+                {primaryAthlete && (
+                  <div 
+                    className={`mt-1 px-1.5 py-0.5 rounded-md text-[9px] sm:text-[11px] font-bold leading-tight max-w-[72px] sm:max-w-[88px] truncate shadow-md border pointer-events-none transition-all ${
+                      hasCurrentAthlete
+                        ? 'bg-amber-400 text-slate-950 border-amber-200 ring-2 ring-amber-300/80 font-black'
+                        : isActive
+                          ? 'bg-amber-500 text-slate-950 border-white font-extrabold'
+                          : 'bg-slate-950/85 text-white border-white/20 backdrop-blur-xs'
+                    }`}
+                  >
+                    {hasCurrentAthlete && <span className="mr-0.5">⭐</span>}
+                    {formatShortName(primaryAthlete.name)}
+                    {count > 1 && (
+                      <span className="opacity-75 text-[8px] sm:text-[9px] font-normal ml-0.5">
+                        (+{count - 1})
+                      </span>
+                    )}
+                  </div>
+                )}
               </button>
             )
           })}
