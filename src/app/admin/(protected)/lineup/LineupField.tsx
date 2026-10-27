@@ -93,10 +93,10 @@ export default function LineupField({
     <div className="flex flex-col md:flex-row h-full w-full bg-[#3b8c2a] relative overflow-hidden">
       
       {/* 1. Baseball Field Area */}
-      <div className="relative flex-1 min-h-[520px] md:min-h-full w-full overflow-y-auto md:overflow-hidden flex flex-col items-center justify-between p-3 sm:p-4">
+      <div className="relative flex-1 min-h-[520px] md:min-h-full w-full overflow-y-auto flex flex-col items-center justify-start p-3 sm:p-4">
         
         {/* Aspect Ratio Container for Field */}
-        <div className="relative w-full max-w-2xl aspect-square shrink-0">
+        <div className="relative w-full max-w-[490px] lg:max-w-[540px] aspect-square shrink-0">
           
           {/* SVG Field Graphics */}
           <svg viewBox="0 0 100 100" className="w-full h-full absolute inset-0 drop-shadow-2xl">
@@ -197,7 +197,7 @@ export default function LineupField({
         </div>
 
         {/* Dugout: DH y Reservas (Posiciones de Banca y Ofensiva Especial) */}
-        <div className="w-full max-w-2xl mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 z-20 shrink-0">
+        <div className="w-full max-w-[490px] lg:max-w-[540px] mt-2.5 sm:mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 z-20 shrink-0 pb-4">
           {/* Card DH */}
           <button
             type="button"
