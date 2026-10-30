@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowLeft, CheckCircle2, Wallet, Camera, X, AlertCircle } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Wallet, Camera, X, AlertCircle, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { reportPayment } from '../../actions'
 import { compressImageClient } from '@/lib/clientImageCompressor'
@@ -57,6 +57,7 @@ export default function PaymentForm({
     method: string;
     reference_number: string;
     file: File | null;
+    isCompressing?: boolean;
   }
   const [splits, setSplits] = useState<PaymentSplit[]>([])
 
@@ -243,10 +244,19 @@ export default function PaymentForm({
       if (s.file) formData.append(`receipt_${i}`, s.file)
     })
 
-    const result = await reportPayment(formData)
-    
-    if (result?.error) {
-      setError(result.error)
+    try {
+      const result = await reportPayment(formData)
+      
+      if (result?.error) {
+        setError(result.error)
+        setLoading(false)
+      }
+    } catch (err: any) {
+      // Si la redirección de Next.js se lanzó, no es un error
+      if (err?.message?.includes('NEXT_REDIRECT') || err?.digest?.includes('NEXT_REDIRECT')) {
+        return
+      }
+      setError(err?.message || 'Error de conexión al enviar el comprobante. Intenta nuevamente.')
       setLoading(false)
     }
   }
@@ -603,7 +613,12 @@ export default function PaymentForm({
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Comprobante</label>
                     <label className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center text-gray-500 hover:bg-white transition-colors cursor-pointer group bg-gray-50/50">
-                      {split.file ? (
+                      {split.isCompressing ? (
+                        <div className="text-center">
+                          <Loader2 className="w-6 h-6 mb-1 text-kasa-vinotinto animate-spin mx-auto" />
+                          <span className="text-xs font-medium text-gray-700">Procesando imagen...</span>
+                        </div>
+                      ) : split.file ? (
                         <div className="text-center">
                           <CheckCircle2 className="w-6 h-6 mb-1 text-green-500 mx-auto" />
                           <span className="text-xs font-medium text-gray-900 block truncate max-w-[200px]">{split.file.name}</span>
@@ -617,7 +632,7 @@ export default function PaymentForm({
                       <input 
                         type="file" 
                         className="hidden" 
-                        accept="image/jpeg, image/png, image/webp" 
+                        accept="image/*" 
                         onChange={async (e) => {
                           const file = e.target.files?.[0]
                           if (file) {
@@ -625,8 +640,13 @@ export default function PaymentForm({
                               setError('La imagen es muy pesada. Máximo 10MB.')
                               return
                             }
-                            const optimized = await compressImageClient(file)
-                            updateSplit(split.id, 'file', optimized)
+                            updateSplit(split.id, 'isCompressing', true)
+                            try {
+                              const optimized = await compressImageClient(file)
+                              setSplits(prev => prev.map(s => s.id === split.id ? { ...s, file: optimized, isCompressing: false } : s))
+                            } catch {
+                              setSplits(prev => prev.map(s => s.id === split.id ? { ...s, file, isCompressing: false } : s))
+                            }
                           }
                         }}
                       />

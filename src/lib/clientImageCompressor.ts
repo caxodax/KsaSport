@@ -25,6 +25,19 @@ export async function compressImageClient(
   }
 
   return new Promise((resolve) => {
+    let resolved = false;
+    const safeResolve = (result: File) => {
+      if (!resolved) {
+        resolved = true;
+        resolve(result);
+      }
+    };
+
+    // Timeout de seguridad: si el navegador se queda esperando canvas o decodificación, resolver con el archivo original en 4s
+    const timer = setTimeout(() => {
+      safeResolve(file);
+    }, 4000);
+
     try {
       const img = new Image();
       const objectUrl = URL.createObjectURL(file);
@@ -51,7 +64,8 @@ export async function compressImageClient(
         const ctx = canvas.getContext('2d');
 
         if (!ctx) {
-          resolve(file);
+          clearTimeout(timer);
+          safeResolve(file);
           return;
         }
 
@@ -64,8 +78,9 @@ export async function compressImageClient(
         const outputMime = 'image/webp';
         canvas.toBlob(
           (blob) => {
+            clearTimeout(timer);
             if (!blob) {
-              resolve(file);
+              safeResolve(file);
               return;
             }
 
@@ -76,9 +91,9 @@ export async function compressImageClient(
                 type: outputMime,
                 lastModified: Date.now(),
               });
-              resolve(compressedFile);
+              safeResolve(compressedFile);
             } else {
-              resolve(file);
+              safeResolve(file);
             }
           },
           outputMime,
@@ -87,13 +102,15 @@ export async function compressImageClient(
       };
 
       img.onerror = () => {
+        clearTimeout(timer);
         URL.revokeObjectURL(objectUrl);
-        resolve(file); // Ante cualquier error de lectura, nunca romper el flujo
+        safeResolve(file); // Ante cualquier error de lectura, nunca romper el flujo
       };
 
       img.src = objectUrl;
     } catch {
-      resolve(file);
+      clearTimeout(timer);
+      safeResolve(file);
     }
   });
 }
