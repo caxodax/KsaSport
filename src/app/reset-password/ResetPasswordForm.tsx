@@ -7,21 +7,28 @@ import { Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, ArrowRight } fro
 import { createBrowserClient } from '@/lib/supabase/client';
 import { updatePassword } from './actions';
 
-export default function ResetPasswordForm() {
+export default function ResetPasswordForm({ initialHasSession = false }: { initialHasSession?: boolean }) {
   const router = useRouter();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [checkingSession, setCheckingSession] = useState(true);
-  const [hasSession, setHasSession] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(!initialHasSession);
+  const [hasSession, setHasSession] = useState(initialHasSession);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
     const supabase = createBrowserClient();
+
+    // Si el servidor ya verificó que el usuario tiene sesión válida, no es necesario bloquear
+    if (initialHasSession) {
+      setHasSession(true);
+      setCheckingSession(false);
+      return;
+    }
 
     async function checkAuth() {
       try {

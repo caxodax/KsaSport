@@ -128,9 +128,14 @@ export async function requestPasswordReset(formData: FormData): Promise<AuthResu
 
   const { headers } = await import('next/headers');
   const headersList = await headers();
-  const host = headersList.get('x-forwarded-host') || headersList.get('host') || 'www.kasasportsagency.com';
-  const proto = headersList.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
-  const origin = (headersList.get('origin') || `${proto}://${host}`).replace(/\/$/, '');
+  const host = headersList.get('x-forwarded-host') || headersList.get('host') || '';
+  
+  // En producción siempre usar el dominio canónico oficial para evitar pérdida de cookies entre vercel.app y el dominio personalizado
+  let origin = 'https://www.kasasportsagency.com';
+  if (host.includes('localhost') || host.includes('127.0.0.1')) {
+    const proto = headersList.get('x-forwarded-proto') || 'http';
+    origin = `${proto}://${host}`;
+  }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
