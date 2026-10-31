@@ -189,31 +189,51 @@ export default function PaymentForm({
     setError('')
   }
 
+  const triggerError = (msg: string) => {
+    setError(msg)
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        const errEl = document.getElementById('payment-form-error-banner')
+        if (errEl) {
+          errEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        }
+      }, 50)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedProduct) return
+
+    // Validar si aún se está procesando alguna foto
+    if (splits.some(s => s.isCompressing)) {
+      triggerError('Aún se está procesando la imagen del comprobante. Por favor espera unos segundos.')
+      return
+    }
     
     // Validar suma de montos
     const totalSplitsAmount = splits.reduce((sum, s) => sum + (Number(s.amount) || 0), 0)
     const formCurrSymbol = selectedProduct.rate_type === 'EUR' ? '€' : '$'
     if (Math.abs(totalSplitsAmount - Number(amountToPay)) > 0.01) {
-      setError(`La suma de los métodos (${formCurrSymbol}${totalSplitsAmount.toFixed(2)}) no coincide con el total a abonar (${formCurrSymbol}${Number(amountToPay).toFixed(2)}).`)
+      triggerError(`La suma de los métodos (${formCurrSymbol}${totalSplitsAmount.toFixed(2)}) no coincide con el total a abonar (${formCurrSymbol}${Number(amountToPay).toFixed(2)}).`)
       return
     }
 
     // Validar campos vacíos y disponibilidad de tasas oficiales
     for (const split of splits) {
-      if (!split.method) return setError('Selecciona el método de pago para todos los abonos.')
-      if (!split.reference_number) return setError('Ingresa el número de referencia para todos los abonos.')
-      if (!split.file) return setError('Sube el comprobante para todos los abonos.')
-      if (Number(split.amount) <= 0) return setError('El monto de cada abono debe ser mayor a 0.')
+      if (!split.method) return triggerError('Selecciona el método de pago para todos los abonos.')
+      if (!split.reference_number) return triggerError('Ingresa el número de referencia para todos los abonos.')
+      if (!split.file) return triggerError('Sube el comprobante para todos los abonos.')
+      if (Number(split.amount) <= 0) return triggerError('El monto de cada abono debe ser mayor a 0.')
 
       const isBs = split.method.toLowerCase().includes('pago móvil') || 
                    split.method.toLowerCase().includes('transferencia') || 
                    split.method.toLowerCase().includes('bs') || 
                    split.payment_currency === 'VES';
       if (isBs && (!split.exchange_rate || Number(split.exchange_rate) <= 0)) {
-        return setError('No se puede procesar el abono en Bolívares porque la tasa oficial del día aún no está disponible en el sistema. Por favor contacta a administración.')
+        return triggerError('No se puede procesar el abono en Bolívares porque la tasa oficial del día aún no está disponible en el sistema. Por favor contacta a administración.')
       }
     }
 
@@ -248,7 +268,7 @@ export default function PaymentForm({
       const result = await reportPayment(formData)
       
       if (result?.error) {
-        setError(result.error)
+        triggerError(result.error)
         setLoading(false)
       }
     } catch (err: any) {
@@ -256,7 +276,7 @@ export default function PaymentForm({
       if (err?.message?.includes('NEXT_REDIRECT') || err?.digest?.includes('NEXT_REDIRECT')) {
         return
       }
-      setError(err?.message || 'Error de conexión al enviar el comprobante. Intenta nuevamente.')
+      triggerError(err?.message || 'Error de conexión al enviar el comprobante. Intenta nuevamente.')
       setLoading(false)
     }
   }
@@ -431,12 +451,13 @@ export default function PaymentForm({
               </label>
               <input 
                 type="number" 
-                step="0.01"
-                min="1"
+                step="any"
+                inputMode="decimal"
+                min="0.01"
                 max={selectedProduct.allows_installments ? selectedProduct.amount_pending ?? selectedProduct.price : undefined}
                 value={amountToPay}
                 onChange={(e) => {
-                  const val = e.target.value
+                  const val = e.target.value.replace(',', '.')
                   setAmountToPay(val)
                   if (splits.length === 1) {
                     updateSplit(splits[0].id, 'amount', val)
@@ -484,10 +505,11 @@ export default function PaymentForm({
                       </label>
                       <input 
                         type="number" 
-                        step="0.01"
+                        step="any"
+                        inputMode="decimal"
                         min="0.01"
                         value={split.amount}
-                        onChange={(e) => updateSplit(split.id, 'amount', e.target.value)}
+                        onChange={(e) => updateSplit(split.id, 'amount', e.target.value.replace(',', '.'))}
                         required
                         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto font-mono font-bold"
                       />
@@ -546,9 +568,10 @@ export default function PaymentForm({
                           </div>
                           <input 
                             type="number"
-                            step="0.01"
+                            step="any"
+                            inputMode="decimal"
                             value={split.transferred_amount || ''}
-                            onChange={(e) => updateSplit(split.id, 'transferred_amount', e.target.value)}
+                            onChange={(e) => updateSplit(split.id, 'transferred_amount', e.target.value.replace(',', '.'))}
                             required
                             placeholder="Calculado automáticamente"
                             className="w-full pl-10 pr-3 py-2 bg-white rounded-lg border border-sky-300 text-sm font-mono font-black text-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-2xs"
@@ -583,9 +606,10 @@ export default function PaymentForm({
                           </div>
                           <input 
                             type="number"
-                            step="0.01"
+                            step="any"
+                            inputMode="decimal"
                             value={split.transferred_amount || split.amount || ''}
-                            onChange={(e) => updateSplit(split.id, 'transferred_amount', e.target.value)}
+                            onChange={(e) => updateSplit(split.id, 'transferred_amount', e.target.value.replace(',', '.'))}
                             required
                             placeholder="Monto en USDT"
                             className="w-full pl-10 pr-3 py-2 bg-white rounded-lg border border-emerald-300 text-sm font-mono font-black text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
@@ -616,35 +640,47 @@ export default function PaymentForm({
                       {split.isCompressing ? (
                         <div className="text-center">
                           <Loader2 className="w-6 h-6 mb-1 text-kasa-vinotinto animate-spin mx-auto" />
-                          <span className="text-xs font-medium text-gray-700">Procesando imagen...</span>
+                          <span className="text-xs font-medium text-gray-700">Optimizando imagen...</span>
                         </div>
                       ) : split.file ? (
                         <div className="text-center">
                           <CheckCircle2 className="w-6 h-6 mb-1 text-green-500 mx-auto" />
                           <span className="text-xs font-medium text-gray-900 block truncate max-w-[200px]">{split.file.name}</span>
+                          <span className="text-[10px] text-gray-500">{(split.file.size / 1024).toFixed(0)} KB</span>
                         </div>
                       ) : (
                         <div className="text-center">
                           <Camera className="w-6 h-6 mb-1 text-gray-400 group-hover:text-kasa-vinotinto transition-colors mx-auto" />
-                          <span className="text-xs font-medium">Subir foto</span>
+                          <span className="text-xs font-medium">Subir foto o captura</span>
                         </div>
                       )}
                       <input 
                         type="file" 
                         className="hidden" 
-                        accept="image/*" 
+                        accept="image/*,image/heic,image/heif,image/jpeg,image/png,image/webp" 
                         onChange={async (e) => {
                           const file = e.target.files?.[0]
                           if (file) {
-                            if (file.size > 10 * 1024 * 1024) {
-                              setError('La imagen es muy pesada. Máximo 10MB.')
+                            if (file.size > 15 * 1024 * 1024) {
+                              triggerError('La imagen supera los 15MB. Por favor selecciona una imagen más ligera.')
                               return
                             }
+                            setError('')
                             updateSplit(split.id, 'isCompressing', true)
                             try {
                               const optimized = await compressImageClient(file)
+                              if (optimized.size > 4.2 * 1024 * 1024) {
+                                triggerError('El comprobante es muy pesado (>4MB) y tu dispositivo no permitió comprimirlo. Por favor toma una captura de pantalla del comprobante y súbela.')
+                                setSplits(prev => prev.map(s => s.id === split.id ? { ...s, isCompressing: false } : s))
+                                return
+                              }
                               setSplits(prev => prev.map(s => s.id === split.id ? { ...s, file: optimized, isCompressing: false } : s))
                             } catch {
+                              if (file.size > 4.2 * 1024 * 1024) {
+                                triggerError('El comprobante supera los 4MB. Por favor toma una captura de pantalla para reducir su tamaño.')
+                                setSplits(prev => prev.map(s => s.id === split.id ? { ...s, isCompressing: false } : s))
+                                return
+                              }
                               setSplits(prev => prev.map(s => s.id === split.id ? { ...s, file, isCompressing: false } : s))
                             }
                           }
@@ -667,6 +703,17 @@ export default function PaymentForm({
               </div>
             )}
 
+            {/* Banner de error visible en pantalla con scroll suave */}
+            {error && (
+              <div 
+                id="payment-form-error-banner"
+                className="p-4 bg-red-50 border-2 border-red-300 rounded-xl text-red-800 text-sm flex items-start gap-3 shadow-xs animate-in fade-in"
+              >
+                <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                <div className="flex-1 font-semibold">{error}</div>
+              </div>
+            )}
+
             <div className="flex gap-3 pt-4 border-t border-gray-100">
               <button 
                 type="button" 
@@ -677,10 +724,22 @@ export default function PaymentForm({
               </button>
               <button 
                 type="submit" 
-                disabled={loading}
-                className="flex-1 px-4 py-3 bg-kasa-vinotinto hover:bg-red-900 text-white font-bold rounded-xl transition-colors shadow-md disabled:opacity-70"
+                disabled={loading || splits.some(s => s.isCompressing)}
+                className="flex-1 px-4 py-3 bg-kasa-vinotinto hover:bg-red-900 text-white font-bold rounded-xl transition-colors shadow-md disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {loading ? 'Enviando...' : 'Reportar Pago'}
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Enviando comprobante...</span>
+                  </>
+                ) : splits.some(s => s.isCompressing) ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Optimizando foto...</span>
+                  </>
+                ) : (
+                  'Reportar Pago'
+                )}
               </button>
             </div>
           </form>
