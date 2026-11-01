@@ -32,12 +32,27 @@ export default function ResetPasswordForm({ initialHasSession = false }: { initi
 
     async function checkAuth() {
       try {
-        // 1. Si Supabase envió ?code=... en los query params (flujo directo de rescate)
-        const searchParams = new URLSearchParams(window.location.search);
-        const code = searchParams.get('code');
-        if (code) {
-          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-          if (!exchangeError && data.session) {
+        // 1. Verificar si vienen tokens en el hash (#access_token=...&refresh_token=...)
+        const hash = typeof window !== 'undefined' ? window.location.hash : '';
+        if (hash && hash.includes('access_token')) {
+          const hashParams = new URLSearchParams(hash.startsWith('#') ? hash.substring(1) : hash);
+          const accessToken = hashParams.get('access_token');
+          const refreshToken = hashParams.get('refresh_token');
+
+          if (accessToken && refreshToken) {
+            const { data, error: setSessionError } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+
+            if (!setSessionError && data?.session) {
+              if (isMounted) {
+                setHasSession(true);
+                setCheckingSession(false);
+              }
+              return;
+            }
+          } else if (hash.includes('access_token') || hash.includes('type=recovery')) {
             if (isMounted) {
               setHasSession(true);
               setCheckingSession(false);
@@ -46,7 +61,38 @@ export default function ResetPasswordForm({ initialHasSession = false }: { initi
           }
         }
 
-        // 2. Si ya hay sesión activa (establecida por /auth/callback o login previo)
+        // 2. Si vino ?code=... en los query params (flujo PKCE)
+        const searchParams = new URLSearchParams(window.location.search);
+        const code = searchParams.get('code');
+        if (code) {
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (!exchangeError && data?.session) {
+            if (isMounted) {
+              setHasSession(true);
+              setCheckingSession(false);
+            }
+            return;
+          }
+        }
+
+        // 3. Si vino ?token_hash=... en los query params
+        const tokenHash = searchParams.get('token_hash');
+        const otpType = (searchParams.get('type') || 'recovery') as any;
+        if (tokenHash) {
+          const { data, error: otpError } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: otpType,
+          });
+          if (!otpError && data?.session) {
+            if (isMounted) {
+              setHasSession(true);
+              setCheckingSession(false);
+            }
+            return;
+          }
+        }
+
+        // 4. Verificar si ya hay sesión activa
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           if (isMounted) {
@@ -56,39 +102,58 @@ export default function ResetPasswordForm({ initialHasSession = false }: { initi
           return;
         }
 
-        // 3. Si Supabase envió el token en el hash (#access_token=...)
-        const hash = window.location.hash;
-        if (hash && (hash.includes('access_token') || hash.includes('type=recovery'))) {
-          if (isMounted) {
+        // 5. En iOS / Safari o WebView, dar un margen de espera activo de hasta 2 segundos
+        // comprobando periódicamente si el cliente Supabase o el hash terminaron de inicializarse
+        for (let i = 0; i < 5; i++) {
+          await new Promise(res => setTimeout(res, 400));
+          if (!isMounted) return;
+
+          const currentHash = window.location.hash;
+          if (currentHash && currentHash.includes('access_token')) {
+            const currentParams = new URLSearchParams(currentHash.startsWith('#') ? currentHash.substring(1) : currentHash);
+            const aToken = currentParams.get('access_token');
+            const rToken = currentParams.get('refresh_token');
+            if (aToken && rToken) {
+              const { data: retryData } = await supabase.auth.setSession({
+                access_token: aToken,
+                refresh_token: rToken,
+              });
+              if (retryData?.session) {
+                setHasSession(true);
+                setCheckingSession(false);
+                return;
+              }
+            } else {
+              setHasSession(true);
+              setCheckingSession(false);
+              return;
+            }
+          }
+
+          const { data: { session: retrySession } } = await supabase.auth.getSession();
+          if (retrySession) {
             setHasSession(true);
             setCheckingSession(false);
+            return;
           }
-          return;
         }
 
-        // 4. Margen de gracia (800ms) para permitir que onAuthStateChange capture eventos asíncronos en Safari/iOS
-        await new Promise(res => setTimeout(res, 800));
-
-        if (!isMounted) return;
-
-        // Re-verificar sesión tras el margen de gracia
-        const { data: { session: recheckedSession } } = await supabase.auth.getSession();
-        if (recheckedSession) {
-          setHasSession(true);
-        } else {
+        if (isMounted) {
           setHasSession(false);
+          setCheckingSession(false);
         }
       } catch (err) {
         console.error('Error verifying recovery session:', err);
-        if (isMounted) setHasSession(false);
-      } finally {
-        if (isMounted) setCheckingSession(false);
+        if (isMounted) {
+          setHasSession(false);
+          setCheckingSession(false);
+        }
       }
     }
 
     checkAuth();
 
-    // 5. Escuchar evento explícito de recuperación de contraseña de Supabase
+    // 6. Escuchar evento explícito de recuperación de contraseña de Supabase
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!isMounted) return;
       if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
@@ -101,7 +166,7 @@ export default function ResetPasswordForm({ initialHasSession = false }: { initi
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [initialHasSession]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
