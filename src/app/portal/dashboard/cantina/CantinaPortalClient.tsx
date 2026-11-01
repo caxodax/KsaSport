@@ -379,12 +379,9 @@ export default function CantinaPortalClient({
                   className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-kasa-dorado"
                 >
                   <option value="Pago Móvil">Pago Móvil</option>
-                  <option value="Transferencia Bancaria">Transferencia Bancaria</option>
-                  <option value="Efectivo en Euros">Efectivo en Euros (€)</option>
-                  <option value="Efectivo en Dólares">Efectivo en Dólares ($)</option>
-                  <option value="Efectivo en Bolívares">Efectivo en Bolívares (Bs)</option>
+                  <option value="Efectivo">Efectivo</option>
                   <option value="Zelle">Zelle</option>
-                  <option value="USDT/Binance">USDT / Binance</option>
+                  <option value="USDT">USDT / Binance</option>
                 </select>
               </div>
 

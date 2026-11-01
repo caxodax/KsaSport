@@ -131,9 +131,8 @@ export default function PaymentForm({
       if (s.id !== id) return s
 
       if (field === 'method') {
-        const isBs = value === 'Pago Móvil' || value === 'Transferencia Bancaria' || value === 'Efectivo en Bolívares'
+        const isBs = value === 'Pago Móvil'
         const isUsdt = value === 'USDT'
-        const isEurCash = value === 'Efectivo en Euros'
         const numAmount = Number(s.amount) || 0
 
         let currency = 'USD'
@@ -147,10 +146,6 @@ export default function PaymentForm({
         } else if (isUsdt) {
           currency = 'USDT'
           rate = '1.0000'
-          transferred = numAmount.toFixed(2)
-        } else if (isEurCash) {
-          currency = 'EUR'
-          rate = (Number(rates?.eur) || 0).toFixed(4)
           transferred = numAmount.toFixed(2)
         } else {
           currency = selectedProduct?.rate_type || 'USD'
@@ -523,12 +518,9 @@ export default function PaymentForm({
                         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-kasa-vinotinto font-bold text-gray-800"
                       >
                         <option value="">Selecciona el método...</option>
-                        <option value="Pago Móvil">📱 Pago Móvil (Bs)</option>
-                        <option value="Transferencia Bancaria">🏦 Transferencia Bancaria (Bs)</option>
-                        <option value="Efectivo en Bolívares">💵 Efectivo en Bolívares (Bs)</option>
+                        <option value="Pago Móvil">📱 Pago Móvil / Transferencia (Bs)</option>
+                        <option value="Efectivo">💵 Efectivo ({selectedProduct?.rate_type === 'EUR' ? '€ EUR' : '$ USD'})</option>
                         <option value="Zelle">🇺🇸 Zelle (USD)</option>
-                        <option value="Efectivo">💵 Efectivo en Dólares ($ USD)</option>
-                        <option value="Efectivo en Euros">💶 Efectivo en Euros (€ EUR)</option>
                         <option value="USDT">🟢 USDT / Binance Cripto</option>
                       </select>
                     </div>
@@ -547,7 +539,7 @@ export default function PaymentForm({
                   )}
 
                   {/* Bloque de Conversión Automática de Tasa BCV (Bolívares) */}
-                  {(split.method === 'Pago Móvil' || split.method === 'Transferencia Bancaria' || split.method === 'Efectivo en Bolívares') && (
+                  {split.method === 'Pago Móvil' && (
                     <div className="mb-4 p-3.5 bg-sky-50/90 rounded-xl border border-sky-200 text-xs">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2.5 border-b border-sky-200/80">
                         <span className="font-bold text-sky-950 flex items-center gap-1.5">

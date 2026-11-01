@@ -33,13 +33,10 @@ interface ManualPaymentModalProps {
 }
 
 const PAYMENT_METHODS = [
-  'Efectivo (USD)',
-  'Pago Móvil (Bs)',
+  'Pago Móvil',
+  'Efectivo',
   'Zelle',
-  'Punto de Venta',
-  'Transferencia Bancaria',
-  'Efectivo (EUR)',
-  'Otro'
+  'USDT'
 ]
 
 export default function ManualPaymentModal({
@@ -53,7 +50,7 @@ export default function ManualPaymentModal({
   const [selectedProductId, setSelectedProductId] = useState<string>('')
   
   const [amount, setAmount] = useState<string>('')
-  const [method, setMethod] = useState<string>('Efectivo (USD)')
+  const [method, setMethod] = useState<string>('Pago Móvil')
   const [rateType, setRateType] = useState<'USD' | 'EUR'>('USD')
   const [paymentDate, setPaymentDate] = useState<string>(() => new Date().toISOString().split('T')[0])
   const [reference, setReference] = useState<string>('')

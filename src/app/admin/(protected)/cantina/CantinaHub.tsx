@@ -264,7 +264,7 @@ export default function CantinaHub({
   const [newLimitValue, setNewLimitValue] = useState<string>("50")
   const [manualPayAthlete, setManualPayAthlete] = useState<any | null>(null)
   const [manualPayAmount, setManualPayAmount] = useState<string>("")
-  const [manualPayMethod, setManualPayMethod] = useState<string>("Efectivo en Dólares")
+  const [manualPayMethod, setManualPayMethod] = useState<string>("Efectivo")
   const [manualPayNotes, setManualPayNotes] = useState<string>("")
 
   // TAB 4: VERIFICAR PAGOS
@@ -1772,12 +1772,10 @@ export default function CantinaHub({
                       onChange={(e) => setManualPayMethod(e.target.value)}
                       className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-gray-200"
                     >
-                      <option value="Efectivo en Euros">Efectivo en Euros (€)</option>
-                      <option value="Efectivo en Dólares">Efectivo en Dólares ($)</option>
-                      <option value="Efectivo en Bolívares">Efectivo en Bolívares (Bs)</option>
+                      <option value="Efectivo">Efectivo</option>
                       <option value="Pago Móvil">Pago Móvil (Cobrado en sitio)</option>
-                      <option value="Punto de Venta">Punto de Venta / Tarjeta</option>
                       <option value="Zelle">Zelle</option>
+                      <option value="USDT">USDT / Cripto</option>
                     </select>
                   </div>
                   <div>

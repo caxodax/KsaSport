@@ -190,7 +190,7 @@ export async function recordManualFoodPayment(
       athlete_id: athleteId,
       account_id: account?.id || null,
       amount: Number(amount.toFixed(2)),
-      method: method || 'Efectivo en Dólares',
+      method: method || 'Efectivo',
       status: 'Completado',
       registered_by: 'admin',
       admin_notes: notes || 'Abono directo registrado por administración en créditos',
