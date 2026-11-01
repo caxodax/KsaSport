@@ -15,6 +15,7 @@ interface MultiSelectProductFilterProps {
   selectedIds: string[];
   onChange: (selectedIds: string[]) => void;
   currentCategoryFilter?: string;
+  alignRight?: boolean;
 }
 
 export default function MultiSelectProductFilter({
@@ -22,6 +23,7 @@ export default function MultiSelectProductFilter({
   selectedIds,
   onChange,
   currentCategoryFilter = '',
+  alignRight = false,
 }: MultiSelectProductFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -113,7 +115,7 @@ export default function MultiSelectProductFilter({
 
       {/* Popover Flotante */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1.5 w-72 sm:w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden flex flex-col p-2.5 animate-in fade-in zoom-in-95 duration-150">
+        <div className={`absolute top-full ${alignRight ? 'right-0 sm:right-0' : 'left-0'} mt-1.5 w-72 sm:w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden flex flex-col p-2.5 animate-in fade-in zoom-in-95 duration-150`}>
           
           {/* Header del Popover */}
           <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-100 px-1">

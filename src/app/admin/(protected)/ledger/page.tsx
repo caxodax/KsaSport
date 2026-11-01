@@ -1,6 +1,7 @@
 import { getServiceSupabase } from '@/lib/supabase';
-import { CircleDollarSign, TrendingUp, CreditCard, ShoppingCart, BarChart3, Receipt, ChevronUp, Users, Calendar, Euro } from 'lucide-react';
+import { CircleDollarSign, TrendingUp, CreditCard, ShoppingCart, BarChart3, Receipt, ChevronUp, Users, Calendar, Euro, Tag } from 'lucide-react';
 import DateRangeFilter from '../DateRangeFilter';
+import LedgerProductFilter from './LedgerProductFilter';
 import { parseDateRange } from '@/lib/dateRange';
 import ExportLedgerButton from './ExportLedgerButton';
 import InstallmentTrackingTable from './InstallmentTrackingTable';
@@ -18,10 +19,24 @@ export default async function LedgerPage({
   const { startDate, endDate, formattedRange } = parseDateRange(resolvedParams);
   const supabase = getServiceSupabase();
 
+  // Filtros de Productos
+  const productsParam = typeof resolvedParams.products === 'string' ? resolvedParams.products : '';
+  const selectedProductIds = productsParam ? productsParam.split(',').filter(Boolean) : [];
+
+  // Catálogo completo de productos para el selector de filtro
+  const { data: allProducts } = await supabase
+    .from('products')
+    .select('id, name, price, categories, rate_type')
+    .order('name');
+
+  const selectedProductNames = (allProducts || [])
+    .filter(p => selectedProductIds.includes(p.id))
+    .map(p => p.name);
+
   // Fetch ALL completed payments in the date range
-  const { data: payments, error: paymentsError } = await supabase
+  const { data: rawPayments, error: paymentsError } = await supabase
     .from('payments')
-    .select('id, amount, method, reference_number, rate_type, exchange_rate, usdt_promedio, transferred_amount, payment_currency, date_rate, created_at, products(name), athletes(name, cedula)')
+    .select('id, amount, method, reference_number, rate_type, exchange_rate, usdt_promedio, transferred_amount, payment_currency, date_rate, created_at, product_id, products(name), athletes(name, cedula)')
     .eq('status', 'Completado')
     .gte('created_at', startDate.toISOString())
     .lte('created_at', endDate.toISOString())
@@ -31,12 +46,22 @@ export default async function LedgerPage({
     console.error('Error fetching completed payments for ledger:', paymentsError);
   }
 
+  // Filtrado reactivo por productos si hay alguno seleccionado
+  const payments = selectedProductIds.length > 0
+    ? (rawPayments || []).filter(p => p.product_id && selectedProductIds.includes(p.product_id))
+    : (rawPayments || []);
+
   // Fetch all active installment products (to show debt)
-  const { data: installmentProducts } = await supabase
+  const { data: rawInstallmentProducts } = await supabase
     .from('products')
     .select('id, name, price, rate_type, requires_opt_in, description')
     .eq('is_active', true)
     .eq('allows_installments', true);
+
+  const installmentProducts = (rawInstallmentProducts || []).filter(prod => {
+    if (selectedProductIds.length === 0) return true;
+    return selectedProductIds.includes(prod.id);
+  });
 
   // Fetch payments for active installment products to calculate pending debt
   const { data: installmentPayments } = await supabase
@@ -58,7 +83,7 @@ export default async function LedgerPage({
   let totalRevenue = 0;
   let usdRevenue = 0;
   let eurRevenue = 0;
-  const methodMap = new Map<string, { count: number, total: number, rateType?: string }>();
+  const methodMap = new Map<string, { count: number, total: number, usdTotal: number, eurTotal: number }>();
   const productMap = new Map<string, { count: number, total: number, rateType?: string }>();
   let highestTicket = 0;
   let lowestTicket = Infinity;
@@ -78,10 +103,15 @@ export default async function LedgerPage({
 
       // Method Breakdown
       const method = pay.method || 'No Especificado';
-      if (!methodMap.has(method)) methodMap.set(method, { count: 0, total: 0, rateType: pay.rate_type });
+      if (!methodMap.has(method)) methodMap.set(method, { count: 0, total: 0, usdTotal: 0, eurTotal: 0 });
       const mEntry = methodMap.get(method)!;
       mEntry.count += 1;
       mEntry.total += amount;
+      if (pay.rate_type === 'EUR') {
+        mEntry.eurTotal += amount;
+      } else {
+        mEntry.usdTotal += amount;
+      }
 
       // Product Breakdown
       const prodName = (pay.products as any)?.name || 'Producto Eliminado / Desconocido';
@@ -214,17 +244,31 @@ export default async function LedgerPage({
             <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight truncate">
               Reportes Financieros (Libro Mayor)
             </h2>
-            <div className="flex items-center gap-2 mt-0.5">
+            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
               <span className="text-xs text-slate-400">Período:</span>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md text-xs font-mono font-bold">
                 <Calendar className="w-3 h-3 text-slate-500" />
                 {formattedRange}
               </span>
+              {selectedProductNames.length > 0 && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-vinotinto-light/10 text-kasa-vinotinto rounded-md text-xs font-bold border border-kasa-vinotinto/30">
+                  <Tag className="w-3 h-3" />
+                  {selectedProductNames.length === 1 ? selectedProductNames[0] : `${selectedProductNames.length} productos filtrados`}
+                </span>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-wrap">
+          <LedgerProductFilter 
+            products={(allProducts || []).map(p => ({
+              id: p.id,
+              name: p.name,
+              price: Number(p.price),
+              categories: p.categories
+            }))} 
+          />
           <DateRangeFilter />
           <ExportLedgerButton data={exportPayload} />
         </div>
@@ -314,7 +358,11 @@ export default async function LedgerPage({
                     <div className="flex justify-between items-center text-xs">
                       <span className="font-bold text-slate-700 truncate pr-2">{method}</span>
                       <span className="font-mono font-black text-gray-900 shrink-0">
-                        {data.rateType === 'EUR' ? '€' : '$'}{data.total.toFixed(2)}
+                        {data.eurTotal > 0 && data.usdTotal > 0
+                          ? `€${data.eurTotal.toFixed(2)} + $${data.usdTotal.toFixed(2)}`
+                          : data.eurTotal > 0
+                          ? `€${data.eurTotal.toFixed(2)}`
+                          : `$${data.usdTotal.toFixed(2)}`}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
