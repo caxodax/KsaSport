@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import BrandLogo from '@/components/ui/BrandLogo';
 import ResetPasswordForm from './ResetPasswordForm';
-import { createClient } from '@/lib/supabase/server';
 import { getServiceSupabase } from '@/lib/supabase';
 
 export const metadata = {
@@ -12,16 +11,12 @@ export const metadata = {
 };
 
 export default async function ResetPasswordPage() {
-  const serviceSupabase = getServiceSupabase();
-  const authSupabase = await createClient();
-
-  const [settingsRes, userRes] = await Promise.all([
-    serviceSupabase.from('club_settings').select('logo_url').eq('id', 1).single(),
-    authSupabase.auth.getUser()
-  ]);
-
-  const settings = settingsRes.data;
-  const initialHasSession = !!userRes.data?.user;
+  const supabase = getServiceSupabase();
+  const { data: settings } = await supabase
+    .from('club_settings')
+    .select('logo_url')
+    .eq('id', 1)
+    .single();
 
   return (
     <div className="min-h-screen bg-kasa-fondo flex flex-col justify-center py-10 px-4 sm:px-6 lg:px-8 relative selection:bg-kasa-dorado selection:text-kasa-vinotinto">
@@ -59,7 +54,7 @@ export default async function ResetPasswordPage() {
             <Loader2 className="w-6 h-6 animate-spin text-kasa-vinotinto" />
           </div>
         }>
-          <ResetPasswordForm initialHasSession={initialHasSession} />
+          <ResetPasswordForm />
         </Suspense>
       </div>
     </div>
