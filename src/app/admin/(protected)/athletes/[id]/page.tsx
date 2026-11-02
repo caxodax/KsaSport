@@ -69,7 +69,7 @@ export default async function AthleteProfilePage({
   // 2. Fetch Active Products (for Exemption, Tournaments and Payment Modal)
   const { data: products } = await supabase
     .from('products')
-    .select('id, name, price, allows_installments, requires_opt_in, description, categories, parent_product_id, start_date, end_date')
+    .select('id, name, price, allows_installments, requires_opt_in, description, categories, parent_product_id, start_date, end_date, is_active')
     .eq('is_active', true)
     .order('created_at', { ascending: false })
 
@@ -150,12 +150,23 @@ export default async function AthleteProfilePage({
     
     // Calcular pagos válidos
     const productPayments = payments?.filter(p => p.product_id === product.id) || []
-    const pagado = productPayments
+    let pagado = productPayments
       .filter(p => p.status === 'Completado')
       .reduce((sum, p) => sum + Number(p.amount), 0)
 
     // Evaluar penalidad de mora para mensualidades
     const isMensualidad = product.name.toLowerCase().includes('mensualidad') || product.name.toLowerCase().includes('cuota')
+    
+    // Si es mensualidad y el atleta tiene paid_until que cubre este mes,
+    // se reconoce como pagado base aunque el pago se haya registrado directamente en taquilla o admin
+    if (isMensualidad && athlete.paid_until && product.start_date) {
+      const pStart = new Date(product.start_date)
+      const athletePaidUntil = new Date(athlete.paid_until)
+      if (athletePaidUntil >= pStart && pagado === 0) {
+        pagado = Number(product.price)
+      }
+    }
+
     let penaltyApplied = 0
     let isWaived = false
 
@@ -204,9 +215,12 @@ export default async function AthleteProfilePage({
     const basePrice = isExempt ? 0 : Number(product.price)
     const facturado = isExempt ? 0 : (basePrice + penaltyApplied)
     
-    // Solo mostramos en el Estado de Cuenta si es un producto a cuotas (meses/ligas)
-    // o si han pagado algo, o si tiene penalidad activa
-    if (product.allows_installments || productPayments.length > 0 || penaltyApplied > 0) {
+    // Solo mostramos en el Estado de Cuenta si es un producto a cuotas (meses/ligas),
+    // si han pagado algo, si tiene penalidad activa, o si es la mensualidad activa de la categoría
+    const isCategoryMatch = !product.categories || product.categories.length === 0 || product.categories.includes('Global') || (athleteCategory && product.categories.includes(athleteCategory))
+    const isRelevantProduct = product.allows_installments || productPayments.length > 0 || penaltyApplied > 0 || (isMensualidad && product.is_active && isCategoryMatch)
+
+    if (isRelevantProduct) {
       statement.push({
         id: product.id,
         name: product.name,
