@@ -242,7 +242,6 @@ export default async function DashboardPage({
       applicableProducts.forEach((p) => {
         const parentProd = findParentProduct(p, allProductsData || []);
         const isExempt =
-          Boolean(athlete.has_alliance) ||
           athleteExemptionSet.has(`${athlete.id}_${p.id}`) ||
           Boolean(parentProd && athleteExemptionSet.has(`${athlete.id}_${parentProd.id}`));
         
@@ -504,8 +503,7 @@ export default async function DashboardPage({
       const entry = categoryBreakdown.get(cat)!;
 
       const isExempt = product && (
-        allExemptions?.some((e) => e.athlete_id === a.id && e.product_id === product.id) ||
-        Boolean(a.has_alliance)
+        allExemptions?.some((e) => e.athlete_id === a.id && e.product_id === product.id)
       );
       if (isExempt) {
         entry.exonerados++;

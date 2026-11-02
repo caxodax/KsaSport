@@ -22,6 +22,17 @@ export async function toggleExemption(athleteId: string, productId: string, isEx
     if (error && error.code !== '23505') {
       return { error: error.message };
     }
+
+    // Si el producto exonerado es una Mensualidad con end_date,
+    // sincronizar la solvencia (paid_until) si es menor para protegerla de morosidad por el mes exonerado (ej. reposo médico)
+    const { data: prod } = await supabase.from('products').select('name, end_date').eq('id', productId).single();
+    if (prod && (prod.name.toLowerCase().includes('mensualidad') || prod.name.toLowerCase().includes('cuota')) && prod.end_date) {
+      const prodEndStr = prod.end_date.split('T')[0];
+      const { data: athlete } = await supabase.from('athletes').select('paid_until').eq('id', athleteId).single();
+      if (!athlete?.paid_until || prodEndStr > athlete.paid_until) {
+        await supabase.from('athletes').update({ paid_until: prodEndStr, status: 'Solvente' }).eq('id', athleteId);
+      }
+    }
   } else {
     const { error } = await supabase
       .from('athlete_exemptions')
@@ -34,7 +45,11 @@ export async function toggleExemption(athleteId: string, productId: string, isEx
   }
 
   revalidatePath(`/admin/athletes/${athleteId}`);
+  revalidatePath('/admin/athletes');
   revalidatePath('/admin/ledger');
+  revalidatePath('/admin');
+  revalidatePath('/portal/dashboard');
+  revalidatePath('/portal/dashboard/pagos');
   return { success: true };
 }
 
