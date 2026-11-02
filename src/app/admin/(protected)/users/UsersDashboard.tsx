@@ -2,22 +2,36 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { 
   Users, UserPlus, Search, Shield, Key, Trash2, Edit3, Trophy, 
   Crown, Coins, Compass, CheckCircle2, AlertTriangle, Loader2, Check,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Smartphone, ExternalLink
 } from 'lucide-react';
 import UserDrawer, { AdminUserData, AdminRoleItem } from './UserDrawer';
+import ResetAthletePasswordModal from '../athletes/[id]/ResetAthletePasswordModal';
 import { revokeAdminUser } from './actions';
+import { formatCedula } from '@/lib/cedula';
 import { toast } from 'sonner';
+
+export interface AthleteAccountItem {
+  id: string;
+  name: string;
+  cedula: string;
+  user_id: string;
+  email: string;
+  team_name?: string;
+}
 
 export default function UsersDashboard({
   initialUsers,
+  initialAthletes = [],
   roles,
   teams,
   currentUserId,
 }: {
   initialUsers: AdminUserData[];
+  initialAthletes?: AthleteAccountItem[];
   roles: AdminRoleItem[];
   teams: { id: string; name: string; category?: string }[];
   currentUserId: string;
@@ -28,6 +42,10 @@ export default function UsersDashboard({
   const [selectedRoleFilter, setSelectedRoleFilter] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<AdminUserData | null>(null);
+
+  const [activeTab, setActiveTab] = useState<'admin' | 'athletes'>('admin');
+  const [athleteSearch, setAthleteSearch] = useState('');
+  const [athletePage, setAthletePage] = useState(1);
 
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -67,6 +85,23 @@ export default function UsersDashboard({
   const totalPages = Math.ceil(filteredUsers.length / pageSize) || 1;
   const safePage = Math.min(currentPage, totalPages);
   const paginatedUsers = filteredUsers.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+  // Filtrado y paginación para Atletas y Familias
+  const filteredAthletes = initialAthletes.filter((a) => {
+    if (!athleteSearch.trim()) return true;
+    const q = athleteSearch.toLowerCase().trim();
+    return (
+      a.name.toLowerCase().includes(q) ||
+      a.cedula.toLowerCase().includes(q) ||
+      a.email.toLowerCase().includes(q) ||
+      (a.team_name && a.team_name.toLowerCase().includes(q))
+    );
+  });
+
+  const athletePageSize = 10;
+  const athleteTotalPages = Math.ceil(filteredAthletes.length / athletePageSize) || 1;
+  const safeAthletePage = Math.min(athletePage, athleteTotalPages);
+  const paginatedAthletes = filteredAthletes.slice((safeAthletePage - 1) * athletePageSize, safeAthletePage * athletePageSize);
 
   const handleOpenCreate = () => {
     setEditingUser(null);
@@ -199,7 +234,38 @@ export default function UsersDashboard({
         </div>
       )}
 
-      {/* Barra de Filtros y Búsqueda */}
+      {/* Selector de Pestañas: Staff Administrativo vs Atletas / Familias */}
+      <div className="flex items-center gap-2 border-b border-gray-200/80 pb-1">
+        <button
+          type="button"
+          onClick={() => setActiveTab('admin')}
+          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'admin'
+              ? 'bg-kasa-vinotinto text-white shadow-xs'
+              : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+          }`}
+        >
+          <Shield className="w-4 h-4" />
+          <span>Staff Administrativo ({users.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('athletes')}
+          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'athletes'
+              ? 'bg-kasa-vinotinto text-white shadow-xs'
+              : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+          }`}
+        >
+          <Smartphone className="w-4 h-4" />
+          <span>Atletas y Familias ({initialAthletes.length})</span>
+        </button>
+      </div>
+
+      {activeTab === 'admin' ? (
+        <>
+          {/* Barra de Filtros y Búsqueda */}
       <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white p-3.5 rounded-xl border border-gray-200 shadow-2xs">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -493,6 +559,166 @@ export default function UsersDashboard({
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
+        </div>
+      )}
+        </>
+      ) : (
+        <div className="space-y-4">
+          {/* Barra de Búsqueda de Atletas */}
+          <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white p-3.5 rounded-xl border border-gray-200 shadow-2xs">
+            <div className="relative w-full sm:w-96">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={athleteSearch}
+                onChange={(e) => {
+                  setAthleteSearch(e.target.value);
+                  setAthletePage(1);
+                }}
+                placeholder="Buscar por nombre, cédula o correo..."
+                className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm rounded-lg border border-gray-200 outline-none focus:ring-2 focus:ring-kasa-vinotinto bg-gray-50/50 font-medium"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+              <span className="text-xs font-bold text-gray-500 px-3 py-2 bg-gray-100 rounded-lg whitespace-nowrap">
+                {filteredAthletes.length} {filteredAthletes.length === 1 ? 'Cuenta registrada' : 'Cuentas registradas'}
+              </span>
+            </div>
+          </div>
+
+          {/* VISTA ESCRITORIO: TABLA DE ATLETAS */}
+          <div className="hidden md:block bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50/80 border-b border-gray-200 text-[11px] font-black text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4">Atleta</th>
+                  <th className="px-6 py-4">Equipo</th>
+                  <th className="px-6 py-4">Correo de Acceso App Móvil</th>
+                  <th className="px-6 py-4 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-sm">
+                {paginatedAthletes.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-12 text-center text-gray-400">
+                      <Smartphone className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+                      <p className="font-semibold text-gray-500">No se encontraron atletas</p>
+                      <p className="text-xs text-gray-400 mt-1">Prueba con otro término de búsqueda.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedAthletes.map((athlete) => (
+                    <tr key={athlete.id} className="hover:bg-gray-50/80 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-gray-900">{athlete.name}</div>
+                        <div className="text-xs text-gray-500 font-mono">
+                          CI: {athlete.cedula ? formatCedula(athlete.cedula) : 'N/A'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-slate-100 text-slate-700">
+                          {athlete.team_name}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-xs font-mono font-bold text-indigo-700 bg-indigo-50/80 px-2.5 py-1 rounded-lg border border-indigo-200/60">
+                          {athlete.email}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <ResetAthletePasswordModal
+                            athleteId={athlete.id}
+                            athleteName={athlete.name}
+                            userEmail={athlete.email}
+                            hasAccount={true}
+                          />
+                          <Link
+                            href={`/admin/athletes/${athlete.id}`}
+                            className="p-1.5 text-gray-400 hover:text-kasa-vinotinto hover:bg-vinotinto-light/10 rounded-lg transition-colors cursor-pointer"
+                            title="Ver ficha completa de la atleta"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* VISTA MÓVIL: TARJETAS DE ATLETAS */}
+          <div className="md:hidden space-y-3">
+            {paginatedAthletes.length === 0 ? (
+              <div className="bg-white p-8 rounded-2xl border border-gray-200 text-center text-gray-400">
+                <Smartphone className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                <p className="font-semibold text-gray-500 text-sm">No se encontraron atletas</p>
+              </div>
+            ) : (
+              paginatedAthletes.map((athlete) => (
+                <div key={athlete.id} className="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs space-y-3">
+                  <div className="flex justify-between items-start gap-2">
+                    <div>
+                      <h3 className="font-bold text-gray-900 text-sm leading-tight">{athlete.name}</h3>
+                      <p className="text-xs text-gray-500 font-mono mt-0.5">
+                        CI: {athlete.cedula ? formatCedula(athlete.cedula) : 'N/A'} • {athlete.team_name}
+                      </p>
+                    </div>
+                    <Link
+                      href={`/admin/athletes/${athlete.id}`}
+                      className="p-1.5 text-gray-400 hover:text-kasa-vinotinto rounded-lg"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </Link>
+                  </div>
+
+                  <div className="p-2.5 bg-indigo-50/70 rounded-xl border border-indigo-100 text-xs">
+                    <span className="text-[10px] uppercase font-bold text-indigo-900 block mb-0.5">Correo de Acceso:</span>
+                    <span className="font-mono font-bold text-indigo-800 break-all">{athlete.email}</span>
+                  </div>
+
+                  <div className="pt-1 flex justify-end">
+                    <ResetAthletePasswordModal
+                      athleteId={athlete.id}
+                      athleteName={athlete.name}
+                      userEmail={athlete.email}
+                      hasAccount={true}
+                    />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Paginación de Atletas */}
+          {athleteTotalPages > 1 && (
+            <div className="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-2xs">
+              <span className="text-xs text-gray-500">
+                Página {safeAthletePage} de {athleteTotalPages}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setAthletePage((p) => Math.max(1, p - 1))}
+                  disabled={safeAthletePage <= 1}
+                  className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 cursor-pointer"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAthletePage((p) => Math.min(athleteTotalPages, p + 1))}
+                  disabled={safeAthletePage >= athleteTotalPages}
+                  className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 cursor-pointer"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

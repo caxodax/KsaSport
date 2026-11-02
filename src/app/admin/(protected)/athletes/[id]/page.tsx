@@ -6,6 +6,7 @@ import ExemptionManager from './ExemptionManager'
 import TournamentEnrollmentManager from './TournamentEnrollmentManager'
 import ManualPaymentModal from './ManualPaymentModal'
 import VoidPaymentButton from './VoidPaymentButton'
+import ResetAthletePasswordModal from './ResetAthletePasswordModal'
 import { formatCedula } from '@/lib/cedula'
 import { formatLocalDate } from '@/lib/dateUtils'
 import { findParentProduct, getEffectiveOptInProductId } from '@/lib/productHierarchy'
@@ -394,25 +395,36 @@ export default async function AthleteProfilePage({
                   </div>
 
                   {/* Acceso App Móvil */}
-                  <div className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border shadow-2xs ${
+                  <div className={`inline-flex items-center justify-between gap-3 px-3.5 py-2 rounded-xl border shadow-2xs ${
                     athlete.user_id 
                       ? 'bg-indigo-50 text-indigo-900 border-indigo-200' 
                       : 'bg-slate-50 text-slate-600 border-slate-200'
                   }`}>
-                    <Smartphone className={`w-4 h-4 ${athlete.user_id ? 'text-indigo-600' : 'text-slate-400'}`} />
-                    <div>
-                      <p className="text-[9px] uppercase font-black tracking-wider opacity-75 leading-none">Acceso App Móvil</p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <p className="font-black text-xs">
-                          {athlete.user_id ? 'Registrada' : 'Sin Cuenta'}
-                        </p>
-                        {authUserEmail && (
-                          <span className="text-[10px] font-mono font-bold text-indigo-700 bg-white/90 px-1.5 py-0.5 rounded border border-indigo-200 max-w-[200px] truncate" title={authUserEmail}>
-                            {authUserEmail}
-                          </span>
-                        )}
+                    <div className="flex items-center gap-2">
+                      <Smartphone className={`w-4 h-4 ${athlete.user_id ? 'text-indigo-600' : 'text-slate-400'}`} />
+                      <div>
+                        <p className="text-[9px] uppercase font-black tracking-wider opacity-75 leading-none">Acceso App Móvil</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <p className="font-black text-xs">
+                            {athlete.user_id ? 'Registrada' : 'Sin Cuenta'}
+                          </p>
+                          {authUserEmail && (
+                            <span className="text-[10px] font-mono font-bold text-indigo-700 bg-white/90 px-1.5 py-0.5 rounded border border-indigo-200 max-w-[200px] truncate" title={authUserEmail}>
+                              {authUserEmail}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
+
+                    {athlete.user_id && (
+                      <ResetAthletePasswordModal
+                        athleteId={athlete.id}
+                        athleteName={athlete.name}
+                        userEmail={authUserEmail}
+                        hasAccount={Boolean(athlete.user_id)}
+                      />
+                    )}
                   </div>
 
                   {/* Alertas Push / PWA */}

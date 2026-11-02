@@ -45,6 +45,30 @@ export default async function UsersPage() {
     .select('id, name, user_id, team_id, teams ( id, name, category )')
     .not('user_id', 'is', null);
 
+  // 7. Obtener atletas registradas con cuenta móvil y sus correos
+  const [{ data: registeredAthletes }, { data: authUsersRes }] = await Promise.all([
+    adminSupabase
+      .from('athletes')
+      .select('id, name, cedula, user_id, teams ( id, name, category )')
+      .not('user_id', 'is', null)
+      .order('name'),
+    adminSupabase.auth.admin.listUsers({ perPage: 1000 }),
+  ]);
+
+  const emailMap = new Map<string, string>();
+  authUsersRes?.users?.forEach((u) => {
+    if (u.id && u.email) emailMap.set(u.id, u.email);
+  });
+
+  const athleteAccounts = (registeredAthletes || []).map((a: any) => ({
+    id: a.id,
+    name: a.name,
+    cedula: a.cedula,
+    user_id: a.user_id,
+    email: emailMap.get(a.user_id) || 'Correo no disponible',
+    team_name: (Array.isArray(a.teams) ? a.teams[0] : a.teams)?.name || 'Sin Equipo',
+  }));
+
   const enrichedUsers = (adminUsers || []).map((u: any) => {
     const matchedStaff = staffData?.find((s: any) => s.user_id === u.id);
     return {
@@ -65,6 +89,7 @@ export default async function UsersPage() {
   return (
     <UsersDashboard
       initialUsers={enrichedUsers}
+      initialAthletes={athleteAccounts}
       roles={(rolesData as any) || []}
       teams={teamsData}
       currentUserId={user.id}

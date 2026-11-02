@@ -566,5 +566,13 @@
     "Tasa_EUR": 992.8002,
     "Tasa_USDT_Promedio": 982.685,
     "Fuente": "alcambio.app"
+  },
+  {
+    "Fecha_Consulta": "2026-11-02",
+    "Hora_Consulta": "09:30:01",
+    "Tasa_USD": 889.5754,
+    "Tasa_EUR": 991.2539,
+    "Tasa_USDT_Promedio": 995.92,
+    "Fuente": "alcambio.app"
   }
 ]

@@ -289,5 +289,51 @@ export async function recordManualPayment(params: RecordManualPaymentParams) {
   return { success: true, paymentId: newPayment.id };
 }
 
+export async function updateAthletePassword(athleteId: string, newPassword: string) {
+  const { permissions, isSuperAdmin } = await checkAdminPermission();
+  if (!isSuperAdmin && !permissions.includes('view_roster') && !permissions.includes('manage_roles')) {
+    return { error: 'No tienes permisos administrativos para cambiar contraseñas.' };
+  }
+
+  if (!athleteId || !newPassword) {
+    return { error: 'Atleta y nueva contraseña son obligatorios.' };
+  }
+
+  if (newPassword.length < 6) {
+    return { error: 'La nueva contraseña debe tener al menos 6 caracteres.' };
+  }
+
+  const supabase = getServiceSupabase();
+
+  // 1. Obtener la atleta y su user_id
+  const { data: athlete, error: athleteErr } = await supabase
+    .from('athletes')
+    .select('id, name, user_id')
+    .eq('id', athleteId)
+    .single();
+
+  if (athleteErr || !athlete) {
+    return { error: 'Atleta no encontrada en el sistema.' };
+  }
+
+  if (!athlete.user_id) {
+    return { error: 'Esta atleta aún no tiene una cuenta de aplicación vinculada (no ha completado registro o vinculación).' };
+  }
+
+  // 2. Actualizar contraseña directamente en Supabase Auth
+  const { error: authErr } = await supabase.auth.admin.updateUserById(athlete.user_id, {
+    password: newPassword,
+  });
+
+  if (authErr) {
+    console.error('Error in updateUserById:', authErr);
+    return { error: `Error al actualizar contraseña: ${authErr.message}` };
+  }
+
+  // 3. Revalidar la vista
+  revalidatePath(`/admin/athletes/${athleteId}`);
+  return { success: true };
+}
+
 
 
