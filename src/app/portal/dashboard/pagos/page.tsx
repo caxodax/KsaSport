@@ -174,18 +174,8 @@ export default async function PagosPage() {
     const productPayments = payments?.filter(pay => pay.product_id === p.id) || []
     let amountPaid = productPayments.reduce((sum, pay) => sum + Number(pay.amount), 0)
     
-    // Si es mensualidad y el atleta tiene paid_until que cubre este mes,
-    // se reconoce como pagado base aunque el pago se haya registrado directamente en taquilla o admin
+    // Calcular si aplica cobertura por paid_until y penalidad por mora en mensualidades
     const isMensualidad = p.name.toLowerCase().includes('mensualidad') || p.name.toLowerCase().includes('cuota');
-    if (isMensualidad && paidUntil && p.start_date) {
-      const pStart = new Date(p.start_date);
-      const athletePaidUntil = new Date(paidUntil);
-      if (athletePaidUntil >= pStart && amountPaid === 0) {
-        amountPaid = basePrice;
-      }
-    }
-
-    // Calcular si aplica penalidad por mora en mensualidades
     let penaltyApplied = 0;
     if (isMensualidad) {
       let year: number | null = null;
@@ -204,6 +194,16 @@ export default async function PagosPage() {
         if (foundIdx !== -1) {
           month = foundIdx + 1;
           year = new Date().getFullYear();
+        }
+      }
+
+      // Si es mensualidad y el atleta tiene paid_until que cubre el fin de este mes,
+      // se reconoce como pagado base aunque el pago se haya registrado directamente en taquilla o admin
+      if (paidUntil && year && month && amountPaid === 0) {
+        const lastDayOfMonth = new Date(Date.UTC(year, month, 0, 23, 59, 59));
+        const athletePaidUntil = new Date(paidUntil.split('T')[0] + 'T23:59:59Z');
+        if (athletePaidUntil >= lastDayOfMonth) {
+          amountPaid = basePrice;
         }
       }
 

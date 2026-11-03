@@ -105,11 +105,13 @@ export default function AthleteDrawer({
       setPosition('');
       setStatus('Solvente');
       
-      // Default: fin de mes actual
-      const endOfMonth = new Date();
-      endOfMonth.setMonth(endOfMonth.getMonth() + 1);
-      endOfMonth.setDate(0);
-      setPaidUntil(endOfMonth.toISOString().split('T')[0]);
+      // Default: fin de mes anterior (para que el mes corriente inicie pendiente de pago)
+      const endOfPrevMonth = new Date();
+      endOfPrevMonth.setDate(0);
+      const y = endOfPrevMonth.getFullYear();
+      const m = String(endOfPrevMonth.getMonth() + 1).padStart(2, '0');
+      const d = String(endOfPrevMonth.getDate()).padStart(2, '0');
+      setPaidUntil(`${y}-${m}-${d}`);
       
       setHasAlliance(false);
       setStatsAvg('');
