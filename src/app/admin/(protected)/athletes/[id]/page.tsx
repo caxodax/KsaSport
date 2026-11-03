@@ -148,25 +148,14 @@ export default async function AthleteProfilePage({
     const parentProd = findParentProduct(product, products || [])
     const isExempt = Boolean(exemptionSet.has(product.id) || (parentProd && exemptionSet.has(parentProd.id)) || athlete.has_alliance)
     
-    // Calcular pagos válidos
+    // Calcular pagos válidos estrictamente desde la tabla de pagos
     const productPayments = payments?.filter(p => p.product_id === product.id) || []
-    let pagado = productPayments
+    const pagado = productPayments
       .filter(p => p.status === 'Completado')
       .reduce((sum, p) => sum + Number(p.amount), 0)
 
     // Evaluar penalidad de mora para mensualidades
     const isMensualidad = product.name.toLowerCase().includes('mensualidad') || product.name.toLowerCase().includes('cuota')
-    
-    // Si es mensualidad y el atleta tiene paid_until que cubre este mes,
-    // se reconoce como pagado base aunque el pago se haya registrado directamente en taquilla o admin
-    if (isMensualidad && athlete.paid_until && product.start_date) {
-      const pStart = new Date(product.start_date)
-      const athletePaidUntil = new Date(athlete.paid_until)
-      if (athletePaidUntil >= pStart && pagado === 0) {
-        pagado = Number(product.price)
-      }
-    }
-
     let penaltyApplied = 0
     let isWaived = false
 
