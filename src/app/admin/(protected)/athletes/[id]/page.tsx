@@ -144,9 +144,9 @@ export default async function AthleteProfilePage({
       continue
     }
     
-    // Si la jugadora está exonerada (directo o del torneo padre), su deuda base es 0
+    // Si la jugadora está exonerada (directo o del torneo padre o alianza), su deuda base es 0
     const parentProd = findParentProduct(product, products || [])
-    const isExempt = Boolean(exemptionSet.has(product.id) || (parentProd && exemptionSet.has(parentProd.id)))
+    const isExempt = Boolean(exemptionSet.has(product.id) || (parentProd && exemptionSet.has(parentProd.id)) || athlete.has_alliance)
     
     // Calcular pagos válidos
     const productPayments = payments?.filter(p => p.product_id === product.id) || []
@@ -158,11 +158,11 @@ export default async function AthleteProfilePage({
     const isMensualidad = product.name.toLowerCase().includes('mensualidad') || product.name.toLowerCase().includes('cuota')
     
     // Si es mensualidad y el atleta tiene paid_until que cubre este mes,
-    // se reconoce como pagado base aunque el pago se haya registrado directamente en taquilla o admin (solo si no está exonerada)
+    // se reconoce como pagado base aunque el pago se haya registrado directamente en taquilla o admin
     if (isMensualidad && athlete.paid_until && product.start_date) {
       const pStart = new Date(product.start_date)
       const athletePaidUntil = new Date(athlete.paid_until)
-      if (athletePaidUntil >= pStart && pagado === 0 && !isExempt) {
+      if (athletePaidUntil >= pStart && pagado === 0) {
         pagado = Number(product.price)
       }
     }
@@ -241,7 +241,7 @@ export default async function AthleteProfilePage({
   // 6.2 Preparar lista de productos para el Modal de Pagos y Abonos
   const productsForPaymentModal = (products || []).map(p => {
     const parentProd = findParentProduct(p, products || [])
-    const isExempt = Boolean(exemptionSet.has(p.id) || (parentProd && exemptionSet.has(parentProd.id)))
+    const isExempt = Boolean(exemptionSet.has(p.id) || (parentProd && exemptionSet.has(parentProd.id)) || athlete.has_alliance)
 
     const productPayments = payments?.filter(pay => pay.product_id === p.id) || []
     const amountPaid = productPayments
