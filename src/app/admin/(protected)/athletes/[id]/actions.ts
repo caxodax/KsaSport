@@ -54,6 +54,11 @@ export async function toggleAthleteAlliance(athleteId: string, hasAlliance: bool
     return { error: error.message };
   }
 
+  // Si se desactiva la alianza comercial, limpiar las exoneraciones activas
+  if (!hasAlliance) {
+    await supabase.from('athlete_exemptions').delete().eq('athlete_id', athleteId);
+  }
+
   revalidatePath(`/admin/athletes/${athleteId}`);
   revalidatePath('/admin/athletes');
   return { success: true };

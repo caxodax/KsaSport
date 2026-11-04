@@ -144,9 +144,9 @@ export default async function AthleteProfilePage({
       continue
     }
     
-    // Si la jugadora está exonerada (directo o del torneo padre o alianza), su deuda base es 0
+    // Si la jugadora está exonerada (directo o del torneo padre), su deuda base es 0
     const parentProd = findParentProduct(product, products || [])
-    const isExempt = Boolean(exemptionSet.has(product.id) || (parentProd && exemptionSet.has(parentProd.id)) || athlete.has_alliance)
+    const isExempt = Boolean(exemptionSet.has(product.id) || (parentProd && exemptionSet.has(parentProd.id)))
     
     // Calcular pagos válidos estrictamente desde la tabla de pagos
     const productPayments = payments?.filter(p => p.product_id === product.id) || []
@@ -230,7 +230,7 @@ export default async function AthleteProfilePage({
   // 6.2 Preparar lista de productos para el Modal de Pagos y Abonos
   const productsForPaymentModal = (products || []).map(p => {
     const parentProd = findParentProduct(p, products || [])
-    const isExempt = Boolean(exemptionSet.has(p.id) || (parentProd && exemptionSet.has(parentProd.id)) || athlete.has_alliance)
+    const isExempt = Boolean(exemptionSet.has(p.id) || (parentProd && exemptionSet.has(parentProd.id)))
 
     const productPayments = payments?.filter(pay => pay.product_id === p.id) || []
     const amountPaid = productPayments

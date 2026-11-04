@@ -32,9 +32,15 @@ export default function ExemptionManager({
   const handleToggleAlliance = async (active: boolean) => {
     setIsTogglingAlliance(true)
     setHasAlliance(active)
+    if (!active) {
+      setExemptions(new Set())
+    }
     const res = await toggleAthleteAlliance(athleteId, active)
     if (res?.error) {
       setHasAlliance(!active)
+      if (!active) {
+        setExemptions(new Set(initialExemptions))
+      }
       toast.error('Error al actualizar alianza: ' + res.error)
     } else {
       toast.success(active ? 'Alianza / Beca activada exitosamente.' : 'Alianza / Beca desactivada.');
@@ -53,6 +59,12 @@ export default function ExemptionManager({
       newExemptions.delete(productId)
     }
     setExemptions(newExemptions)
+
+    // Si se activa una exoneración y la alianza estaba inactiva, activarla
+    if (isExempt && !hasAlliance) {
+      setHasAlliance(true)
+      await toggleAthleteAlliance(athleteId, true)
+    }
 
     const result = await toggleExemption(athleteId, productId, isExempt)
     
