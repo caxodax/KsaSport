@@ -606,5 +606,29 @@
     "Tasa_EUR": 999.7692,
     "Tasa_USDT_Promedio": 1007.655,
     "Fuente": "alcambio.app"
+  },
+  {
+    "Fecha_Consulta": "2026-11-04",
+    "Hora_Consulta": "16:30:06",
+    "Tasa_USD": 893.2173,
+    "Tasa_EUR": 999.7692,
+    "Tasa_USDT_Promedio": 1010.325,
+    "Fuente": "alcambio.app"
+  },
+  {
+    "Fecha_Consulta": "2026-11-05",
+    "Hora_Consulta": "09:30:01",
+    "Tasa_USD": 894.8876,
+    "Tasa_EUR": 1006.0326,
+    "Tasa_USDT_Promedio": 1010.28,
+    "Fuente": "alcambio.app"
+  },
+  {
+    "Fecha_Consulta": "2026-11-05",
+    "Hora_Consulta": "16:30:02",
+    "Tasa_USD": 894.8876,
+    "Tasa_EUR": 1006.0326,
+    "Tasa_USDT_Promedio": 1011.305,
+    "Fuente": "alcambio.app"
   }
 ]

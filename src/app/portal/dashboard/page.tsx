@@ -404,7 +404,11 @@ export default async function PortalDashboard() {
               triggerLabel="Carnet QR"
               triggerClassName="w-full sm:w-auto flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 font-bold py-3 px-5 rounded-2xl transition-all shadow-md active:scale-95 cursor-pointer"
             />
-            <Link href="/portal/dashboard/pagos" className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-kasa-dorado via-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-kasa-vinotinto font-black py-3 px-6 rounded-2xl transition-all shadow-lg hover:shadow-yellow-500/20 transform hover:-translate-y-0.5 active:scale-95">
+            <Link 
+              href="/portal/dashboard/pagos" 
+              prefetch={false}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-kasa-dorado via-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-kasa-vinotinto font-black py-3 px-6 rounded-2xl transition-all shadow-lg hover:shadow-yellow-500/20 transform hover:-translate-y-0.5 active:scale-95"
+            >
               <ShoppingCart className="w-5 h-5" />
               PAGAR
             </Link>
@@ -523,6 +527,7 @@ export default async function PortalDashboard() {
 
             <Link
               href="/portal/dashboard/lineup"
+              prefetch={false}
               className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-kasa-dorado hover:bg-yellow-400 text-kasa-vinotinto font-black text-xs transition-colors shadow-md text-center flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
             >
               Ver Alineación Oficial ➜
@@ -556,6 +561,7 @@ export default async function PortalDashboard() {
 
             <Link
               href="/portal/dashboard/cantina"
+              prefetch={false}
               className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-kasa-dorado hover:bg-yellow-400 text-kasa-vinotinto font-black text-xs transition-colors shadow-md text-center flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
             >
               Ver Créditos & Pagar ➜

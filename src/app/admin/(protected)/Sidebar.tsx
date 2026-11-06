@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { LayoutDashboard, Users, Shield, Trophy, Menu, Tags, X, ShoppingBag, Wallet, Settings, LogOut, BarChart3, UserCog, Landmark, CreditCard, Bell, Camera } from 'lucide-react';
 import { logoutAdmin } from '../login/actions';
 import BrandLogo from '@/components/ui/BrandLogo';
@@ -25,6 +25,7 @@ export default function Sidebar({
   const [isAvatarOpen, setIsAvatarOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(staffProfile?.avatar_url || null);
   const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     setAvatarUrl(staffProfile?.avatar_url || null);
@@ -68,6 +69,8 @@ export default function Sidebar({
       <Link
         key={link.href}
         href={link.href}
+        prefetch={false}
+        onMouseEnter={() => router.prefetch(link.href)}
         onClick={closeMenu}
         className={`flex items-center gap-3 px-3 py-3 rounded-lg font-medium transition-colors ${
           isActive ? 'bg-white/15 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'
