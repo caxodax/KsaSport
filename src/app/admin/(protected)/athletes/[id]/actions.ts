@@ -187,7 +187,14 @@ export async function recordManualPayment(params: RecordManualPaymentParams) {
   }
 
   // 4. Registrar el pago en la tabla payments
-  const nowIso = paymentDate ? new Date(paymentDate).toISOString() : new Date().toISOString();
+  let nowIso: string;
+  if (paymentDate) {
+    nowIso = paymentDate.includes('T') 
+      ? new Date(paymentDate).toISOString() 
+      : new Date(`${paymentDate}T12:00:00-04:00`).toISOString();
+  } else {
+    nowIso = new Date().toISOString();
+  }
   let conceptBase = product.name;
   if (waivePenalty) {
     conceptBase = `${product.name} (Mora Exonerada)`;

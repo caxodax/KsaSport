@@ -489,7 +489,7 @@ export default function SettingsDashboard({
             {/* Días de Gracia Globales */}
             <div>
               <label className="block text-xs font-black uppercase text-slate-600 tracking-wider mb-2">
-                Días de Gracia (Mes en Curso) *
+                Día de Inicio de Mora / Corte (Club) *
               </label>
               <div className="relative">
                 <input 
@@ -502,11 +502,11 @@ export default function SettingsDashboard({
                   className="w-full rounded-2xl border border-slate-300 px-4 py-3 bg-white text-gray-900 font-bold text-base focus:ring-2 focus:ring-kasa-vinotinto/20 focus:border-kasa-vinotinto outline-none shadow-2xs transition-all pr-14"
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-slate-400 font-black text-xs uppercase">
-                  días
+                  día
                 </div>
               </div>
               <p className="mt-2 text-xs text-slate-500 font-medium leading-relaxed">
-                Cantidad de días del mes actual que la atleta puede esperar para pagar su mensualidad sin recibir recargo.
+                Día del mes a partir del cual aplica morosidad (00:00 hora Vzla). Ej: si colocas 6, se puede pagar sin recargo hasta el día 5.
               </p>
             </div>
 
@@ -542,7 +542,7 @@ export default function SettingsDashboard({
             <div>
               <span className="font-black text-gray-900 block mb-0.5">Efecto de la Regla Base:</span>
               <p className="leading-relaxed font-medium text-slate-600">
-                Las atletas tienen hasta el <strong className="font-bold text-gray-900">día {globalGrace}</strong> de cada mes para cancelar su mensualidad sin recargo. A partir del <strong className="font-bold text-gray-900">día {globalGrace + 1}</strong> se sumará automáticamente una penalidad de <strong className="font-bold text-gray-900">${Number(globalPenalty).toFixed(2)} USD</strong>.
+                Las atletas tienen hasta el <strong className="font-bold text-gray-900">día {Math.max(1, globalGrace - 1)} a las 23:59:59</strong> para cancelar su mensualidad sin recargo. A partir del <strong className="font-bold text-gray-900">día {globalGrace} a las 00:00 (hora Vzla)</strong> se sumará automáticamente una penalidad de <strong className="font-bold text-gray-900">${Number(globalPenalty).toFixed(2)} USD</strong>.
               </p>
             </div>
           </div>
@@ -741,7 +741,7 @@ export default function SettingsDashboard({
                           {/* Días de Gracia */}
                           <div>
                             <label className="block text-[10px] font-black uppercase text-slate-600 tracking-wider mb-1.5">
-                              Días de Gracia ({cleanName}) *
+                              Día de Inicio de Mora ({cleanName}) *
                             </label>
                             <div className="relative">
                               <input
@@ -753,7 +753,7 @@ export default function SettingsDashboard({
                                 className="w-full rounded-2xl border border-slate-300 px-3.5 py-2.5 text-sm font-bold bg-white text-gray-900 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all shadow-2xs pr-14"
                               />
                               <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400 font-black text-[11px] uppercase">
-                                días
+                                día
                               </div>
                             </div>
                           </div>
@@ -786,7 +786,7 @@ export default function SettingsDashboard({
                           <div className="space-y-0.5">
                             <span className="font-black text-amber-900 block">Simulación en vivo para {cleanName}:</span>
                             <p className="text-amber-900/90 leading-relaxed font-medium">
-                              Las atletas de <strong className="font-black text-amber-950">{cleanName}</strong> tienen hasta el <strong className="font-black text-amber-950">día {state.graceDays}</strong> de cada mes para pagar sin recargo. A partir del <strong className="font-black text-amber-950">día {state.graceDays + 1}</strong> se sumará una penalidad de <strong className="font-black text-amber-950">${Number(state.penalty).toFixed(2)} USD</strong>.
+                              Las atletas de <strong className="font-black text-amber-950">{cleanName}</strong> tienen hasta el <strong className="font-black text-amber-950">día {Math.max(1, state.graceDays - 1)} a las 23:59:59</strong> para pagar sin recargo. A partir del <strong className="font-black text-amber-950">día {state.graceDays} a las 00:00 (hora Vzla)</strong> se sumará una penalidad de <strong className="font-black text-amber-950">${Number(state.penalty).toFixed(2)} USD</strong>.
                             </p>
                           </div>
                         </div>
@@ -799,7 +799,7 @@ export default function SettingsDashboard({
                           <span>Heredando Política General del Club</span>
                         </div>
                         <p className="leading-relaxed font-medium">
-                          Esta disciplina no tiene recargos particulares. Aplica la regla base: hasta el <strong className="font-bold text-gray-900">día {globalGrace}</strong> sin recargo y multa de <strong className="font-bold text-gray-900">${Number(globalPenalty).toFixed(2)} USD</strong> desde el día {globalGrace + 1}.
+                          Esta disciplina no tiene recargos particulares. Aplica la regla base: hasta el <strong className="font-bold text-gray-900">día {Math.max(1, globalGrace - 1)} a las 23:59:59</strong> sin recargo y multa de <strong className="font-bold text-gray-900">${Number(globalPenalty).toFixed(2)} USD</strong> desde el día {globalGrace} a las 00:00 (hora Vzla).
                         </p>
                         <p className="text-[11px] text-slate-400 font-medium">
                           💡 Activa el interruptor arriba si necesitas fijar condiciones diferentes para {cleanName}.

@@ -9,7 +9,7 @@ import Pagination from './Pagination';
 import DateRangeFilter from './DateRangeFilter';
 import { parseDateRange } from '@/lib/dateRange';
 import { cleanCedula, formatCedula } from '@/lib/cedula';
-import { formatLocalDate } from '@/lib/dateUtils';
+import { formatLocalDate, isPaymentLate } from '@/lib/dateUtils';
 import { ProductFilterItem } from './MultiSelectProductFilter';
 import { findParentProduct, getEffectiveOptInProductId } from '@/lib/productHierarchy';
 
@@ -271,8 +271,7 @@ export default async function DashboardPage({
             const catRule = categoryPenaltyMap.get(athleteCat.trim().toLowerCase());
             const effGrace = catRule?.grace_period_days ?? defaultGrace;
             const effPenalty = catRule?.penalty_amount ?? defaultPenalty;
-            const deadline = new Date(year, month - 1, effGrace, 23, 59, 59, 999);
-            const isPastDeadline = new Date() > deadline;
+            const isPastDeadline = isPaymentLate(null, year, month, effGrace);
 
             const athletePaymentsForProd = (productPayments || []).filter(
               pay => pay.athlete_id === athlete.id && pay.product_id === p.id
@@ -284,7 +283,7 @@ export default async function DashboardPage({
             );
 
             const paidOnTime = athletePaymentsForProd.some(pay =>
-              pay.status === 'Completado' && new Date(pay.created_at) <= deadline
+              pay.status === 'Completado' && !isPaymentLate(pay.created_at, year, month, effGrace)
             );
 
             if (isPastDeadline && !isWaived && !paidOnTime) {
@@ -540,9 +539,8 @@ export default async function DashboardPage({
         const catRules = categoryPenaltyMap.get(cat.trim().toLowerCase());
         const catGrace = catRules?.grace_period_days ?? gracePeriodDays;
         const catPenalty = catRules?.penalty_amount ?? penaltyAmount;
-        const targetDeadline = new Date(startDate.getFullYear(), startDate.getMonth(), catGrace, 23, 59, 59, 999);
 
-        if (today > targetDeadline) {
+        if (isPaymentLate(null, startDate.getFullYear(), startDate.getMonth() + 1, catGrace)) {
           appliedPenalty = catPenalty;
         }
 

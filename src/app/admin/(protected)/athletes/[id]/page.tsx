@@ -8,7 +8,7 @@ import ManualPaymentModal from './ManualPaymentModal'
 import VoidPaymentButton from './VoidPaymentButton'
 import ResetAthletePasswordModal from './ResetAthletePasswordModal'
 import { formatCedula } from '@/lib/cedula'
-import { formatLocalDate } from '@/lib/dateUtils'
+import { formatLocalDate, isPaymentLate } from '@/lib/dateUtils'
 import { findParentProduct, getEffectiveOptInProductId } from '@/lib/productHierarchy'
 import { checkAdminPermission } from '@/lib/auth-admin'
 
@@ -180,8 +180,7 @@ export default async function AthleteProfilePage({
       }
 
       if (year && month) {
-        const deadline = new Date(year, month - 1, effectiveGrace, 23, 59, 59, 999)
-        const isPastDeadline = new Date() > deadline
+        const isPastDeadline = isPaymentLate(null, year, month, effectiveGrace)
         
         // Verificar si algún pago tiene la marca de mora exonerada
         isWaived = productPayments.some(pay => 
@@ -191,7 +190,7 @@ export default async function AthleteProfilePage({
 
         // Verificar si la atleta pagó a tiempo (algún pago completado en o antes de la fecha límite)
         const paidOnTime = productPayments.some(pay => 
-          pay.status === 'Completado' && new Date(pay.created_at) <= deadline
+          pay.status === 'Completado' && !isPaymentLate(pay.created_at, year, month, effectiveGrace)
         )
 
         // Aplica penalidad si venció la fecha de gracia, no fue exonerada y no pagó a tiempo

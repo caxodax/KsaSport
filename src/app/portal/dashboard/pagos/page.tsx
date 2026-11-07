@@ -4,6 +4,7 @@ import PaymentForm from './PaymentForm'
 import { redirect } from 'next/navigation'
 import { getTodayRates } from '@/lib/exchangeRate'
 import { findParentProduct, getEffectiveOptInProductId } from '@/lib/productHierarchy'
+import { isPaymentLate } from '@/lib/dateUtils'
 
 export const revalidate = 0
 
@@ -73,19 +74,16 @@ export default async function PagosPage() {
     
     if (!isNaN(pYear) && !isNaN(pMonth)) {
       // El mes a pagar es el siguiente al solvente (1-indexed).
-      // En JS Date(año, mes_index_0_based, dia, hora...):
-      // Para mes_index, pasar pMonth equivale a (pMonth - 1) + 1.
-      const limitDate = new Date(pYear, pMonth, effectiveGracePeriod, 23, 59, 59, 999);
-      const today = new Date();
-      
-      // Solo está moroso si hoy es estrictamente mayor que la fecha límite
-      if (today > limitDate) {
+      const nextMonth = pMonth === 12 ? 1 : pMonth + 1;
+      const nextYear = pMonth === 12 ? pYear + 1 : pYear;
+      if (isPaymentLate(null, nextYear, nextMonth, effectiveGracePeriod)) {
         isLate = true;
       }
 
       // Calcular cuántos meses se deben si la fecha de solvencia ya pasó
-      const currentYear = today.getFullYear();
-      const currentMonth = today.getMonth() + 1;
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
       const calculatedMonths = (currentYear - pYear) * 12 + (currentMonth - pMonth);
       if (calculatedMonths >= 1) {
         monthsOwed = calculatedMonths;
@@ -208,14 +206,13 @@ export default async function PagosPage() {
       }
 
       if (year && month) {
-        const deadline = new Date(year, month - 1, effectiveGracePeriod, 23, 59, 59, 999);
-        const isPastDeadline = new Date() > deadline;
+        const isPastDeadline = isPaymentLate(null, year, month, effectiveGracePeriod);
         const isWaived = productPayments.some(pay => 
           pay.concept?.toLowerCase().includes('mora exonerada') || 
           pay.concept?.toLowerCase().includes('sin penalidad')
         );
         const paidOnTime = productPayments.some(pay => 
-          new Date(pay.created_at) <= deadline
+          !isPaymentLate(pay.created_at, year, month, effectiveGracePeriod)
         );
 
         if (isPastDeadline && !isWaived && !paidOnTime) {

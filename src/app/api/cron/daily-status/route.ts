@@ -1,6 +1,7 @@
 import { getServiceSupabase } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
 import { syncRates } from '@/lib/exchangeRate'
+import { isPaymentLate } from '@/lib/dateUtils'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,7 +26,24 @@ export async function GET(request: Request) {
 
     const supabase = getServiceSupabase()
 
-    // 3. Obtener configuración de días de gracia (general y por disciplina)
+    // 3. Ejecutar actualización atómica vía RPC de PostgreSQL (Misma función del cron pg_cron)
+    try {
+      const { data: dbResult, error: rpcError } = await supabase.rpc('fn_actualizar_morosidad_diaria')
+      if (!rpcError && dbResult) {
+        return NextResponse.json({
+          message: 'Daily status sync completed via PostgreSQL RPC',
+          dbResult,
+          rateSync: rateSyncInfo?.result || null
+        })
+      }
+      if (rpcError) {
+        console.warn('RPC fn_actualizar_morosidad_diaria no disponible o con error, usando fallback TS:', rpcError.message)
+      }
+    } catch (rpcEx) {
+      console.warn('Excepción llamando a RPC, continuando con fallback TS:', rpcEx)
+    }
+
+    // 4. Fallback TypeScript con hora oficial de Venezuela (America/Caracas UTC-4)
     const [{ data: settingsData }, { data: categoriesData }] = await Promise.all([
       supabase.from('club_settings').select('grace_period_days').eq('id', 1).maybeSingle(),
       supabase.from('categories').select('name, grace_period_days')
@@ -39,7 +57,6 @@ export async function GET(request: Request) {
       }
     })
 
-    // 4. Buscar atletas activas en competencia (sin convenio de alianza comercial)
     const { data: athletes, error: fetchError } = await supabase
       .from('athletes')
       .select('id, name, status, paid_until, teams(category)')
@@ -47,11 +64,10 @@ export async function GET(request: Request) {
       .or('has_alliance.is.null,has_alliance.eq.false')
 
     if (fetchError) {
-      console.error('Error fetching athletes in daily-status:', fetchError)
+      console.error('Error fetching athletes in daily-status fallback:', fetchError)
       return NextResponse.json({ error: 'Error fetching athletes' }, { status: 500 })
     }
 
-    const now = new Date()
     const toMorosoIds: string[] = []
     const toMorosoNames: string[] = []
     const toSolventeIds: string[] = []
@@ -75,13 +91,11 @@ export async function GET(request: Request) {
             ? categoryGraceMap.get(categoryName)!
             : defaultGrace
 
-          // El mes a pagar es el siguiente al solvente (1-indexed).
-          // En constructor Date(año, mes_index, dia, hora...):
-          // Pasar pMonth corresponde exactamente al índice del mes siguiente (ej. pMonth = 10 -> Noviembre).
-          // Si effGrace es 0, dia 0 corresponde al último día del mes pagado a las 23:59:59.
-          const graceDeadline = new Date(pYear, pMonth, effGrace, 23, 59, 59, 999)
+          // El mes a pagar es el siguiente al solvente (1-indexed)
+          const nextMonth = pMonth === 12 ? 1 : pMonth + 1
+          const nextYear = pMonth === 12 ? pYear + 1 : pYear
 
-          if (now > graceDeadline) {
+          if (isPaymentLate(null, nextYear, nextMonth, effGrace)) {
             isExpired = true
           }
         }
@@ -92,7 +106,7 @@ export async function GET(request: Request) {
         toMorosoIds.push(athlete.id)
         toMorosoNames.push(athlete.name)
       } 
-      // Si todavía está en periodo de gracia o solvente pero está Moroso -> corregir a Solvente
+      // Si todavía está en periodo regular y solvente pero está Moroso -> corregir a Solvente
       else if (!isExpired && athlete.status === 'Moroso') {
         toSolventeIds.push(athlete.id)
         toSolventeNames.push(athlete.name)
@@ -111,7 +125,7 @@ export async function GET(request: Request) {
       }
     }
 
-    // Restaurar a Solvente si están dentro del lapso de gracia
+    // Restaurar a Solvente si están dentro del lapso regular
     if (toSolventeIds.length > 0) {
       const { error: solventeErr } = await supabase
         .from('athletes')
@@ -124,13 +138,14 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({
-      message: 'Daily status sync completed',
+      message: 'Daily status sync completed via TS fallback',
       updatedToMorosoCount: toMorosoIds.length,
       updatedToSolventeCount: toSolventeIds.length,
       athletesToMoroso: toMorosoNames,
       athletesToSolvente: toSolventeNames,
       rateSync: rateSyncInfo?.result || null
     })
+
 
   } catch (error) {
     console.error('Cron job error:', error)

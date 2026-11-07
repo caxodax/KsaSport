@@ -90,3 +90,63 @@ export function formatDateRangeText(
   const end = formatLocalDate(endDateStr, { day: '2-digit', month: 'short', year: 'numeric' }, locale);
   return `${start} — ${end}`;
 }
+
+/**
+ * Retorna la fecha y hora de corte exacta para un mes y día dados en hora de Venezuela (UTC-4).
+ * Ejemplo: si cutoffDay = 6, retorna el día 6 a las 00:00:00 hora de Venezuela (04:00:00 UTC).
+ */
+export function getMorosidadCutoff(targetYear: number, targetMonth: number, cutoffDay: number): Date {
+  const maxDays = new Date(Date.UTC(targetYear, targetMonth, 0)).getUTCDate();
+  const safeDay = Math.min(Math.max(1, cutoffDay || 5), maxDays);
+  // En UTC, las 00:00:00 hora Venezuela (UTC-4) son las 04:00:00 UTC.
+  return new Date(Date.UTC(targetYear, targetMonth - 1, safeDay, 4, 0, 0, 0));
+}
+
+/**
+ * Determina si un pago o el momento actual califica como fuera de plazo / moroso según la hora de Venezuela.
+ * Regla: Si el corte es el día 6, a partir del día 6 a las 00:00:00 hora Venezuela (minuto 1) aplica morosidad.
+ * Pagos realizados el día 5 a las 23:59:59 o antes están a tiempo.
+ * 
+ * @param paymentDateInput Fecha del pago ('YYYY-MM-DD', timestamp ISO, Date, o null/undefined para evaluar 'ahora')
+ * @param targetYear Año de la mensualidad (ej. 2026)
+ * @param targetMonth Mes de la mensualidad (1 a 12, ej. 11 para Noviembre)
+ * @param cutoffDay Día de corte configurado (ej. 6)
+ */
+export function isPaymentLate(
+  paymentDateInput: string | Date | null | undefined,
+  targetYear: number,
+  targetMonth: number,
+  cutoffDay: number
+): boolean {
+  const deadlineUtc = getMorosidadCutoff(targetYear, targetMonth, cutoffDay);
+
+  // Si no se especifica fecha de pago, se evalúa el momento presente (ahora)
+  if (!paymentDateInput) {
+    return new Date().getTime() >= deadlineUtc.getTime();
+  }
+
+  // Si se ingresa como string de fecha calendario simple ("YYYY-MM-DD")
+  if (typeof paymentDateInput === 'string') {
+    const trimmed = paymentDateInput.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      const [pY, pM, pD] = trimmed.split('-').map(Number);
+      if (pY > targetYear) return true;
+      if (pY < targetYear) return false;
+      if (pM > targetMonth) return true;
+      if (pM < targetMonth) return false;
+      
+      const maxDays = new Date(Date.UTC(targetYear, targetMonth, 0)).getUTCDate();
+      const safeDay = Math.min(Math.max(1, cutoffDay || 5), maxDays);
+      return pD >= safeDay;
+    }
+  }
+
+  // Si es un Date o timestamp ISO (ej. '2026-11-06T04:01:00Z' de created_at)
+  const pDate = new Date(paymentDateInput);
+  if (isNaN(pDate.getTime())) {
+    return new Date().getTime() >= deadlineUtc.getTime();
+  }
+
+  return pDate.getTime() >= deadlineUtc.getTime();
+}
+

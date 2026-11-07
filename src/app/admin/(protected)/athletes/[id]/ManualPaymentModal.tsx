@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { recordManualPayment } from './actions'
 import { toast } from 'sonner'
+import { isPaymentLate } from '@/lib/dateUtils'
 
 export interface AthleteProductForPayment {
   id: string
@@ -91,9 +92,7 @@ export default function ManualPaymentModal({
       }
     }
     if (year && month) {
-      const deadline = new Date(year, month - 1, graceDays, 23, 59, 59, 999)
-      const evalDate = paymentDate ? new Date(paymentDate + 'T12:00:00') : new Date()
-      if (evalDate > deadline) {
+      if (isPaymentLate(paymentDate, year, month, graceDays)) {
         isLate = true
       }
     }
@@ -351,7 +350,7 @@ export default function ManualPaymentModal({
                         <p className="text-[11px] mt-1 leading-relaxed opacity-90">
                           {waivePenalty
                             ? `El administrador ha decidido no cobrar la penalidad de mora. El monto se registrará como mensualidad regular sin recargo.`
-                            : `La fecha límite sin recargo era hasta el día ${graceDays}. A este pago le corresponde una penalidad de $${penaltyAmt.toFixed(2)} USD. Si la jugadora solo cancela el monto regular, quedará con saldo deudor.`}
+                            : `El plazo sin recargo venció el día ${Math.max(1, graceDays - 1)} a las 23:59:59. A este pago le corresponde una penalidad de $${penaltyAmt.toFixed(2)} USD por realizarse a partir del día ${graceDays}. Si la jugadora solo cancela el monto regular, quedará con saldo deudor.`}
                         </p>
                       </div>
                     </div>
