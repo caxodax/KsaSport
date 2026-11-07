@@ -5,6 +5,7 @@ import { checkAdminPermission } from '@/lib/auth-admin';
 import { revalidatePath } from 'next/cache';
 import { findParentProduct, getEffectiveOptInProductId } from '@/lib/productHierarchy';
 import { sendAthletePush } from '@/lib/pushNotifications';
+import { syncAthleteCoverage } from '@/lib/athleteCoverage';
 
 export async function toggleExemption(athleteId: string, productId: string, isExempt: boolean) {
   const { permissions } = await checkAdminPermission();
@@ -33,7 +34,12 @@ export async function toggleExemption(athleteId: string, productId: string, isEx
     }
   }
 
+  // Sincronizar automáticamente el estatus (Solvente/Moroso) y paid_until de la atleta
+  await syncAthleteCoverage(athleteId, supabase);
+
   revalidatePath(`/admin/athletes/${athleteId}`);
+  revalidatePath('/admin/athletes');
+  revalidatePath('/admin');
   revalidatePath('/admin/ledger');
   return { success: true };
 }
@@ -59,8 +65,12 @@ export async function toggleAthleteAlliance(athleteId: string, hasAlliance: bool
     await supabase.from('athlete_exemptions').delete().eq('athlete_id', athleteId);
   }
 
+  // Sincronizar automáticamente el estatus y paid_until
+  await syncAthleteCoverage(athleteId, supabase);
+
   revalidatePath(`/admin/athletes/${athleteId}`);
   revalidatePath('/admin/athletes');
+  revalidatePath('/admin');
   return { success: true };
 }
 
@@ -241,46 +251,9 @@ export async function recordManualPayment(params: RecordManualPaymentParams) {
     return { error: paymentError?.message || 'Error al registrar el pago en el sistema.' };
   }
 
-  // 5. Si es mensualidad, actualizar estatus del atleta y paid_until
-  if (product.name.toLowerCase().includes('mensualidad')) {
-    const { data: athlete } = await supabase.from('athletes').select('paid_until').eq('id', athleteId).single();
-    
-    let nextDate: Date;
-    if (product.end_date) {
-      const productEndDate = new Date(product.end_date);
-      if (!athlete?.paid_until || productEndDate > new Date(athlete.paid_until)) {
-        nextDate = productEndDate;
-      } else {
-        nextDate = new Date(athlete.paid_until);
-      }
-    } else {
-      let monthsPaid = 1;
-      if (Number(product.price) > 0) {
-        monthsPaid = Math.floor(Number(amount) / Number(product.price));
-        if (monthsPaid < 1) monthsPaid = 1;
-      }
-
-      if (athlete?.paid_until) {
-        nextDate = new Date(athlete.paid_until);
-        nextDate.setMonth(nextDate.getMonth() + monthsPaid);
-      } else {
-        nextDate = new Date();
-        nextDate.setMonth(nextDate.getMonth() + monthsPaid);
-        nextDate.setDate(0);
-      }
-    }
-
-    const today = new Date();
-    const isSolventeNow = nextDate.getFullYear() > today.getFullYear() || 
-                         (nextDate.getFullYear() === today.getFullYear() && nextDate.getMonth() >= today.getMonth());
-
-    await supabase
-      .from('athletes')
-      .update({ 
-        status: isSolventeNow ? 'Solvente' : 'Moroso',
-        paid_until: nextDate.toISOString().split('T')[0]
-      })
-      .eq('id', athleteId);
+  // 5. Si es mensualidad, actualizar estatus del atleta y paid_until de forma unificada
+  if (product.name.toLowerCase().includes('mensualidad') || product.name.toLowerCase().includes('cuota')) {
+    await syncAthleteCoverage(athleteId, supabase);
   }
 
   // 6. Notificación push si la atleta está vinculada
