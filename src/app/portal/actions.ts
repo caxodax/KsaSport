@@ -264,5 +264,7 @@ export async function reportPayment(formData: FormData) {
   if (error) return { error: error.message }
 
   revalidatePath('/portal/dashboard')
+  revalidatePath('/admin/payments')
+  revalidatePath('/admin')
   redirect('/portal/dashboard')
 }

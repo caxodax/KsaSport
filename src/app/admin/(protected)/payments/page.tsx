@@ -16,12 +16,11 @@ export default async function PaymentsPage({
 }) {
   await checkAdminPermission('view_finances')
   const resolvedParams = await searchParams;
-  const { startDate, endDate, formattedRange } = parseDateRange(resolvedParams);
+  const { timestampStartIso, timestampEndIso, formattedRange } = parseDateRange(resolvedParams);
   const supabase = getServiceSupabase()
 
-  // Obtener pagos con datos de la atleta (inner join) en el rango de fechas seleccionado
-  // Ordenamos para que los Pendientes salgan de primero, y luego por fecha más reciente
-  const { data: payments } = await supabase
+  // Obtener pagos con datos de la atleta en el rango horario oficial de Venezuela
+  const { data: rawPayments } = await supabase
     .from('payments')
     .select(`
       *,
@@ -30,10 +29,23 @@ export default async function PaymentsPage({
         cedula
       )
     `)
-    .gte('created_at', startDate.toISOString())
-    .lte('created_at', endDate.toISOString())
-    .order('status', { ascending: false }) // 'Pendiente' va antes que 'Completado'/'Rechazado' alfabéticamente
+    .gte('created_at', timestampStartIso)
+    .lte('created_at', timestampEndIso)
     .order('created_at', { ascending: false })
+
+  // Garantizar que los pagos 'Pendiente' salgan siempre de primero, luego por fecha más reciente
+  const STATUS_PRIORITY: Record<string, number> = {
+    Pendiente: 0,
+    Completado: 1,
+    Rechazado: 2,
+    Anulado: 3,
+  };
+  const payments = [...(rawPayments || [])].sort((a, b) => {
+    const pA = STATUS_PRIORITY[a.status] ?? 4;
+    const pB = STATUS_PRIORITY[b.status] ?? 4;
+    if (pA !== pB) return pA - pB;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
 
   const completedPayments = payments?.filter(p => p.status === 'Completado') || [];
   const pendingPayments = payments?.filter(p => p.status === 'Pendiente') || [];
